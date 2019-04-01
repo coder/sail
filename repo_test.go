@@ -1,0 +1,29 @@
+package main
+
+import (
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"testing"
+)
+
+func TestParseRepo(t *testing.T) {
+	var (
+		repo Repo
+		err error
+	)
+	repo, err = ParseRepo("codercom/narwhal")
+	require.NoError(t, err)
+
+	assert.Equal(t, "codercom/narwhal.git", repo.Path)
+	assert.Equal(t, "github.com", repo.Host)
+	assert.Equal(t, "git", repo.User)
+
+	repo, err = ParseRepo("git@github.com:codercom/narwhal.git")
+	require.NoError(t, err)
+
+	assert.Equal(t, "codercom/narwhal.git", repo.Path)
+	assert.Equal(t, "github.com", repo.Host)
+	assert.Equal(t, "git", repo.User)
+
+	assert.Equal(t, "git@github.com:codercom/narwhal.git", repo.String())
+}

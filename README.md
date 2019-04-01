@@ -35,6 +35,17 @@ which will use the local narwhal client.
 If `narwhal` detects the same host being used with the same project, it will just open up the existing
 environment.
 
+# Container requirements
+
+The dev container must have
+
+- wget
+- git
+- lsof
+- bash
+
+The `codercom/ubuntu-dev` container ships with these.
+
 # Configuration
 
 A self-documenting configuration is stored  at `~/.config/narwhal/narwhal.toml`

@@ -4,22 +4,16 @@ import (
 	"flag"
 	"fmt"
 	"github.com/BurntSushi/toml"
+	"github.com/fatih/color"
 	"go.coder.com/flog"
-	"go.coder.com/narwhal"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
 )
 
-// config describes the config.toml.
-// Changes to this
-type config struct {
-	DefaultHost string `toml:"default_host"`
-}
-
-func readConfig(path string) config {
-	var c config
+func readConfig(path string) Config {
+	var c Config
 	_, err := toml.DecodeFile(path, &c)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -31,7 +25,7 @@ func readConfig(path string) config {
 				flog.Fatal("failed to mkdirall %v: %v", baseDir, err)
 			}
 
-			err = ioutil.WriteFile(path, []byte(narwhal.DefaultConfig), 0644)
+			err = ioutil.WriteFile(path, []byte(DefaultConfig), 0644)
 			if err != nil {
 				flog.Fatal("failed to write default config @ %v\n%v", path, err)
 			}
@@ -43,14 +37,33 @@ func readConfig(path string) config {
 	return c
 }
 
+type flags struct {
+	verbose    bool
+	configPath string
+	newContainer bool
+}
+
+func (flg *flags) debug(msg string, args ...interface{}) {
+	if !flg.verbose {
+		return
+	}
+	flog.Log(
+		flog.Level(color.New(color.FgHiMagenta).Sprint("DEBUG")),
+		msg, args...,
+	)
+}
+
 func main() {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		panic(err)
 	}
 
-	verbose := flag.Bool("v", false, "Enable debug logging.")
-	configPath := flag.String("config", homeDir+"/.config/narwhal/narwhal.toml", "Path to config.")
+	var flg flags
+
+	flag.BoolVar(&flg.verbose, "v", false, "Enable debug logging.")
+	flag.StringVar(&flg.configPath, "config", homeDir+"/.config/narwhal/narwhal.toml", "Path to config.")
+	flag.BoolVar(&flg.newContainer, "new", false, "Force create a new container.")
 
 	flag.Usage = func() {
 		var flagHelp strings.Builder
@@ -75,17 +88,6 @@ Flags:
 	}
 	flag.Parse()
 
-	_ = verbose
-
-	c := readConfig(*configPath)
-
-	flog.Info("config: %+v", c)
-
-	//
-	//host := flag.Arg(0)
-	//repo := flag.Arg(1)
-	//
-	//if host == "" {
-	//
-	//}
+	c := readConfig(flg.configPath)
+	run(flg, c)
 }
