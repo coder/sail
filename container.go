@@ -2,26 +2,31 @@ package main
 
 import (
 	"bytes"
-	"context"
 	"errors"
 	"fmt"
 	"golang.org/x/xerrors"
 	"io"
-	"os"
+	"math/rand"
+	"net"
 	"os/exec"
+	"strconv"
 	"strings"
 	"time"
 )
 
-// container describes a remote or local container.
+// container describes a local container.
 type container struct {
 	Name string
-	Host Host
 }
 
 func (c container) Exec(cmd string, args ...string) *exec.Cmd {
 	args = append([]string{"exec", "-i", c.Name, cmd}, args...)
-	return c.Host.Command("docker", args...)
+	return exec.Command("docker", args...)
+}
+
+func (c container) ExecTTY(cmd string, args ...string) *exec.Cmd {
+	args = append([]string{"exec", "-w", "/root", "-it", c.Name, cmd}, args...)
+	return exec.Command("docker", args...)
 }
 
 func (c container) FmtExec(cmdFmt string, args ...interface{}) *exec.Cmd {
@@ -30,29 +35,54 @@ func (c container) FmtExec(cmdFmt string, args ...interface{}) *exec.Cmd {
 
 func (c container) DetachedExec(cmd string, args ...string) *exec.Cmd {
 	args = append([]string{"exec", "-d", c.Name, cmd}, args...)
-	return c.Host.Command("docker", args...)
+	return exec.Command("docker", args...)
 }
 
 func (c container) ExecEnv(envs []string, cmd string, args ...string) *exec.Cmd {
 	args = append([]string{"exec", "-e", strings.Join(envs, ","), "-i", c.Name, cmd}, args...)
-	return c.Host.Command("docker", args...)
+	return exec.Command("docker", args...)
 }
 
-// RunContainer creates and runs a new container.
-func RunContainer(log io.Writer, h Host, image string, name string) error {
-	// We run sh to the container never terminated.
-	cmd := h.Command("docker", "run", "--name", name, "-dt", image, "sh")
-	cmd.Stdout = log
+const narwhalLabel = "narwhal"
+
+type containerConfig struct {
+	image    string
+	name     string
+	hostname string
+	shares   map[string]string
+}
+
+// runContainer creates and runs a new container.
+func runContainer(log io.Writer, c containerConfig) error {
+	var volumeFlag strings.Builder
+	for k, v := range c.shares {
+		fmt.Fprintf(&volumeFlag, "-v %v:%v ", k, v)
+	}
+
+	// Use host network to remove the need for export.
+	// We run sleep so the container never terminates.
+	// We don't run sh because sh doesn't kill on SIGTERM.
+	cmd := fmtExec("docker run %s -h %v --network=host --label=%v --name %v -dt %v sleep 900000d",
+		volumeFlag.String(), c.hostname,
+		narwhalLabel, c.name, c.image,
+	)
+	// This only outputs the container name.
+	//cmd.Stdout = log
 	cmd.Stderr = log
 	return cmd.Run()
 }
 
-// ListContainers lists containers with the given prefix.
+// listContainers lists containers with the given prefix.
 // Names are returned in descending order with respect to when it
 // was created.
-func ListContainers(h Host, prefix string) ([]string, error) {
-	cmd := h.Command("docker", "ps",
-		"--format", "{{ .Names }}", "--filter", "name=codercom-bigdur",
+func listContainers(all bool, prefix string) ([]string, error) {
+	var allFlag string
+	if all {
+		allFlag = "-a"
+	}
+
+	cmd := fmtExec("docker ps %v --format '{{ .Names }}' --filter name=%v --filter label=%v",
+		allFlag, prefix, narwhalLabel,
 	)
 
 	out, err := cmd.CombinedOutput()
@@ -61,30 +91,25 @@ func ListContainers(h Host, prefix string) ([]string, error) {
 	}
 
 	var names []string
-	for _, v := range bytes.Split(out, []byte("\n")) {
+	for _, v := range bytes.Split(bytes.TrimSpace(out), []byte("\n")) {
+		v = bytes.TrimSpace(v)
+		if string(v) == "" {
+			continue
+		}
 		names = append(names, string(v))
 	}
 	return names, nil
 }
 
-// DownloadCodeServer downloads code-server to /usr/bin/code-server.
-func (c container) DownloadCodeServer() error {
-	url, err := CodeServerDownloadURL(context.Background(), c.Host.OS())
+func containerExists(name string) (bool, error) {
+	out, err := fmtExec("docker inspect %v", name).CombinedOutput()
 	if err != nil {
-		return xerrors.Errorf("failed to get download url: %w", err)
+		if bytes.Contains(out, []byte("No such object")) {
+			return false, nil
+		}
+		return false, err
 	}
-
-	cmd := c.ExecEnv([]string{
-		"URL=" + url,
-	}, "bash", "-c", CodeServerExtractScript, url)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	err = cmd.Run()
-	if err != nil {
-		return xerrors.Errorf("failed to run extract script: %w\n%s", err, CodeServerExtractScript)
-	}
-
-	return nil
+	return true, nil
 }
 
 // CodeServerLogLocation is the location of the code-server log.
@@ -95,10 +120,40 @@ func (c container) CodeServerRunning() bool {
 	return cmd.Run() == nil
 }
 
-// CheckPort returns true if the port is bound.
-func (c container) CheckPort(port string) bool {
-	cmd := c.FmtExec("lsof -i:%v", port)
-	return cmd.Run() == nil
+// CodeServerPort gets the port of the running code-server binary.
+func (c container) CodeServerPort() (string, error) {
+	// netstat and similar may not work correctly in the container due to procfs limitations.
+	// So, we rely on this janky ps regex.
+	cmd := c.FmtExec(`ps aux | grep -Po "(?<=code-server --port )([0-9]{1,5})" | head -n 1`)
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		return "", errors.New("no processes found")
+	}
+
+	return strings.TrimSpace(string(out)), nil
+}
+
+// checkPort returns true if the port is bound.
+// We want to run this on the host and not in the container
+func checkPort(port string) bool {
+	l, err := net.Listen("tcp", ":"+port)
+	if err != nil {
+		return false
+	}
+	_ = l.Close()
+	return true
+}
+
+func findAvailablePort(min, max uint16) (string, error) {
+	for _, tryPort := range rand.Perm(int(max - min)) {
+		tryPort += int(min)
+
+		strport := strconv.Itoa(tryPort)
+		if checkPort(strport) {
+			return strport, nil
+		}
+	}
+	return "", errors.New("no availabe ports")
 }
 
 var (
@@ -119,14 +174,15 @@ func (c container) ReadCodeServerLog() ([]byte, error) {
 }
 
 // StartCodeServer starts code-server and binds it to the given port.
-func (c container) StartCodeServer(port string) error {
+func (c container) StartCodeServer(dir string, port string) error {
 	if c.CodeServerRunning() {
 		return errCodeServerRunning
 	}
 
 	cmd := c.DetachedExec(
 		"bash", "-c",
-		"code-server --port "+port+" 2>&1 > "+CodeServerLogLocation,
+		// Port must be first parameter for janky port detection to work.
+		"cd "+dir+"; code-server --port "+port+" --data-dir ~/.config/Code --extensions-dir ~/.vscode/extensions --allow-http --no-auth 2>&1 > "+CodeServerLogLocation,
 	)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
@@ -139,7 +195,7 @@ func (c container) StartCodeServer(port string) error {
 		if !c.CodeServerRunning() {
 			return errCodeServerFailed
 		}
-		if c.CheckPort(port) {
+		if checkPort(port) {
 			return nil
 		}
 
@@ -147,9 +203,4 @@ func (c container) StartCodeServer(port string) error {
 	}
 
 	return errCodeServerTimedOut
-}
-
-// FindAvailablePort finds an available port in the provided range.
-func (c container) FindAvailablePort(start uint16, end uint16) (string, error) {
-
 }

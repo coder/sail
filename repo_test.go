@@ -8,8 +8,8 @@ import (
 
 func TestParseRepo(t *testing.T) {
 	var (
-		repo Repo
-		err error
+		repo repo
+		err  error
 	)
 	repo, err = ParseRepo("codercom/narwhal")
 	require.NoError(t, err)
@@ -25,5 +25,5 @@ func TestParseRepo(t *testing.T) {
 	assert.Equal(t, "github.com", repo.Host)
 	assert.Equal(t, "git", repo.User)
 
-	assert.Equal(t, "git@github.com:codercom/narwhal.git", repo.String())
+	assert.Equal(t, "git@github.com:codercom/narwhal.git", repo.CloneURI())
 }

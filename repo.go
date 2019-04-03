@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"path"
 	"regexp"
 	"strings"
 )
@@ -25,28 +26,32 @@ func subexpMap(r *regexp.Regexp, target string) map[string]string {
 	return m
 }
 
-type Repo struct {
+type repo struct {
 	User, Host, Path string
 }
 
-func (r Repo) String() string {
+func (r repo) CloneURI() string {
 	return fmt.Sprintf("%v@%v:%v", r.User, r.Host, r.Path)
 }
 
-func (r Repo) DockerName() string {
+func (r repo) DockerName() string {
 	return strings.Replace(
 		strings.TrimSuffix(r.Path, ".git"), "/", "-", -1,
 	)
 }
 
-// ParseRepo parses a reponame into a Repo.
+func (r repo) BaseName() string {
+	return strings.TrimSuffix(path.Base(r.Path), ".git")
+}
+
+// ParseRepo parses a reponame into a repo.
 // The default user is Git.
 // The default Host is github.com.
 // If the host is github.com, `.git` is always at the end of Path.
-func ParseRepo(name string) (Repo, error) {
+func ParseRepo(name string) (repo, error) {
 	m := subexpMap(repoRegex, name)
 
-	repo := Repo{
+	repo := repo{
 		User: strings.TrimSuffix(m["user"], "@"),
 		Host: strings.TrimSuffix(m["host"], ":"),
 		Path: m["path"],
@@ -61,7 +66,7 @@ func ParseRepo(name string) (Repo, error) {
 	}
 
 	if repo.Path == "" {
-		return Repo{}, errors.New("no path provided")
+		return repo{}, errors.New("no path provided")
 	}
 
 	if repo.Host == "github.com" && !strings.HasSuffix(repo.Path, ".git") {
