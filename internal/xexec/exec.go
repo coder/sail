@@ -1,4 +1,5 @@
-package main
+// Package xexec contains extended os/exec utilities.
+package xexec
 
 import (
 	"fmt"
@@ -6,11 +7,11 @@ import (
 	"os/exec"
 )
 
-func fmtExec(cmdFmt string, args ...interface{}) *exec.Cmd {
+func Fmt(cmdFmt string, args ...interface{}) *exec.Cmd {
 	return exec.Command("bash", "-c", fmt.Sprintf(cmdFmt, args...))
 }
 
-func attach(cmd *exec.Cmd) {
+func Attach(cmd *exec.Cmd) {
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
 	cmd.Stdin = os.Stdin

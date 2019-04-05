@@ -16,4 +16,5 @@ require (
 	github.com/stretchr/testify v1.3.0
 	go.coder.com/flog v0.0.0-20190129195112-eaed154a0db8
 	golang.org/x/xerrors v0.0.0-20190315151331-d61658bd2e18
+	gopkg.in/fsnotify.v1 v1.4.7
 )

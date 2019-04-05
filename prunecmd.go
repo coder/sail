@@ -7,7 +7,7 @@ import (
 )
 
 // handlePrune removes all narwhal container from host.
-func handlePrune(flg flags) int {
+func handlePrune(flg globalFlags) int {
 	list, err := listContainers(true, "")
 	if err != nil {
 		flog.Fatal("failed to list containers: %v", err)

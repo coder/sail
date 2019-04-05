@@ -51,27 +51,27 @@ func (r repo) BaseName() string {
 func ParseRepo(name string) (repo, error) {
 	m := subexpMap(repoRegex, name)
 
-	repo := repo{
+	r := repo{
 		User: strings.TrimSuffix(m["user"], "@"),
 		Host: strings.TrimSuffix(m["host"], ":"),
 		Path: m["path"],
 	}
 
-	if repo.User == "" {
-		repo.User = "git"
+	if r.User == "" {
+		r.User = "git"
 	}
 
-	if repo.Host == "" {
-		repo.Host = "github.com"
+	if r.Host == "" {
+		r.Host = "github.com"
 	}
 
-	if repo.Path == "" {
+	if r.Path == "" {
 		return repo{}, errors.New("no path provided")
 	}
 
-	if repo.Host == "github.com" && !strings.HasSuffix(repo.Path, ".git") {
-		repo.Path += ".git"
+	if r.Host == "github.com" && !strings.HasSuffix(r.Path, ".git") {
+		r.Path += ".git"
 	}
 
-	return repo, nil
+	return r, nil
 }

@@ -38,12 +38,8 @@ type config struct {
 	Shares               map[string]string `toml:"shares"`
 }
 
-func (c config) containerProjectPath(r repo) string {
-	return filepath.Join(c.ContainerProjectRoot, r.BaseName())
-}
-
 const DefaultConfig = `# Narwhal configuration.
-# default_image is the default Docker image to use if the repository provides none.
+# default_image is the default Docker baseImage to use if the repository provides none.
 default_image = "codercom/ubuntu-dev"
 
 # project_root is the base from which projects are mounted.
