@@ -33,11 +33,13 @@ func (c *runcmd) spec() commandSpec {
 
 func (c *runcmd) initFlags(fl *flag.FlagSet) {
 	c.repoArg = fl.Arg(0)
-	fl.StringVar(&c.image, "image", "", "Custom docker baseImage to use.")
+	fl.StringVar(&c.image, "image", "", "Custom docker image to use.")
 	fl.StringVar(&c.hat, "hat", "", "Custom hat to use.")
 	fl.BoolVar(&c.keep, "keep", false, "Keep container when it fails to build.")
 	fl.StringVar(&c.testCmd, "test-cmd", "", "A command to use in-place of starting code-server for testing purposes.")
 }
+
+const guestHomeDir = "/home/user"
 
 func (c *runcmd) handle(gf globalFlags, fl *flag.FlagSet) {
 	var (
@@ -60,7 +62,7 @@ func (c *runcmd) handle(gf globalFlags, fl *flag.FlagSet) {
 
 	var shares []types.MountPoint
 
-	projectDir := filepath.Join("/home/user", proj.repo.BaseName())
+	projectDir := filepath.Join(guestHomeDir, proj.repo.BaseName())
 
 	shares = append(shares, types.MountPoint{
 		Type:        "bind",
@@ -78,7 +80,7 @@ func (c *runcmd) handle(gf globalFlags, fl *flag.FlagSet) {
 			flog.Fatal("failed to build image: %v", err)
 		}
 		if !customImageExists {
-			flog.Info("using default baseImage %v", gf.config().DefaultImage)
+			flog.Info("using default image %v", gf.config().DefaultImage)
 			image = gf.config().DefaultImage
 		} else {
 			flog.Info("using repo image %v", image)
@@ -94,11 +96,17 @@ func (c *runcmd) handle(gf globalFlags, fl *flag.FlagSet) {
 		hatPath = gf.config().DefaultHat
 	}
 
+	hostHomeDir, err := os.UserHomeDir()
+	if err != nil {
+		panic(err)
+	}
+	gf.debug("host home dir: %v", hostHomeDir)
+
 	for k, v := range gf.config().Shares {
 		shares = append(shares, types.MountPoint{
 			Type:        "bind",
-			Source:      cleanPath(k),
-			Destination: v,
+			Source:      resolvePath(hostHomeDir, k),
+			Destination: resolvePath(guestHomeDir, v),
 		})
 	}
 
@@ -111,7 +119,6 @@ func (c *runcmd) handle(gf globalFlags, fl *flag.FlagSet) {
 	if err != nil {
 		flog.Fatal("failed to get current user: %v", err)
 	}
-
 
 	b := &builder{
 		baseImage:  image,

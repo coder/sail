@@ -35,9 +35,14 @@ func (p *project) name() string {
 }
 
 func (p *project) localDir() string {
+	hostHomeDir, err := os.UserHomeDir()
+	if err != nil {
+		panic(err)
+	}
+
 	path := strings.TrimSuffix(p.repo.Path, ".git")
 	projectDir := filepath.Join(p.conf.ProjectRoot, path)
-	return cleanPath(projectDir)
+	return resolvePath(hostHomeDir, projectDir)
 }
 
 func (p *project) dockerfilePath() string {
@@ -137,7 +142,7 @@ func (p *project) buildImage() (string, bool, error) {
 
 	imageID := p.repo.DockerName()
 
-	cmdStr := fmt.Sprintf("docker build -t %v -f %v %v", imageID, path, p.localDir())
+	cmdStr := fmt.Sprintf("docker build --network=host -t %v -f %v %v", imageID, path, p.localDir())
 	flog.Info("running %v", cmdStr)
 	cmd := xexec.Fmt(cmdStr)
 	xexec.Attach(cmd)
@@ -173,8 +178,8 @@ func (p *project) Exec(cmd string, args ...string) *exec.Cmd {
 	return exec.Command("docker", args...)
 }
 
-func (p *project) ExecTTY(cmd string, args ...string) *exec.Cmd {
-	args = append([]string{"exec", "-w", "/root", "-it", p.cntName(), cmd}, args...)
+func (p *project) ExecTTY(dir string, cmd string, args ...string) *exec.Cmd {
+	args = append([]string{"exec", "-w", dir, "-it", p.cntName(), cmd}, args...)
 	return exec.Command("docker", args...)
 }
 

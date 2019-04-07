@@ -17,6 +17,7 @@ import (
 )
 
 type editcmd struct {
+	noEditor bool
 }
 
 func (c *editcmd) spec() commandSpec {
@@ -158,3 +159,4 @@ func (c *editcmd) recreate(proj *project) error {
 func (c *editcmd) initFlags(fl *flag.FlagSet) {
 
 }
+

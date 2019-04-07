@@ -30,7 +30,7 @@ func (c *shellcmd) handle(gf globalFlags, fl *flag.FlagSet) {
 		flog.Fatal("failed to get default shell: %v\n%s", err, out)
 	}
 
-	cmd := proj.ExecTTY(string(bytes.TrimSpace(out)))
+	cmd := proj.ExecTTY(guestHomeDir, string(bytes.TrimSpace(out)))
 	xexec.Attach(cmd)
 	err = cmd.Run()
 	if err != nil {

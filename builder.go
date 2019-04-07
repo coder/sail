@@ -94,8 +94,8 @@ func (b *builder) applyHat() string {
 	csm := sha256.Sum256(dockerFileByt)
 	imageName := b.baseImage + "-hat-" + hex.EncodeToString(csm[:])[:16]
 
-	flog.Info("building hat baseImage %v", imageName)
-	cmd := xexec.Fmt("docker build -t %v -f %v %v",
+	flog.Info("building hat image %v", imageName)
+	cmd := xexec.Fmt("docker build --network=host -t %v -f %v %v",
 		imageName, fi.Name(), hatPath,
 	)
 	xexec.Attach(cmd)
@@ -106,7 +106,7 @@ func (b *builder) applyHat() string {
 	return imageName
 }
 
-// imageMounts adds a list of shares to the shares map from the baseImage.
+// imageMounts adds a list of shares to the shares map from the image.
 func (b *builder) imageMounts(image string, mounts []mount.Mount) []mount.Mount {
 	cli, err := client.NewEnvClient()
 	if err != nil {
@@ -117,6 +117,12 @@ func (b *builder) imageMounts(image string, mounts []mount.Mount) []mount.Mount 
 	if err != nil {
 		flog.Fatal("failed to inspect %v: %v", b.baseImage, err)
 	}
+
+	hostHomeDir, err := os.UserHomeDir()
+	if err != nil {
+		panic(err)
+	}
+
 	for k, v := range ins.ContainerConfig.Labels {
 		const prefix = "share."
 		if !strings.HasPrefix(k, prefix) {
@@ -130,8 +136,8 @@ func (b *builder) imageMounts(image string, mounts []mount.Mount) []mount.Mount 
 
 		mounts = append(mounts, mount.Mount{
 			Type:   mount.TypeBind,
-			Source: tokens[0],
-			Target: tokens[1],
+			Source: resolvePath(hostHomeDir, tokens[0]),
+			Target: resolvePath(guestHomeDir, tokens[1]),
 		})
 	}
 	return mounts

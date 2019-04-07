@@ -9,12 +9,7 @@ import (
 	"strings"
 )
 
-func cleanPath(path string) string {
-	homedir, err := os.UserHomeDir()
-	if err != nil {
-		panic(err)
-	}
-
+func resolvePath(homedir string, path string) string {
 	path = filepath.Clean(path)
 
 	list := strings.Split(path, string(filepath.Separator))
@@ -38,7 +33,7 @@ type config struct {
 }
 
 const DefaultConfig = `# Narwhal configuration.
-# default_image is the default Docker baseImage to use if the repository provides none.
+# default_image is the default Docker image to use if the repository provides none.
 default_image = "codercom/ubuntu-dev"
 
 # project_root is the base from which projects are mounted.
@@ -51,14 +46,12 @@ project_root = "~/Projects"
 
 [shares]
 # These shares synchronizes VS Code settings.
-"~/.config/Code" = "/root/.config/Code"
-"~/.vscode/extensions" = "/root/.vscode/extensions"
+"~/.config/Code" = "~/.config/Code"
+"~/.vscode/extensions" = "~/.vscode/extensions"
 
 # Things you probably want inside.
-"~/.gitconfig" = "/root/.gitconfig"
-"~/.vimrc" = "/root/.vimrc"
-"~/.vim" = "/root/.vim"
-"~/.ssh" = "/root/.ssh"
+"~/.gitconfig" = "~/.gitconfig"
+"~/.ssh" = "~/.ssh"
 `
 
 func mustReadConfig(path string) config {
