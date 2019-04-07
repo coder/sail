@@ -5,9 +5,6 @@ import (
 	"errors"
 	"go.coder.com/narwhal/internal/xexec"
 	"golang.org/x/xerrors"
-	"math/rand"
-	"net"
-	"strconv"
 )
 
 const narwhalLabel = "com.coder.narwhal"
@@ -44,33 +41,6 @@ func listContainers(all bool, prefix string) ([]string, error) {
 // containerLogPath is the location of the code-server log.
 const containerLogPath = "/tmp/code-server.log"
 
-// portFree returns true if the port is bound.
-// We want to run this on the host and not in the container
-func portFree(port string) bool {
-	l, err := net.Listen("tcp", ":"+port)
-	if err != nil {
-		return false
-	}
-	_ = l.Close()
-	return true
-}
-
-func findAvailablePort() (string, error) {
-	const (
-		min = 8000
-		max = 9000
-	)
-	for _, tryPort := range rand.Perm(int(max - min)) {
-		tryPort += int(min)
-
-		strport := strconv.Itoa(tryPort)
-		if portFree(strport) {
-			return strport, nil
-		}
-	}
-	return "", xerrors.New("no availabe ports")
-}
-
 var (
-	errCodeServerRunning  = errors.New("code-server is already running")
+	errCodeServerRunning = errors.New("code-server is already running")
 )

@@ -15,10 +15,17 @@ import (
 	"golang.org/x/xerrors"
 	"io/ioutil"
 	"os"
-	"os/user"
 	"path/filepath"
 	"strings"
 	"time"
+)
+
+// Docker labels for Narwhal state.
+const (
+	baseImageLabel  = narwhalLabel + ".base_image"
+	hatLabel        = narwhalLabel + ".hat"
+	portLabel       = narwhalLabel + ".port"
+	projectDirLabel = narwhalLabel + ".project_dir"
 )
 
 // builder holds all the information needed to assemble a new narwhal container.
@@ -37,6 +44,12 @@ type builder struct {
 
 	port       string
 	projectDir string
+
+	// hostUser is the uid on the host which is mapped to
+	// the container's "user" user.
+	hostUser string
+
+	testCmd string
 }
 
 func dockerClient() *client.Client {
@@ -124,14 +137,6 @@ func (b *builder) imageMounts(image string, mounts []mount.Mount) []mount.Mount 
 	return mounts
 }
 
-// Labels
-const (
-	baseImageLabel  = narwhalLabel + ".base_image"
-	hatLabel        = narwhalLabel + ".hat"
-	portLabel       = narwhalLabel + ".port"
-	projectDirLabel = narwhalLabel + ".project_dir"
-)
-
 func (b *builder) stripDuplicateMounts(mounts []mount.Mount) []mount.Mount {
 	rmounts := make([]mount.Mount, 0, len(mounts))
 
@@ -188,19 +193,18 @@ func (b *builder) runContainer() error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 	defer cancel()
 
-	u, err := user.Current()
-	if err != nil {
-		return xerrors.Errorf("failed to get current user: %w", err)
+	// We want the code-server logs to be available inside the container for easy
+	// access during development, but also going to stdout so `docker logs` can be used
+	// to debug a failed code-server startup.
+	cmd := "cd " + b.projectDir + "; code-server --port " + b.port + " --data-dir ~/.config/Code --extensions-dir ~/.vscode/extensions --allow-http --no-auth 2>&1 | tee " + containerLogPath
+	if b.testCmd != "" {
+		cmd = b.testCmd + "; exit 1"
 	}
 
 	_, err = cli.ContainerCreate(ctx, &container.Config{
 		Hostname: b.hostname,
 		Cmd: strslice.StrSlice{
-			"bash", "-c",
-			// We want the code-server logs to be available inside the container for easy
-			// access during development, but also going to stdout so `docker logs` can be used
-			// to debug a failed code-server startup.
-			"cd " + b.projectDir + "; code-server --port " + b.port + " --data-dir ~/.config/Code --extensions-dir ~/.vscode/extensions --allow-http --no-auth 2>&1 | tee " + containerLogPath,
+			"bash", "-c", cmd,
 		},
 		Image: image,
 		Labels: map[string]string{
@@ -210,10 +214,11 @@ func (b *builder) runContainer() error {
 			portLabel:       b.port,
 			projectDirLabel: b.projectDir,
 		},
-		User: u.Uid + ":0",
+		User: b.hostUser + ":user",
 	}, &container.HostConfig{
 		Mounts:      mounts,
 		NetworkMode: "host",
+		Privileged:  true,
 	}, nil, b.name)
 	if err != nil {
 		return xerrors.Errorf("failed to create container: %w", err)
@@ -245,5 +250,6 @@ func builderFromContainer(name string) *builder {
 		hatPath:    cnt.Config.Labels[hatLabel],
 		port:       cnt.Config.Labels[portLabel],
 		projectDir: cnt.Config.Labels[projectDirLabel],
+		hostUser:   cnt.Config.User,
 	}
 }

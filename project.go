@@ -6,6 +6,7 @@ import (
 	"github.com/skratchdot/open-golang/open"
 	"go.coder.com/flog"
 	"go.coder.com/narwhal/internal/xexec"
+	"go.coder.com/narwhal/internal/xnet"
 	"golang.org/x/xerrors"
 	"net"
 	"os"
@@ -152,8 +153,19 @@ func (p *project) cntName() string {
 }
 
 // containerDir returns the directory of which the project is mounted within the container.
-func (p *project) containerDir() string {
-	return filepath.Join(p.conf.ContainerProjectRoot, p.repo.BaseName())
+func (p *project) containerDir() (string, error) {
+	client := dockerClient()
+	defer client.Close()
+
+	cnt, err := client.ContainerInspect(context.Background(), p.cntName())
+	if err != nil {
+		return "", err
+	}
+	dir, ok := cnt.Config.Labels[projectDirLabel]
+	if !ok {
+		return "", xerrors.Errorf("no %v label", projectDirLabel)
+	}
+	return dir, nil
 }
 
 func (p *project) Exec(cmd string, args ...string) *exec.Cmd {
@@ -230,7 +242,7 @@ func (p *project) waitOnline() error {
 			return xerrors.Errorf("no %v label found", portLabel)
 		}
 
-		if !portFree(port) {
+		if !xnet.PortFree(port) {
 			return nil
 		}
 

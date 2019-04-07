@@ -32,7 +32,6 @@ func cleanPath(path string) string {
 // Changes to this should be accompanied by changes to DefaultConfig.
 type config struct {
 	DefaultImage         string            `toml:"default_image"`
-	ContainerProjectRoot string            `toml:"container_project_root"`
 	ProjectRoot          string            `toml:"project_root"`
 	DefaultHat           string            `toml:"default_hat"`
 	Shares               map[string]string `toml:"shares"`
@@ -45,10 +44,6 @@ default_image = "codercom/ubuntu-dev"
 # project_root is the base from which projects are mounted.
 # projects are stored in directories with form "<root>/<org>/<repo."
 project_root = "~/Projects"
-
-# container_project_root is the path within the container containing the Git project.
-container_project_root = "/root/"
-
 
 # default hat lets you configure a hat that's applied automatically by default.
 # default_hat = ""

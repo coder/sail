@@ -46,9 +46,15 @@ and you can seamlessly interact with project files outside of the container.
 
 Projects can define their own environment by specifying a `.narwhal/Dockerfile` file.
 
-The Dockerfile should abide the [requirements](#Container requirements).
+The dev container must have `codercom/ubuntu-dev` as a parent.
 
 The build will occur in the repo's root directory.
+
+## Permissions
+
+The user that creates the container has their Uid mapped to the `user` user within the container.
+
+This ensures that newly created project files have the correct permissions on the host.
 
 ## Live modification
 
@@ -109,17 +115,6 @@ To enable expirementation, hats can be used from github like so:
 ---
 
 Hats are supposed to enable global personalization, so GitHub hats should just be used for expirementation.
-
-# Container requirements
-
-The dev container must have
-
-- wget
-- git
-- lsof
-- bash
-
-The `codercom/ubuntu-dev` container ships with these.
 
 # Configuration
 

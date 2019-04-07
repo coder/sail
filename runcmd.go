@@ -6,16 +6,20 @@ import (
 	"github.com/docker/docker/api/types"
 	"go.coder.com/flog"
 	"go.coder.com/narwhal/internal/dockutil"
+	"go.coder.com/narwhal/internal/xnet"
 	"golang.org/x/xerrors"
 	"os"
+	"os/user"
+	"path/filepath"
 )
 
 type runcmd struct {
 	repoArg string
 
-	image string
-	hat   string
-	keep  bool
+	image   string
+	hat     string
+	keep    bool
+	testCmd string
 }
 
 func (c *runcmd) spec() commandSpec {
@@ -32,6 +36,7 @@ func (c *runcmd) initFlags(fl *flag.FlagSet) {
 	fl.StringVar(&c.image, "image", "", "Custom docker baseImage to use.")
 	fl.StringVar(&c.hat, "hat", "", "Custom hat to use.")
 	fl.BoolVar(&c.keep, "keep", false, "Keep container when it fails to build.")
+	fl.StringVar(&c.testCmd, "test-cmd", "", "A command to use in-place of starting code-server for testing purposes.")
 }
 
 func (c *runcmd) handle(gf globalFlags, fl *flag.FlagSet) {
@@ -46,7 +51,7 @@ func (c *runcmd) handle(gf globalFlags, fl *flag.FlagSet) {
 	exists := proj.cntExists()
 	if exists {
 		flog.Fatal(
-			"Container %v already exists. Use `nw open %v` to open it.",
+			"container %v already exists. Use `nw open %v` to open it.",
 			proj.cntName(), proj.name(),
 		)
 	}
@@ -54,10 +59,13 @@ func (c *runcmd) handle(gf globalFlags, fl *flag.FlagSet) {
 	proj.ensureDir()
 
 	var shares []types.MountPoint
+
+	projectDir := filepath.Join("/home/user", proj.repo.BaseName())
+
 	shares = append(shares, types.MountPoint{
 		Type:        "bind",
 		Source:      proj.localDir(),
-		Destination: proj.containerDir(),
+		Destination: projectDir,
 	})
 
 	var image string
@@ -94,10 +102,16 @@ func (c *runcmd) handle(gf globalFlags, fl *flag.FlagSet) {
 		})
 	}
 
-	port, err := findAvailablePort()
+	port, err := xnet.FindAvailablePort()
 	if err != nil {
 		flog.Fatal("failed to find available port: %v", err)
 	}
+
+	u, err := user.Current()
+	if err != nil {
+		flog.Fatal("failed to get current user: %v", err)
+	}
+
 
 	b := &builder{
 		baseImage:  image,
@@ -106,11 +120,14 @@ func (c *runcmd) handle(gf globalFlags, fl *flag.FlagSet) {
 		hostname:   proj.repo.BaseName(),
 		shares:     shares,
 		port:       port,
-		projectDir: proj.containerDir(),
+		projectDir: projectDir,
+		hostUser:   u.Uid,
+		testCmd:    c.testCmd,
 	}
 
 	err = c.buildOpen(gf, proj, b)
 	if err != nil {
+		flog.Error("build run failed: %v", err)
 		if !c.keep {
 			// We remove the container if it fails to start as that means the developer
 			// can iterate w/o having to do the obnoxious `docker rm` step.
