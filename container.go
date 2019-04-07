@@ -41,12 +41,12 @@ func listContainers(all bool, prefix string) ([]string, error) {
 	return names, nil
 }
 
-// CodeServerLogLocation is the location of the code-server log.
-const CodeServerLogLocation = "/tmp/code-server.log"
+// containerLogPath is the location of the code-server log.
+const containerLogPath = "/tmp/code-server.log"
 
-// checkPort returns true if the port is bound.
+// portFree returns true if the port is bound.
 // We want to run this on the host and not in the container
-func checkPort(port string) bool {
+func portFree(port string) bool {
 	l, err := net.Listen("tcp", ":"+port)
 	if err != nil {
 		return false
@@ -64,7 +64,7 @@ func findAvailablePort() (string, error) {
 		tryPort += int(min)
 
 		strport := strconv.Itoa(tryPort)
-		if checkPort(strport) {
+		if portFree(strport) {
 			return strport, nil
 		}
 	}
@@ -73,6 +73,4 @@ func findAvailablePort() (string, error) {
 
 var (
 	errCodeServerRunning  = errors.New("code-server is already running")
-	errCodeServerTimedOut = errors.New("code-server took too long to start")
-	errCodeServerFailed   = errors.New("code-server failed to start")
 )

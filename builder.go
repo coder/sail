@@ -15,6 +15,7 @@ import (
 	"golang.org/x/xerrors"
 	"io/ioutil"
 	"os"
+	"os/user"
 	"path/filepath"
 	"strings"
 	"time"
@@ -32,8 +33,10 @@ type builder struct {
 	hatPath string
 	// baseImage is the image before the hat is applied.
 	baseImage string
+	hostname  string
 
-	hostname string
+	port       string
+	projectDir string
 }
 
 func dockerClient() *client.Client {
@@ -123,8 +126,10 @@ func (b *builder) imageMounts(image string, mounts []mount.Mount) []mount.Mount 
 
 // Labels
 const (
-	baseImageLabel = narwhalLabel + ".base_image"
-	hatLabel       = narwhalLabel + ".hat"
+	baseImageLabel  = narwhalLabel + ".base_image"
+	hatLabel        = narwhalLabel + ".hat"
+	portLabel       = narwhalLabel + ".port"
+	projectDirLabel = narwhalLabel + ".project_dir"
 )
 
 func (b *builder) stripDuplicateMounts(mounts []mount.Mount) []mount.Mount {
@@ -142,7 +147,10 @@ func (b *builder) stripDuplicateMounts(mounts []mount.Mount) []mount.Mount {
 }
 
 // runContainer creates and runs a new container.
-// It handles installing code-server, but doesn't start code-server.
+// It handles installing code-server, and uses code-server as
+// the container's root process.
+// We want code-server to be the root process as it gives us the nice guarantee that
+// the container is only online when code-server is working.
 func (b *builder) runContainer() error {
 	cli := dockerClient()
 
@@ -180,15 +188,29 @@ func (b *builder) runContainer() error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 	defer cancel()
 
+	u, err := user.Current()
+	if err != nil {
+		return xerrors.Errorf("failed to get current user: %w", err)
+	}
+
 	_, err = cli.ContainerCreate(ctx, &container.Config{
 		Hostname: b.hostname,
-		Cmd:      strslice.StrSlice{"sleep", "90000d"},
-		Image:    image,
-		Labels: map[string]string{
-			narwhalLabel:   "",
-			hatLabel:       b.hatPath,
-			baseImageLabel: b.baseImage,
+		Cmd: strslice.StrSlice{
+			"bash", "-c",
+			// We want the code-server logs to be available inside the container for easy
+			// access during development, but also going to stdout so `docker logs` can be used
+			// to debug a failed code-server startup.
+			"cd " + b.projectDir + "; code-server --port " + b.port + " --data-dir ~/.config/Code --extensions-dir ~/.vscode/extensions --allow-http --no-auth 2>&1 | tee " + containerLogPath,
 		},
+		Image: image,
+		Labels: map[string]string{
+			narwhalLabel:    "",
+			hatLabel:        b.hatPath,
+			baseImageLabel:  b.baseImage,
+			portLabel:       b.port,
+			projectDirLabel: b.projectDir,
+		},
+		User: u.Uid + ":0",
 	}, &container.HostConfig{
 		Mounts:      mounts,
 		NetworkMode: "host",
@@ -216,10 +238,12 @@ func builderFromContainer(name string) *builder {
 	}
 
 	return &builder{
-		name:      name,
-		shares:    cnt.Mounts,
-		hostname:  cnt.Config.Hostname,
-		baseImage: cnt.Config.Labels[baseImageLabel],
-		hatPath:   cnt.Config.Labels[hatLabel],
+		name:       name,
+		shares:     cnt.Mounts,
+		hostname:   cnt.Config.Hostname,
+		baseImage:  cnt.Config.Labels[baseImageLabel],
+		hatPath:    cnt.Config.Labels[hatLabel],
+		port:       cnt.Config.Labels[portLabel],
+		projectDir: cnt.Config.Labels[projectDirLabel],
 	}
 }

@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"github.com/skratchdot/open-golang/open"
 	"go.coder.com/flog"
@@ -34,14 +33,14 @@ func (p *project) name() string {
 	return strings.TrimSuffix(p.repo.Path, ".git")
 }
 
-func (p *project) dir() string {
+func (p *project) localDir() string {
 	path := strings.TrimSuffix(p.repo.Path, ".git")
 	projectDir := filepath.Join(p.conf.ProjectRoot, path)
 	return cleanPath(projectDir)
 }
 
 func (p *project) dockerfilePath() string {
-	return filepath.Join(p.dir(), ".narwhal", "Dockerfile")
+	return filepath.Join(p.localDir(), ".narwhal", "Dockerfile")
 }
 
 // clone clones a git repository on h.
@@ -68,11 +67,18 @@ func pull(repo repo, dir string) {
 	}
 }
 
+func isContainerNotFoundError(err error) bool {
+	if err == nil {
+		return false
+	}
+	return strings.Contains(err.Error(), "No such container")
+}
+
 func (p *project) cntExists() bool {
 	cli := dockerClient()
 	_, err := cli.ContainerInspect(context.Background(), p.cntName())
 	if err != nil {
-		if strings.Contains(err.Error(), "No such container") {
+		if isContainerNotFoundError(err) {
 			return false
 		}
 		flog.Fatal("failed to inspect %v: %v", p.cntName(), err)
@@ -98,27 +104,27 @@ func (p *project) requireRunning() {
 // ensureDir ensures that a
 // project directory exists or creates one if it doesn't exist.
 func (p *project) ensureDir() {
-	err := os.MkdirAll(p.dir(), 0750)
+	err := os.MkdirAll(p.localDir(), 0750)
 	if err != nil {
-		flog.Fatal("failed to make project dir %v: %v", p.dir(), err)
+		flog.Fatal("failed to make project dir %v: %v", p.localDir(), err)
 	}
 
 	// If the git directory exists, don't bother re-downloading the project.
-	gitDir := filepath.Join(p.dir(), ".git")
+	gitDir := filepath.Join(p.localDir(), ".git")
 	_, err = os.Stat(gitDir)
 	if err == nil {
-		pull(p.repo, p.dir())
+		pull(p.repo, p.localDir())
 		return
 	}
 
-	clone(p.repo, p.dir())
+	clone(p.repo, p.localDir())
 }
 
 // buildImage finds the `.narwhal/Dockerfile` in the project directory
 // and builds it.
 func (p *project) buildImage() (string, bool, error) {
 	const relPath = ".narwhal/Dockerfile"
-	path := filepath.Join(p.dir(), relPath)
+	path := filepath.Join(p.localDir(), relPath)
 
 	_, err := os.Stat(path)
 	if err != nil {
@@ -130,7 +136,7 @@ func (p *project) buildImage() (string, bool, error) {
 
 	imageID := p.repo.DockerName()
 
-	cmdStr := fmt.Sprintf("docker build -t %v -f %v %v", imageID, path, p.dir())
+	cmdStr := fmt.Sprintf("docker build -t %v -f %v %v", imageID, path, p.localDir())
 	flog.Info("running %v", cmdStr)
 	cmd := xexec.Fmt(cmdStr)
 	xexec.Attach(cmd)
@@ -174,65 +180,64 @@ func (p *project) ExecEnv(envs []string, cmd string, args ...string) *exec.Cmd {
 	return exec.Command("docker", args...)
 }
 
-func (p *project) CodeServerRunning() bool {
-	cmd := p.FmtExec("pgrep code-server")
-	return cmd.Run() == nil
-}
-
 // CodeServerPort gets the port of the running code-server binary.
 func (p *project) CodeServerPort() (string, error) {
-	// netstat and similar may not work correctly in the container due to procfs limitations.
-	// So, we rely on this janky ps regex.
-	cmd := p.FmtExec(`ps aux | grep -Po "(?<=code-server --port )([0-9]{1,5})" | head -n 1`)
-	out, err := cmd.CombinedOutput()
+	cli := dockerClient()
+	defer cli.Close()
+
+	cnt, err := cli.ContainerInspect(context.Background(), p.cntName())
 	if err != nil {
-		return "", errors.New("no processes found")
+		return "", err
 	}
 
-	return strings.TrimSpace(string(out)), nil
+	port, ok := cnt.Config.Labels[portLabel]
+	if !ok {
+		return "", xerrors.Errorf("no %v label found", portLabel)
+	}
+	return port, nil
 }
 
-func (p *project) ReadCodeServerLog() ([]byte, error) {
-	cmd := p.Exec("cat", CodeServerLogLocation)
+func (p *project) readCodeServerLog() ([]byte, error) {
+	cmd := xexec.Fmt("docker logs %v", p.cntName())
 
 	out, err := cmd.CombinedOutput()
 	if err != nil {
-		return nil, xerrors.Errorf("failed to cat %v: %w", CodeServerLogLocation, err)
+		return nil, xerrors.Errorf("failed to cat %v: %w", containerLogPath, err)
 	}
 
 	return out, nil
 }
 
-// StartCodeServer starts code-server and binds it to the given port.
-func (p *project) StartCodeServer(dir string, port string) error {
-	if p.CodeServerRunning() {
-		return errCodeServerRunning
-	}
+// waitOnline waits until code-server has bound to it's port.
+func (p *project) waitOnline() error {
+	cli := dockerClient()
+	defer cli.Close()
 
-	cmd := p.DetachedExec(
-		"bash", "-c",
-		// Port must be first parameter for janky port detection to work.
-		"cd "+dir+"; code-server --port "+port+" --data-dir ~/.config/Code --extensions-dir ~/.vscode/extensions --allow-http --no-auth 2>&1 > "+CodeServerLogLocation,
-	)
-	out, err := cmd.CombinedOutput()
-	if err != nil {
-		return xerrors.Errorf("failed to start code-server: %w\n%s", err, out)
-	}
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	defer cancel()
 
-	expires := time.Now().Add(time.Second * 10)
-
-	for time.Now().Before(expires) {
-		if !p.CodeServerRunning() {
-			return errCodeServerFailed
+	for ctx.Err() == nil {
+		cnt, err := cli.ContainerInspect(ctx, p.cntName())
+		if err != nil {
+			return err
 		}
-		if checkPort(port) {
+		if !cnt.State.Running {
+			return xerrors.Errorf("container %v not running", p.cntName())
+		}
+
+		port, ok := cnt.Config.Labels[portLabel]
+		if !ok {
+			return xerrors.Errorf("no %v label found", portLabel)
+		}
+
+		if !portFree(port) {
 			return nil
 		}
 
 		time.Sleep(time.Millisecond * 100)
 	}
 
-	return errCodeServerTimedOut
+	return ctx.Err()
 }
 
 func (p *project) open() error {
@@ -240,6 +245,7 @@ func (p *project) open() error {
 	if err != nil {
 		return err
 	}
+
 	u := "http://" + net.JoinHostPort("127.0.0.1", port)
 	flog.Info("opening browser serving %v", u)
 	return open.Run(u)

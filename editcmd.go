@@ -81,28 +81,13 @@ func (c *editcmd) handle(gf globalFlags, fl *flag.FlagSet) {
 }
 
 func (c *editcmd) recreate(proj *project) error {
+	var err error
+
 	cli := dockerClient()
 	defer cli.Close()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-
-	// Get port.
-	var (
-		port string
-		err  error
-	)
-	if !proj.running() {
-		port, err = findAvailablePort()
-		if err != nil {
-			return err
-		}
-	} else {
-		port, err = proj.CodeServerPort()
-		if err != nil {
-			return err
-		}
-	}
 
 	// Get the existing container's state so re-create is seamless.
 	b := builderFromContainer(proj.cntName())
@@ -166,11 +151,7 @@ func (c *editcmd) recreate(proj *project) error {
 		return xerrors.Errorf("failed to start container: %w", err)
 	}
 
-	err = proj.StartCodeServer(proj.containerDir(), port)
-	if err != nil {
-		return xerrors.Errorf("failed to start code-server: %w", err)
-	}
-	flog.Info("built new container")
+	flog.Info("replaced container")
 	return nil
 }
 

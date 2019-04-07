@@ -15,10 +15,10 @@ func subexpMap(r *regexp.Regexp, target string) map[string]string {
 	matches := r.FindStringSubmatch(target)
 	m := make(map[string]string, len(r.SubexpNames()))
 	for i, name := range r.SubexpNames() {
-		if i > len(matches) { //no more matches
+		if i > len(matches) { // no more matches
 			return m
 		}
-		if i == 0 { //first subexp is the target
+		if i == 0 { // first subexp is the target
 			continue
 		}
 		m[name] = matches[i]
@@ -71,6 +71,10 @@ func ParseRepo(name string) (repo, error) {
 
 	if r.Host == "github.com" && !strings.HasSuffix(r.Path, ".git") {
 		r.Path += ".git"
+	}
+
+	if r.Host == "github.com" && !strings.Contains(r.Path, "/") {
+		return repo{}, errors.New("GitHub repo path must have /")
 	}
 
 	return r, nil

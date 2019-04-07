@@ -48,7 +48,7 @@ func (c *lscmd) handle(gf globalFlags, fl *flag.FlagSet) {
 
 	tw := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 
-	fmt.Fprintf(tw, "name\tstatus\n")
+	fmt.Fprintf(tw, "name\turl\tstatus\n")
 	for _, cnt := range cnts {
 		var name string
 		if len(cnt.Names) == 0 {
@@ -58,7 +58,9 @@ func (c *lscmd) handle(gf globalFlags, fl *flag.FlagSet) {
 		}
 		name = strings.TrimPrefix(cnt.Names[0], "/")
 
-		fmt.Fprintf(tw, "%v\t%v\n", name, cnt.Status)
+		port := cnt.Labels[portLabel]
+
+		fmt.Fprintf(tw, "%v\thttp://127.0.0.1:%v\t%v\n", name, port, cnt.Status)
 	}
 	tw.Flush()
 
