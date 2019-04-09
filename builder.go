@@ -118,11 +118,6 @@ func (b *builder) imageMounts(image string, mounts []mount.Mount) []mount.Mount 
 		flog.Fatal("failed to inspect %v: %v", b.baseImage, err)
 	}
 
-	hostHomeDir, err := os.UserHomeDir()
-	if err != nil {
-		panic(err)
-	}
-
 	for k, v := range ins.ContainerConfig.Labels {
 		const prefix = "share."
 		if !strings.HasPrefix(k, prefix) {
@@ -136,8 +131,8 @@ func (b *builder) imageMounts(image string, mounts []mount.Mount) []mount.Mount 
 
 		mounts = append(mounts, mount.Mount{
 			Type:   mount.TypeBind,
-			Source: resolvePath(hostHomeDir, tokens[0]),
-			Target: resolvePath(guestHomeDir, tokens[1]),
+			Source: tokens[0],
+			Target: tokens[1],
 		})
 	}
 	return mounts
@@ -147,6 +142,7 @@ func (b *builder) stripDuplicateMounts(mounts []mount.Mount) []mount.Mount {
 	rmounts := make([]mount.Mount, 0, len(mounts))
 
 	dests := make(map[string]struct{})
+
 	for _, mnt := range mounts {
 		if _, ok := dests[mnt.Target]; ok {
 			continue
@@ -155,6 +151,19 @@ func (b *builder) stripDuplicateMounts(mounts []mount.Mount) []mount.Mount {
 		rmounts = append(rmounts, mnt)
 	}
 	return rmounts
+}
+
+// resolveMounts replaces ~ with appropriate home paths with
+// each mount.
+func (b *builder) resolveMounts(mounts []mount.Mount) {
+	hostHomeDir, err := os.UserHomeDir()
+	if err != nil {
+		panic(err)
+	}
+	for i := range mounts {
+		mounts[i].Source = resolvePath(hostHomeDir, mounts[i].Source)
+		mounts[i].Target = resolvePath(guestHomeDir, mounts[i].Target)
+	}
 }
 
 // runContainer creates and runs a new container.
@@ -195,6 +204,8 @@ func (b *builder) runContainer() error {
 
 	// Duplicates can arise from trying to rebuild an existing image.
 	mounts = b.stripDuplicateMounts(mounts)
+
+	b.resolveMounts(mounts)
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 	defer cancel()

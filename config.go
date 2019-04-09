@@ -12,6 +12,11 @@ import (
 func resolvePath(homedir string, path string) string {
 	path = filepath.Clean(path)
 
+	// So homedir resolution is possible in absolute paths.
+	if filepath.IsAbs(path) {
+		return path
+	}
+
 	list := strings.Split(path, string(filepath.Separator))
 
 	for i, seg := range list {
@@ -29,7 +34,6 @@ type config struct {
 	DefaultImage         string            `toml:"default_image"`
 	ProjectRoot          string            `toml:"project_root"`
 	DefaultHat           string            `toml:"default_hat"`
-	Shares               map[string]string `toml:"shares"`
 }
 
 const DefaultConfig = `# Narwhal configuration.
@@ -42,16 +46,6 @@ project_root = "~/Projects"
 
 # default hat lets you configure a hat that's applied automatically by default.
 # default_hat = ""
-
-
-[shares]
-# These shares synchronizes VS Code settings.
-"~/.config/Code" = "~/.config/Code"
-"~/.vscode/extensions" = "~/.vscode/extensions"
-
-# Things you probably want inside.
-"~/.gitconfig" = "~/.gitconfig"
-"~/.ssh" = "~/.ssh"
 `
 
 func mustReadConfig(path string) config {

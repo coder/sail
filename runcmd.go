@@ -62,6 +62,18 @@ func (c *runcmd) handle(gf globalFlags, fl *flag.FlagSet) {
 
 	var shares []types.MountPoint
 
+	// Mount in code-server configs.
+	shares = append(shares, types.MountPoint{
+		Type:        "bind",
+		Source:      "~/.config/Code",
+		Destination: "~/.config/Code",
+	})
+	shares = append(shares, types.MountPoint{
+		Type:        "bind",
+		Source:      "~/.vscode/extensions",
+		Destination: "~/.vscode/extensions",
+	})
+
 	projectDir := filepath.Join(guestHomeDir, proj.repo.BaseName())
 
 	shares = append(shares, types.MountPoint{
@@ -101,14 +113,6 @@ func (c *runcmd) handle(gf globalFlags, fl *flag.FlagSet) {
 		panic(err)
 	}
 	gf.debug("host home dir: %v", hostHomeDir)
-
-	for k, v := range gf.config().Shares {
-		shares = append(shares, types.MountPoint{
-			Type:        "bind",
-			Source:      resolvePath(hostHomeDir, k),
-			Destination: resolvePath(guestHomeDir, v),
-		})
-	}
 
 	port, err := xnet.FindAvailablePort()
 	if err != nil {
