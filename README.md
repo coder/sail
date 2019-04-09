@@ -33,7 +33,9 @@ nw run codercom/narwhal
 
 # Projects
 
-Narwhal enforces that projects are stored on the host filesystem at `$PROJECT_ROOT/<org>/<repo>`.
+Narwhal enforces that projects are stored on the host filesystem at `$project_root/<org>/<repo>`.
+
+`$project_root` is a configuration variable.
 
 Projects are stored in the container at `~/<repo>`.
 
@@ -54,12 +56,13 @@ The build will occur in the repo's root directory.
 
 The user that creates the container has their Uid mapped to the `user` user within the container.
 
-This ensures that newly created project files have the correct permissions on the host.
+This ensures that newly created project files have the correct permissions on 
+the host.
 
 ## Live modification
 
-The narwhal workflow promotes a unique environment for each project, with common configurations
-explicitely declared.
+The narwhal workflow promotes a unique environment for each project, with common
+configurations explicitely declared.
 
 
 The workflow for modifying an environment goes like:
@@ -72,30 +75,49 @@ The workflow for modifying an environment goes like:
 1) Save
 1) code-server window reloads with changed environment.
 
-Narwhal will listen for changes to the file being edited, and will magically recreate the
-environment as changes are made (assuming those changes make sense).
+Narwhal will listen for changes to the file being edited, and will magically
+recreate the environment as changes are made (assuming those changes make
+sense).
 
 To make iterations seamless:
 
 1) Docker caching is heavily employed.
-1) `code-server` automatically reloads the page when the new environment is created.
+1) `code-server` automatically reloads the page when the new environment is
+created.
 1) As usual, the project folder is persisted so no changes are lost.
 1) UI state is persisted so the exact layout of your tabs in undisturbed.
 
 ## Hats
 
-A _hat_ is a build directory with a Dockerfile which has it's `FROM` clause replaced with the repository-provided
-image.
+A _hat_ is a build directory with a Dockerfile which has it's `FROM` clause 
+replaced with the repository-provided image. Essentially, hats let you
+personalize your development environment.
 
-A hat let you automatically install and configure containers to your liking.
+For example:
 
-`narwhal` promotes the use of Ubuntu/apt-based dev containers so that hats are reliable.
+```
+FROM ubuntu-dev
+RUN sudo apt install fish
+RUN chsh user -s $(which fish)
+```
+
+is a hat that would install fish, and configure it as the default
+shell regardless of which shell the repository-provided image uses.
+
+The `FROM ubuntu-dev` will be replaced with `FROM <repo_image>` when narwhal
+assembles your dev container.
+
+---
+
+`narwhal` promotes the use of Ubuntu/apt-based dev containers so that hats are 
+reliable.
 
 You can only wear a single hat at a time.
 
 ## Shares
 
-Projects and hats can specify shares using Docker labels of form `share.<share_name>="host_path:guest_path"`.
+Projects and hats can specify shares using Docker labels of form 
+`share.<share_name>="host_path:guest_path"`.
 
 For example, 
 
