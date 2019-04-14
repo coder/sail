@@ -2,9 +2,10 @@ package main
 
 import (
 	"flag"
+	"os/exec"
+
 	"github.com/fatih/color"
 	"go.coder.com/flog"
-	"os/exec"
 )
 
 type globalFlags struct {

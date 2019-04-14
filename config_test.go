@@ -1,8 +1,16 @@
 package main
 
-import "testing"
+import (
+	"os"
+	"testing"
+
+	"github.com/stretchr/testify/require"
+)
 
 func Test_resolvePath(t *testing.T) {
+	wd, err := os.Getwd()
+	require.NoError(t, err)
+
 	type args struct {
 		homedir string
 		path    string
@@ -12,7 +20,8 @@ func Test_resolvePath(t *testing.T) {
 		args args
 		want string
 	}{
-        {"Abs", args{"/home/ammar", "/home/ammar/test"}, "/home/ammar/test"},
+		{"Abs", args{"/home/ammar", "/home/ammar/test"}, "/home/ammar/test"},
+		{"NoRel", args{"/home/ammar", wd}, wd},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

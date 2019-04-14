@@ -3,14 +3,12 @@ package main
 import (
 	"context"
 	"flag"
-	"github.com/docker/docker/api/types"
 	"go.coder.com/flog"
 	"go.coder.com/narwhal/internal/dockutil"
 	"go.coder.com/narwhal/internal/xnet"
 	"golang.org/x/xerrors"
 	"os"
 	"os/user"
-	"path/filepath"
 )
 
 type runcmd struct {
@@ -54,33 +52,11 @@ func (c *runcmd) handle(gf globalFlags, fl *flag.FlagSet) {
 	if exists {
 		flog.Fatal(
 			"container %v already exists. Use `nw open %v` to open it.",
-			proj.cntName(), proj.name(),
+			proj.cntName(), proj.pathName(),
 		)
 	}
 
 	proj.ensureDir()
-
-	var shares []types.MountPoint
-
-	// Mount in code-server configs.
-	shares = append(shares, types.MountPoint{
-		Type:        "bind",
-		Source:      "~/.config/Code",
-		Destination: "~/.config/Code",
-	})
-	shares = append(shares, types.MountPoint{
-		Type:        "bind",
-		Source:      "~/.vscode/extensions",
-		Destination: "~/.vscode/extensions",
-	})
-
-	projectDir := filepath.Join(guestHomeDir, proj.repo.BaseName())
-
-	shares = append(shares, types.MountPoint{
-		Type:        "bind",
-		Source:      proj.localDir(),
-		Destination: projectDir,
-	})
 
 	var image string
 	if c.image != "" {
@@ -125,15 +101,15 @@ func (c *runcmd) handle(gf globalFlags, fl *flag.FlagSet) {
 	}
 
 	b := &builder{
-		baseImage:  image,
-		hatPath:    hatPath,
-		name:       proj.cntName(),
-		hostname:   proj.repo.BaseName(),
-		shares:     shares,
-		port:       port,
-		projectDir: projectDir,
-		hostUser:   u.Uid,
-		testCmd:    c.testCmd,
+		baseImage:       image,
+		hatPath:         hatPath,
+		projectName:     proj.repo.BaseName(),
+		projectLocalDir: proj.localDir(),
+		cntName:         proj.cntName(),
+		hostname:        proj.repo.BaseName(),
+		port:            port,
+		hostUser:        u.Uid,
+		testCmd:         c.testCmd,
 	}
 
 	err = c.buildOpen(gf, proj, b)

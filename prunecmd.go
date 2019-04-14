@@ -1,9 +1,10 @@
 package main
 
 import (
-	"go.coder.com/flog"
 	"os"
 	"os/exec"
+
+	"go.coder.com/flog"
 )
 
 // handlePrune removes all narwhal container from host.

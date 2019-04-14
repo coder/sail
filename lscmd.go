@@ -4,12 +4,13 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/filters"
-	"go.coder.com/flog"
 	"os"
 	"strings"
 	"text/tabwriter"
+
+	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/filters"
+	"go.coder.com/flog"
 )
 
 type lscmd struct {

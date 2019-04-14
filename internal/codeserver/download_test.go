@@ -2,7 +2,6 @@ package codeserver
 
 import (
 	"context"
-	"github.com/stretchr/testify/require"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -10,6 +9,8 @@ import (
 	"os/exec"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestDownloadURL_Extract(t *testing.T) {

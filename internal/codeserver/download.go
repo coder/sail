@@ -4,11 +4,12 @@ import (
 	"archive/tar"
 	"compress/gzip"
 	"context"
-	"github.com/google/go-github/v24/github"
-	"golang.org/x/xerrors"
 	"io"
 	"path/filepath"
 	"strings"
+
+	"github.com/google/go-github/v24/github"
+	"golang.org/x/xerrors"
 )
 
 // DownloadURL gets a URL for the latest version of code-server.

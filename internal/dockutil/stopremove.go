@@ -2,10 +2,11 @@ package dockutil
 
 import (
 	"context"
+	"time"
+
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
 	"golang.org/x/xerrors"
-	"time"
 )
 
 func DurationPtr(dur time.Duration) *time.Duration {

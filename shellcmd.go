@@ -3,9 +3,10 @@ package main
 import (
 	"bytes"
 	"flag"
+	"os"
+
 	"go.coder.com/flog"
 	"go.coder.com/narwhal/internal/xexec"
-	"os"
 )
 
 type shellcmd struct {
