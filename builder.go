@@ -202,10 +202,11 @@ func (b *builder) runContainer() error {
 	// We take the mounts from the final image so that it includes the hat and the baseImage.
 	mounts = b.imageMounts(image, mounts)
 
-	// Duplicates can arise from trying to rebuild an existing image.
-	mounts = b.stripDuplicateMounts(mounts)
-
 	b.resolveMounts(mounts)
+
+	// Duplicates can arise from trying to rebuild an existing image.
+	// This has to be last.
+	mounts = b.stripDuplicateMounts(mounts)
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 	defer cancel()

@@ -4,6 +4,7 @@ go 1.12
 
 require (
 	github.com/BurntSushi/toml v0.3.1
+	github.com/Microsoft/go-winio v0.4.12 // indirect
 	github.com/docker/distribution v2.7.1+incompatible // indirect
 	github.com/docker/docker v1.13.1
 	github.com/docker/go-connections v0.4.0 // indirect
@@ -16,5 +17,4 @@ require (
 	github.com/stretchr/testify v1.3.0
 	go.coder.com/flog v0.0.0-20190129195112-eaed154a0db8
 	golang.org/x/xerrors v0.0.0-20190315151331-d61658bd2e18
-	gopkg.in/fsnotify.v1 v1.4.7
 )
