@@ -66,18 +66,6 @@ func clone(repo repo, dir string) {
 	}
 }
 
-// pull pulls the latest changes for the repo.
-func pull(repo repo, dir string) {
-	cmd := xexec.Fmt("git pull --all")
-	xexec.Attach(cmd)
-	cmd.Dir = dir
-
-	err := cmd.Run()
-	if err != nil {
-		flog.Fatal("failed to pull project: %v", err)
-	}
-}
-
 func isContainerNotFoundError(err error) bool {
 	if err == nil {
 		return false
@@ -124,7 +112,6 @@ func (p *project) ensureDir() {
 	gitDir := filepath.Join(p.localDir(), ".git")
 	_, err = os.Stat(gitDir)
 	if err == nil {
-		pull(p.repo, p.localDir())
 		return
 	}
 
