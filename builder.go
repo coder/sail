@@ -4,6 +4,12 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"io/ioutil"
+	"os"
+	"path/filepath"
+	"strings"
+	"time"
+
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/mount"
@@ -13,11 +19,6 @@ import (
 	"go.coder.com/narwhal/internal/hat"
 	"go.coder.com/narwhal/internal/xexec"
 	"golang.org/x/xerrors"
-	"io/ioutil"
-	"os"
-	"path/filepath"
-	"strings"
-	"time"
 )
 
 // Docker labels for Narwhal state.
@@ -237,6 +238,9 @@ func (b *builder) runContainer() error {
 		Mounts:      mounts,
 		NetworkMode: "host",
 		Privileged:  true,
+		ExtraHosts: []string{
+			b.hostname + ":127.0.0.1",
+		},
 	}, nil, b.name)
 	if err != nil {
 		return xerrors.Errorf("failed to create container: %w", err)
