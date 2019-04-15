@@ -3,17 +3,20 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/skratchdot/open-golang/open"
-	"go.coder.com/flog"
-	"go.coder.com/narwhal/internal/xexec"
-	"go.coder.com/narwhal/internal/xnet"
-	"golang.org/x/xerrors"
 	"net"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/docker/docker/api/types"
+	"github.com/skratchdot/open-golang/open"
+	"go.coder.com/flog"
+	"go.coder.com/narwhal/internal/nohup"
+	"go.coder.com/narwhal/internal/xexec"
+	"go.coder.com/narwhal/internal/xnet"
+	"golang.org/x/xerrors"
 )
 
 type projectStatus string
@@ -30,7 +33,7 @@ type project struct {
 	repo repo
 }
 
-func (p *project) name() string {
+func (p *project) pathName() string {
 	return strings.TrimSuffix(p.repo.Path, ".git")
 }
 
@@ -42,7 +45,9 @@ func (p *project) localDir() string {
 
 	path := strings.TrimSuffix(p.repo.Path, ".git")
 	projectDir := filepath.Join(p.conf.ProjectRoot, path)
-	return resolvePath(hostHomeDir, projectDir)
+
+	projectDir = resolvePath(hostHomeDir, projectDir)
+	return projectDir
 }
 
 func (p *project) dockerfilePath() string {
@@ -257,13 +262,40 @@ func (p *project) waitOnline() error {
 	return ctx.Err()
 }
 
+const coderNativeBin = "cdrnative"
+
+func (p *project) hasCoderNative() bool {
+	_, err := exec.LookPath(coderNativeBin)
+	return err == nil
+}
+
+func (p *project) openNative(u string) error {
+	err := nohup.Start(coderNativeBin, "--", "--open", u)
+	return err
+}
+
 func (p *project) open() error {
+	cli := dockerClient()
+
+	err := cli.ContainerStart(context.Background(), p.cntName(), types.ContainerStartOptions{})
+	if err != nil {
+		return xerrors.Errorf("failed to start container: %w", err)
+	}
+
 	port, err := p.CodeServerPort()
 	if err != nil {
 		return err
 	}
 
 	u := "http://" + net.JoinHostPort("127.0.0.1", port)
+	if p.hasCoderNative() {
+		flog.Info("opening coder native")
+		err = p.openNative(u)
+		// Uncomment below line to debug native startup failure.
+		// select {}
+		return err
+	}
+
 	flog.Info("opening browser serving %v", u)
 	return open.Run(u)
 }

@@ -2,8 +2,9 @@ package main
 
 import (
 	"flag"
-	"go.coder.com/flog"
 	"os"
+
+	"go.coder.com/flog"
 )
 
 type opencmd struct {

@@ -4,12 +4,14 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/mount"
@@ -23,19 +25,21 @@ import (
 
 // Docker labels for Narwhal state.
 const (
-	baseImageLabel  = narwhalLabel + ".base_image"
-	hatLabel        = narwhalLabel + ".hat"
-	portLabel       = narwhalLabel + ".port"
-	projectDirLabel = narwhalLabel + ".project_dir"
+	baseImageLabel       = narwhalLabel + ".base_image"
+	hatLabel             = narwhalLabel + ".hat"
+	portLabel            = narwhalLabel + ".port"
+	projectLocalDirLabel = narwhalLabel + ".project_local_dir"
+	projectDirLabel      = narwhalLabel + ".project_dir"
+	projectNameLabel     = narwhalLabel + ".project_name"
 )
 
 // builder holds all the information needed to assemble a new narwhal container.
 // The builder stores itself as state on the container.
 // It enables quick iteration on a container with small modifications to it's config.
+// All mounts should be configured from the image.
 type builder struct {
-	name string
-
-	shares []types.MountPoint
+	cntName     string
+	projectName string
 
 	// hatPath is the path to the hat file.
 	hatPath string
@@ -43,8 +47,9 @@ type builder struct {
 	baseImage string
 	hostname  string
 
-	port       string
-	projectDir string
+	port string
+
+	projectLocalDir string
 
 	// hostUser is the uid on the host which is mapped to
 	// the container's "user" user.
@@ -107,8 +112,24 @@ func (b *builder) applyHat() string {
 	return imageName
 }
 
-// imageMounts adds a list of shares to the shares map from the image.
-func (b *builder) imageMounts(image string, mounts []mount.Mount) []mount.Mount {
+func (b *builder) projectDir(image string) (string, error) {
+	cli := dockerClient()
+
+	img, _, err := cli.ImageInspectWithRaw(context.Background(), image)
+	if err != nil {
+		return "", xerrors.Errorf("failed to inspect image: %w", err)
+	}
+
+	proot, ok := img.Config.Labels["project_root"]
+	if ok {
+		return filepath.Join(proot, b.projectName), nil
+	}
+
+	return filepath.Join(guestHomeDir, b.projectName), nil
+}
+
+// imageDefinedMounts adds a list of shares to the shares map from the image.
+func (b *builder) imageDefinedMounts(image string, mounts []mount.Mount) []mount.Mount {
 	cli, err := client.NewEnvClient()
 	if err != nil {
 		flog.Fatal("failed to create docker client: %v", err)
@@ -154,6 +175,10 @@ func (b *builder) stripDuplicateMounts(mounts []mount.Mount) []mount.Mount {
 	return rmounts
 }
 
+func panicf(fmtStr string, args ...interface{}) {
+	panic(fmt.Sprintf(fmtStr, args...))
+}
+
 // resolveMounts replaces ~ with appropriate home paths with
 // each mount.
 func (b *builder) resolveMounts(mounts []mount.Mount) {
@@ -162,9 +187,54 @@ func (b *builder) resolveMounts(mounts []mount.Mount) {
 		panic(err)
 	}
 	for i := range mounts {
-		mounts[i].Source = resolvePath(hostHomeDir, mounts[i].Source)
+		mounts[i].Source, err = filepath.Abs(resolvePath(hostHomeDir, mounts[i].Source))
+		if err != nil {
+			panicf("failed to resolve %v: %v", mounts[i].Source, err)
+		}
 		mounts[i].Target = resolvePath(guestHomeDir, mounts[i].Target)
 	}
+}
+
+func (b *builder) mounts(mounts []mount.Mount, image string) ([]mount.Mount, error) {
+	// Mount in VS Code configs.
+	mounts = append(mounts, mount.Mount{
+		Type:   "bind",
+		Source: "~/.config/Code",
+		Target: "~/.config/Code",
+	})
+	mounts = append(mounts, mount.Mount{
+		Type:   "bind",
+		Source: "~/.vscode/extensions",
+		Target: "~/.vscode/extensions",
+	})
+
+	projectDir, err := b.projectDir(image)
+	if err != nil {
+		return nil, err
+	}
+
+	mounts = append(mounts, mount.Mount{
+		Type:   "bind",
+		Source: b.projectLocalDir,
+		Target: projectDir,
+	})
+
+	// Mount in code-server
+	codeServerBinPath, err := loadCodeServer(context.Background())
+	if err != nil {
+		return nil, xerrors.Errorf("failed to load code-server: %w", err)
+	}
+	mounts = append(mounts, mount.Mount{
+		Type:   mount.TypeBind,
+		Source: codeServerBinPath,
+		Target: "/usr/bin/code-server",
+	})
+
+	// We take the mounts from the final image so that it includes the hat and the baseImage.
+	mounts = b.imageDefinedMounts(image, mounts)
+
+	b.resolveMounts(mounts)
+	return mounts, nil
 }
 
 // runContainer creates and runs a new container.
@@ -180,73 +250,63 @@ func (b *builder) runContainer() error {
 		image = b.applyHat()
 	}
 
-	var mounts []mount.Mount
-	for _, sh := range b.shares {
-		mounts = append(mounts, mount.Mount{
-			Type:   mount.Type(sh.Type),
-			Source: sh.Source,
-			Target: sh.Destination,
-		})
-	}
-
-	// Mount in code-server
-	codeServerBinPath, err := loadCodeServer(context.Background())
-	if err != nil {
-		return xerrors.Errorf("failed to load code-server: %w", err)
-	}
-	mounts = append(mounts, mount.Mount{
-		Type:   mount.TypeBind,
-		Source: codeServerBinPath,
-		Target: "/usr/bin/code-server",
-	})
-
-	// We take the mounts from the final image so that it includes the hat and the baseImage.
-	mounts = b.imageMounts(image, mounts)
-
-	b.resolveMounts(mounts)
-
-	// Duplicates can arise from trying to rebuild an existing image.
-	// This has to be last.
-	mounts = b.stripDuplicateMounts(mounts)
-
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 	defer cancel()
+
+	var mounts []mount.Mount
+
+	mounts, err := b.mounts(mounts, image)
+
+	projectDir, err := b.projectDir(image)
+	if err != nil {
+		return err
+	}
 
 	// We want the code-server logs to be available inside the container for easy
 	// access during development, but also going to stdout so `docker logs` can be used
 	// to debug a failed code-server startup.
-	cmd := "cd " + b.projectDir + "; code-server --port " + b.port + " --data-dir ~/.config/Code --extensions-dir ~/.vscode/extensions --allow-http --no-auth 2>&1 | tee " + containerLogPath
+	cmd := "cd " + projectDir + "; code-server --port " + b.port + " --data-dir ~/.config/Code --extensions-dir ~/.vscode/extensions --allow-http --no-auth 2>&1 | tee " + containerLogPath
 	if b.testCmd != "" {
 		cmd = b.testCmd + "; exit 1"
 	}
 
-	_, err = cli.ContainerCreate(ctx, &container.Config{
+	containerConfig := &container.Config{
 		Hostname: b.hostname,
 		Cmd: strslice.StrSlice{
 			"bash", "-c", cmd,
 		},
 		Image: image,
 		Labels: map[string]string{
-			narwhalLabel:    "",
-			hatLabel:        b.hatPath,
-			baseImageLabel:  b.baseImage,
-			portLabel:       b.port,
-			projectDirLabel: b.projectDir,
+			narwhalLabel:         "",
+			hatLabel:             b.hatPath,
+			baseImageLabel:       b.baseImage,
+			portLabel:            b.port,
+			projectDirLabel:      projectDir,
+			projectLocalDirLabel: b.projectLocalDir,
+			projectNameLabel:     b.projectName,
 		},
 		User: b.hostUser + ":user",
-	}, &container.HostConfig{
+	}
+
+	hostConfig := &container.HostConfig{
 		Mounts:      mounts,
 		NetworkMode: "host",
 		Privileged:  true,
 		ExtraHosts: []string{
 			b.hostname + ":127.0.0.1",
 		},
-	}, nil, b.name)
-	if err != nil {
-		return xerrors.Errorf("failed to create container: %w", err)
 	}
 
-	err = cli.ContainerStart(ctx, b.name, types.ContainerStartOptions{})
+	_, err = cli.ContainerCreate(ctx, containerConfig, hostConfig, nil, b.cntName)
+	if err != nil {
+		return xerrors.Errorf("failed to create container: %w\n%s\n%s",
+			err,
+			spew.Sdump(containerConfig),
+			spew.Sdump(hostConfig),
+		)
+	}
+
+	err = cli.ContainerStart(ctx, b.cntName, types.ContainerStartOptions{})
 	if err != nil {
 		return xerrors.Errorf("failed to start container: %w", err)
 	}
@@ -265,13 +325,13 @@ func builderFromContainer(name string) *builder {
 	}
 
 	return &builder{
-		name:       name,
-		shares:     cnt.Mounts,
-		hostname:   cnt.Config.Hostname,
-		baseImage:  cnt.Config.Labels[baseImageLabel],
-		hatPath:    cnt.Config.Labels[hatLabel],
-		port:       cnt.Config.Labels[portLabel],
-		projectDir: cnt.Config.Labels[projectDirLabel],
-		hostUser:   cnt.Config.User,
+		cntName:         name,
+		hostname:        cnt.Config.Hostname,
+		baseImage:       cnt.Config.Labels[baseImageLabel],
+		hatPath:         cnt.Config.Labels[hatLabel],
+		port:            cnt.Config.Labels[portLabel],
+		projectLocalDir: cnt.Config.Labels[projectLocalDirLabel],
+		projectName:     cnt.Config.Labels[projectNameLabel],
+		hostUser:        cnt.Config.User,
 	}
 }

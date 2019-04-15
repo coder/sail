@@ -3,9 +3,10 @@ package main
 import (
 	"flag"
 	"fmt"
-	"go.coder.com/flog"
 	"os"
 	"strings"
+
+	"go.coder.com/flog"
 )
 
 func flagHelp(fs *flag.FlagSet) string {

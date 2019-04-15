@@ -19,4 +19,11 @@ go get -u -v github.com/haya14busa/goplay/cmd/goplay
 go get -u -v github.com/uudashr/gopkgs/cmd/gopkgs
 go get -u -v github.com/davidrjenni/reftools/cmd/fillstruct
 go get -u -v github.com/alecthomas/gometalinter
+
 ~/go/bin/gometalinter --install
+
+
+# gopls is generally recommended over community tools.
+# It's much faster and more reliable than the other options.
+go get -u golang.org/x/tools/cmd/gopls
+

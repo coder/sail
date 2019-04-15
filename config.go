@@ -1,12 +1,13 @@
 package main
 
 import (
-	"github.com/BurntSushi/toml"
-	"go.coder.com/flog"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/BurntSushi/toml"
+	"go.coder.com/flog"
 )
 
 func resolvePath(homedir string, path string) string {
@@ -31,9 +32,9 @@ func resolvePath(homedir string, path string) string {
 // config describes the config.toml.
 // Changes to this should be accompanied by changes to DefaultConfig.
 type config struct {
-	DefaultImage         string            `toml:"default_image"`
-	ProjectRoot          string            `toml:"project_root"`
-	DefaultHat           string            `toml:"default_hat"`
+	DefaultImage string `toml:"default_image"`
+	ProjectRoot  string `toml:"project_root"`
+	DefaultHat   string `toml:"default_hat"`
 }
 
 const DefaultConfig = `# Narwhal configuration.
@@ -50,6 +51,7 @@ project_root = "~/Projects"
 
 func mustReadConfig(path string) config {
 	var c config
+
 	_, err := toml.DecodeFile(path, &c)
 	if err != nil {
 		if os.IsNotExist(err) {

@@ -2,15 +2,16 @@ package main
 
 import (
 	"context"
-	"go.coder.com/flog"
-	"go.coder.com/narwhal/internal/codeserver"
-	"golang.org/x/xerrors"
 	"io"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
+
+	"go.coder.com/flog"
+	"go.coder.com/narwhal/internal/codeserver"
+	"golang.org/x/xerrors"
 )
 
 // loadCodeServer produces a path containing the code-server binary.

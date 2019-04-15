@@ -39,6 +39,13 @@ Narwhal enforces that projects are stored on the host filesystem at `$project_ro
 
 Projects are stored in the container at `~/<repo>`.
 
+To enable some special-case languages such as Go, the project root can be configured
+via the project_root label. For example:
+
+```
+LABEL project_root "~/go/src/"
+```
+
 Projects are bind-mounted into the container, so deleting a container does not delete project files
 and you can seamlessly interact with project files outside of the container.
 
@@ -70,7 +77,7 @@ The workflow for modifying an environment goes like:
 1) Have code-server open in some window.
 1) Have a terminal open.
 1) Call `nw edit someorg/project`
-    1) Optionally, call `nw edit -hat someorg/project` to just modify the hat.
+	1) Optionally, call `nw edit -hat someorg/project` to just modify the hat.
 1) Edit the file in the editor that pops up.
 1) Save
 1) code-server window reloads with changed environment.
@@ -151,4 +158,4 @@ These features are planned for future releases:
 - Windows support
 - Synchronizing code-server extensions, settings, and themes.
 - Remote Host support.
-    - Cloud integration so `my-compute-instance` can be auto-resolved into an AWS/GCP/Azure instance.
+	- Cloud integration so `my-compute-instance` can be auto-resolved into an AWS/GCP/Azure instance.

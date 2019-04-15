@@ -3,9 +3,10 @@ package hat
 import (
 	"bufio"
 	"bytes"
+	"io/ioutil"
+
 	"go.coder.com/flog"
 	"go.coder.com/narwhal/internal/xexec"
-	"io/ioutil"
 )
 
 // DockerReplaceFrom replaces the FROM clause in a Dockerfile
@@ -44,4 +45,3 @@ func ResolveGitHubPath(ghPath string) string {
 
 	return dir
 }
-

@@ -3,6 +3,11 @@ package main
 import (
 	"context"
 	"flag"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"time"
+
 	"github.com/docker/docker/api/types"
 	"go.coder.com/flog"
 	"go.coder.com/narwhal/internal/dockutil"
@@ -10,10 +15,6 @@ import (
 	"go.coder.com/narwhal/internal/randstr"
 	"go.coder.com/narwhal/internal/xexec"
 	"golang.org/x/xerrors"
-	"os"
-	"os/exec"
-	"path/filepath"
-	"time"
 )
 
 type editcmd struct {
@@ -93,7 +94,7 @@ func (c *editcmd) recreate(proj *project) error {
 	// Get the existing container's state so re-create is seamless.
 	b := builderFromContainer(proj.cntName())
 
-	// We move the existing container to a temporary name so that the old environment can be recovered if
+	// We move the existing container to a temporary cntName so that the old environment can be recovered if
 	// the new environment is broken.
 	tmpCntName := proj.cntName() + "-tmp-" + randstr.Make(5)
 
@@ -159,4 +160,3 @@ func (c *editcmd) recreate(proj *project) error {
 func (c *editcmd) initFlags(fl *flag.FlagSet) {
 
 }
-

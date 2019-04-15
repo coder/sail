@@ -1,10 +1,11 @@
 package xnet
 
 import (
-	"golang.org/x/xerrors"
 	"math/rand"
 	"net"
 	"strconv"
+
+	"golang.org/x/xerrors"
 )
 
 // PortFree returns true if the port is bound.
