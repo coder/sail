@@ -3,12 +3,13 @@ package main
 import (
 	"context"
 	"flag"
+	"os"
+	"os/user"
+
 	"go.coder.com/flog"
 	"go.coder.com/narwhal/internal/dockutil"
 	"go.coder.com/narwhal/internal/xnet"
 	"golang.org/x/xerrors"
-	"os"
-	"os/user"
 )
 
 type runcmd struct {
@@ -50,10 +51,13 @@ func (c *runcmd) handle(gf globalFlags, fl *flag.FlagSet) {
 	// Abort if container already exists.
 	exists := proj.cntExists()
 	if exists {
-		flog.Fatal(
-			"container %v already exists. Use `nw open %v` to open it.",
-			proj.cntName(), proj.pathName(),
-		)
+		gf.debug("opening existing project")
+
+		err = proj.open()
+		if err != nil {
+			flog.Fatal("failed to open project: %v", err)
+		}
+		return
 	}
 
 	proj.ensureDir()

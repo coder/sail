@@ -110,8 +110,8 @@ Commands:
 		_ = fs.Parse(gfs.Args()[1:])
 
 		cmd.handle(gf, fs)
-		// Command should exit on its own.
-		os.Exit(255)
+
+		os.Exit(0)
 	}
 
 	// Command not found.
