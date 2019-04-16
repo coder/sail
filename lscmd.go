@@ -20,8 +20,8 @@ type lscmd struct {
 func (c *lscmd) spec() commandSpec {
 	return commandSpec{
 		name:      "ls",
-		shortDesc: "Lists all narwhal containers.",
-		longDesc:  fmt.Sprintf(`Queries docker for all containers with the %v label.`, narwhalLabel),
+		shortDesc: "Lists all sail containers.",
+		longDesc:  fmt.Sprintf(`Queries docker for all containers with the %v label.`, sailLabel),
 	}
 }
 
@@ -37,7 +37,7 @@ func (c *lscmd) handle(gf globalFlags, fl *flag.FlagSet) {
 	defer cancel()
 
 	filter := filters.NewArgs()
-	filter.Add("label", narwhalLabel)
+	filter.Add("label", sailLabel)
 
 	cnts, err := cli.ContainerList(ctx, types.ContainerListOptions{
 		All:     c.all,
@@ -53,7 +53,7 @@ func (c *lscmd) handle(gf globalFlags, fl *flag.FlagSet) {
 	for _, cnt := range cnts {
 		var name string
 		if len(cnt.Names) == 0 {
-			// All narwhal containers should be named.
+			// All sail containers should be named.
 			flog.Error("container %v doesn't have a name.", cnt.ID)
 			continue
 		}
@@ -64,7 +64,7 @@ func (c *lscmd) handle(gf globalFlags, fl *flag.FlagSet) {
 			hat  = cnt.Labels[hatLabel]
 		)
 		// Convert the first - into a / in order to produce a
-		// narwhal-friendly name.
+		// sail-friendly name.
 		// TODO: this is super janky.
 		name = strings.Replace(name, "-", "/", 1)
 

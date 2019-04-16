@@ -13,9 +13,9 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/skratchdot/open-golang/open"
 	"go.coder.com/flog"
-	"go.coder.com/narwhal/internal/nohup"
-	"go.coder.com/narwhal/internal/xexec"
-	"go.coder.com/narwhal/internal/xnet"
+	"go.coder.com/sail/internal/nohup"
+	"go.coder.com/sail/internal/xexec"
+	"go.coder.com/sail/internal/xnet"
 	"golang.org/x/xerrors"
 )
 
@@ -26,7 +26,7 @@ const (
 	off projectStatus = "off"
 )
 
-// project represents a narwhal project.
+// project represents a sail project.
 type project struct {
 	gf   *globalFlags
 	conf config
@@ -51,7 +51,7 @@ func (p *project) localDir() string {
 }
 
 func (p *project) dockerfilePath() string {
-	return filepath.Join(p.localDir(), ".narwhal", "Dockerfile")
+	return filepath.Join(p.localDir(), ".sail", "Dockerfile")
 }
 
 // clone clones a git repository on h.
@@ -118,10 +118,10 @@ func (p *project) ensureDir() {
 	clone(p.repo, p.localDir())
 }
 
-// buildImage finds the `.narwhal/Dockerfile` in the project directory
+// buildImage finds the `.sail/Dockerfile` in the project directory
 // and builds it.
 func (p *project) buildImage() (string, bool, error) {
-	const relPath = ".narwhal/Dockerfile"
+	const relPath = ".sail/Dockerfile"
 	path := filepath.Join(p.localDir(), relPath)
 
 	_, err := os.Stat(path)

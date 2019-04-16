@@ -7,7 +7,7 @@ import (
 	"go.coder.com/flog"
 )
 
-// handlePrune removes all narwhal container from host.
+// handlePrune removes all sail container from host.
 func handlePrune(flg globalFlags) int {
 	list, err := listContainers(true, "")
 	if err != nil {

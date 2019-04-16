@@ -6,7 +6,7 @@ import (
 	"io/ioutil"
 
 	"go.coder.com/flog"
-	"go.coder.com/narwhal/internal/xexec"
+	"go.coder.com/sail/internal/xexec"
 )
 
 // DockerReplaceFrom replaces the FROM clause in a Dockerfile

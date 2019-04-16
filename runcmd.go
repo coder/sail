@@ -7,8 +7,8 @@ import (
 	"os/user"
 
 	"go.coder.com/flog"
-	"go.coder.com/narwhal/internal/dockutil"
-	"go.coder.com/narwhal/internal/xnet"
+	"go.coder.com/sail/internal/dockutil"
+	"go.coder.com/sail/internal/xnet"
 	"golang.org/x/xerrors"
 )
 

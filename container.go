@@ -4,11 +4,11 @@ import (
 	"bytes"
 	"errors"
 
-	"go.coder.com/narwhal/internal/xexec"
+	"go.coder.com/sail/internal/xexec"
 	"golang.org/x/xerrors"
 )
 
-const narwhalLabel = "com.coder.narwhal"
+const sailLabel = "com.coder.sail"
 
 // listContainers lists containers with the given prefix.
 // Names are returned in descending order with respect to when it
@@ -20,7 +20,7 @@ func listContainers(all bool, prefix string) ([]string, error) {
 	}
 
 	cmd := xexec.Fmt("docker ps %v --format '{{ .Names }}' --filter name=%v --filter label=%v",
-		allFlag, prefix, narwhalLabel,
+		allFlag, prefix, sailLabel,
 	)
 
 	out, err := cmd.CombinedOutput()
