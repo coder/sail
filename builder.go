@@ -11,7 +11,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/mount"
@@ -211,11 +210,18 @@ func (b *builder) mounts(mounts []mount.Mount, image string) ([]mount.Mount, err
 		Source: "~/.vscode/extensions",
 		Target: "~/.vscode/extensions",
 	})
+
+	localGlobalStorageDir := filepath.Join(metaRoot(), b.cntName, "globalStorage")
+	err := os.MkdirAll(localGlobalStorageDir, 0750)
+	if err != nil {
+		return nil, err
+	}
+
 	// globalStorage holds the UI state, and other code-server specific
 	// state.
 	mounts = append(mounts, mount.Mount{
 		Type:   "bind",
-		Source: filepath.Join(metaRoot(), b.cntName, "globalStorage"),
+		Source: localGlobalStorageDir,
 		Target: "~/.local/share/code-server/globalStorage/",
 	})
 
@@ -268,6 +274,9 @@ func (b *builder) runContainer() error {
 	var mounts []mount.Mount
 
 	mounts, err := b.mounts(mounts, image)
+	if err != nil {
+		return xerrors.Errorf("failed to assemble mounts: %w", err)
+	}
 
 	projectDir, err := b.projectDir(image)
 	if err != nil {
@@ -311,10 +320,10 @@ func (b *builder) runContainer() error {
 
 	_, err = cli.ContainerCreate(ctx, containerConfig, hostConfig, nil, b.cntName)
 	if err != nil {
-		return xerrors.Errorf("failed to create container: %w\n%s\n%s",
+		return xerrors.Errorf("failed to create container: %w",
 			err,
-			spew.Sdump(containerConfig),
-			spew.Sdump(hostConfig),
+			// spew.Sdump(containerConfig),
+			// spew.Sdump(hostConfig),
 		)
 	}
 
