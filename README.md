@@ -14,7 +14,7 @@
 ## Install
 
 ```bash
-go install go.coder.com/sail
+go get go.coder.com/sail
 ```
 
 ## Basic usage
