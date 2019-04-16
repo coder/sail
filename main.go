@@ -116,6 +116,6 @@ Commands:
 
 	// Command not found.
 	flog.Error("command %q not found", wantCmd)
-	flag.Usage()
+	gfs.Usage()
 	os.Exit(2)
 }
