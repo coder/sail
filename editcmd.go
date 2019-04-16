@@ -19,6 +19,7 @@ import (
 
 type editcmd struct {
 	noEditor bool
+	hatPath  string
 }
 
 func (c *editcmd) spec() commandSpec {
@@ -94,6 +95,11 @@ func (c *editcmd) recreate(proj *project) error {
 	// Get the existing container's state so re-create is seamless.
 	b := builderFromContainer(proj.cntName())
 
+	// If custom hat provided, use it.
+	if c.hatPath != "" {
+		b.hatPath = c.hatPath
+	}
+
 	// We move the existing container to a temporary cntName so that the old environment can be recovered if
 	// the new environment is broken.
 	tmpCntName := proj.cntName() + "-tmp-" + randstr.Make(5)
@@ -158,5 +164,5 @@ func (c *editcmd) recreate(proj *project) error {
 }
 
 func (c *editcmd) initFlags(fl *flag.FlagSet) {
-
+	fl.StringVar(&c.hatPath, "hat", "", "Path to new hat.")
 }
