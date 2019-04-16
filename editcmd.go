@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/docker/docker/api/types"
+
 	"go.coder.com/flog"
 	"go.coder.com/sail/internal/dockutil"
 	"go.coder.com/sail/internal/editor"
@@ -79,13 +80,12 @@ func (c *editcmd) handle(gf globalFlags, fl *flag.FlagSet) {
 	}
 	err = c.recreate(proj)
 	if err != nil {
+		flog.Fatal("%v", err)
 	}
 	os.Exit(0)
 }
 
-func (c *editcmd) recreate(proj *project) error {
-	var err error
-
+func (c *editcmd) recreate(proj *project) (err error) {
 	cli := dockerClient()
 	defer cli.Close()
 
@@ -100,63 +100,73 @@ func (c *editcmd) recreate(proj *project) error {
 		b.hatPath = c.hatPath
 	}
 
-	// We move the existing container to a temporary cntName so that the old environment can be recovered if
-	// the new environment is broken.
-	tmpCntName := proj.cntName() + "-tmp-" + randstr.Make(5)
+	builderCntName := proj.cntName() + "-builder-" + randstr.Make(5)
+	b.cntName = builderCntName
 
-	// Rename existing container with intention of deleting it if everything goes smoothly.
-	err = cli.ContainerRename(ctx, proj.cntName(), tmpCntName)
+	image, ok, err := proj.buildImage()
 	if err != nil {
-		flog.Fatal("failed to rename %v to %v: %v", proj.cntName(), tmpCntName, err)
+		return xerrors.Errorf("failed to build image: %w", err)
+	}
+	// If we were previously using the default image, we must explicitely override
+	// to use the new base.
+	if ok {
+		b.baseImage = image
 	}
 
+	// Stop OG container after image is built so the period of downtime is minimized.
+	err = cli.ContainerStop(ctx, proj.cntName(), dockutil.DurationPtr(time.Second))
+	if err != nil {
+		return err
+	}
 	defer func() {
-		// Remove the old temporary container.
-		_ = dockutil.StopRemove(ctx, cli, tmpCntName)
+		if err != nil {
+			flog.Error("failed to build and run new container: %v", err)
+			flog.Info("rolling back...")
+
+			err := cli.ContainerStart(ctx, proj.cntName(), types.ContainerStartOptions{})
+			if err != nil {
+				flog.Fatal("failed to restart original container %v in rollback: %v", proj.cntName(), err)
+			}
+		}
 	}()
 
-	// Build new image and container, and rollback if it doesn't go well.
-	err = func() error {
-		image, ok, err := proj.buildImage()
-		if err != nil {
-			return err
-		}
-		// If we were previously using the default image, we must explicitely override
-		// to use the new base.
-		if ok {
-			b.baseImage = image
-		}
-
-		// Stop OG container after image is built so the period of downtime is minimized.
-		err = cli.ContainerStop(ctx, tmpCntName, dockutil.DurationPtr(time.Second))
-		if err != nil {
-			return err
-		}
-
-		err = b.runContainer()
-		if err != nil {
-			return err
-		}
-
-		return nil
-	}()
+	// Rename OG container with a temporary name that we'll remove at the end if
+	// everything completes successfully.
+	oldCntName := proj.cntName() + "-old-" + randstr.Make(5)
+	err = cli.ContainerRename(ctx, proj.cntName(), oldCntName)
 	if err != nil {
-		flog.Error("failed to build and run new container: %v", err)
-		flog.Info("rolling back...")
-
-		// If the new, broken container exists in any shape or form, delete it.
-		_ = dockutil.StopRemove(ctx, cli, proj.cntName())
-
-		err = cli.ContainerRename(ctx, tmpCntName, proj.cntName())
-		if err != nil {
-			flog.Fatal("failed to rename %v to %v: %v", tmpCntName, proj.cntName(), err)
-		}
+		return xerrors.Errorf("failed to rename original container to %v: %w", oldCntName, err)
 	}
+	defer func() {
+		// Roll the container rename back if something failed, but remove the old container from
+		// the system if everything succeeded.
+		if err != nil {
+			err := cli.ContainerRename(ctx, oldCntName, proj.cntName())
+			if err != nil {
+				flog.Fatal("failed to rename container from %v back to %v in rollback: %v", oldCntName, proj.cntName(), err)
+			}
+		} else {
+			_ = dockutil.StopRemove(ctx, cli, oldCntName)
+		}
+	}()
 
-	// (Idempotent)
-	err = cli.ContainerStart(ctx, proj.cntName(), types.ContainerStartOptions{})
+	// Start our new container and try to rename it to the project container name.
+	err = b.runContainer()
 	if err != nil {
-		return xerrors.Errorf("failed to start container: %w", err)
+		return err
+	}
+	defer func() {
+		if err != nil {
+			err := dockutil.StopRemove(ctx, cli, builderCntName)
+			if err != nil {
+				flog.Error("failed to stop remove builder container in rollback: %v", err)
+			}
+		}
+	}()
+
+	err = cli.ContainerRename(ctx, b.cntName, proj.cntName())
+	if err != nil {
+		return xerrors.Errorf("failed to rename builder to project name: %w", err)
 	}
 
 	flog.Info("replaced container")
