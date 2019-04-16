@@ -49,6 +49,16 @@ project_root = "~/Projects"
 # default_hat = ""
 `
 
+// metaRoot returns the root path of all metadata stored on the host.
+func metaRoot() string {
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		panic(err)
+	}
+
+	return filepath.Join(homeDir, ".config", "sail")
+}
+
 func mustReadConfig(path string) config {
 	var c config
 

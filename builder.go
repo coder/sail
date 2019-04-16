@@ -207,6 +207,13 @@ func (b *builder) mounts(mounts []mount.Mount, image string) ([]mount.Mount, err
 		Source: "~/.vscode/extensions",
 		Target: "~/.vscode/extensions",
 	})
+	// globalStorage holds the UI state, and other code-server specific
+	// state.
+	mounts = append(mounts, mount.Mount{
+		Type:   "bind",
+		Source: filepath.Join(metaRoot(), b.cntName, "globalStorage"),
+		Target: "~/.local/share/code-server/globalStorage/",
+	})
 
 	projectDir, err := b.projectDir(image)
 	if err != nil {
@@ -277,7 +284,7 @@ func (b *builder) runContainer() error {
 		},
 		Image: image,
 		Labels: map[string]string{
-			sailLabel:         "",
+			sailLabel:            "",
 			hatLabel:             b.hatPath,
 			baseImageLabel:       b.baseImage,
 			portLabel:            b.port,
