@@ -75,6 +75,8 @@ func isContainerNotFoundError(err error) bool {
 
 func (p *project) cntExists() bool {
 	cli := dockerClient()
+	defer cli.Close()
+
 	_, err := cli.ContainerInspect(context.Background(), p.cntName())
 	if err != nil {
 		if isContainerNotFoundError(err) {
@@ -87,6 +89,8 @@ func (p *project) cntExists() bool {
 
 func (p *project) running() bool {
 	cli := dockerClient()
+	defer cli.Close()
+
 	cnt, err := cli.ContainerInspect(context.Background(), p.cntName())
 	if err != nil {
 		flog.Fatal("failed to get container %v: %v", p.cntName(), err)
@@ -263,6 +267,7 @@ func (p *project) openNative(u string) error {
 
 func (p *project) open() error {
 	cli := dockerClient()
+	defer cli.Close()
 
 	err := cli.ContainerStart(context.Background(), p.cntName(), types.ContainerStartOptions{})
 	if err != nil {

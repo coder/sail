@@ -63,6 +63,11 @@ func dockerClient() *client.Client {
 	if err != nil {
 		flog.Fatal("failed to make docker client: %v", err)
 	}
+
+	// Update the API version of the client to match
+	// what the server is running.
+	cli.NegotiateAPIVersion(context.Background())
+
 	return cli
 }
 
@@ -114,6 +119,7 @@ func (b *builder) applyHat() string {
 
 func (b *builder) projectDir(image string) (string, error) {
 	cli := dockerClient()
+	defer cli.Close()
 
 	img, _, err := cli.ImageInspectWithRaw(context.Background(), image)
 	if err != nil {
@@ -130,10 +136,8 @@ func (b *builder) projectDir(image string) (string, error) {
 
 // imageDefinedMounts adds a list of shares to the shares map from the image.
 func (b *builder) imageDefinedMounts(image string, mounts []mount.Mount) []mount.Mount {
-	cli, err := client.NewEnvClient()
-	if err != nil {
-		flog.Fatal("failed to create docker client: %v", err)
-	}
+	cli := dockerClient()
+	defer cli.Close()
 
 	ins, _, err := cli.ImageInspectWithRaw(context.Background(), b.baseImage)
 	if err != nil {
@@ -251,6 +255,7 @@ func (b *builder) mounts(mounts []mount.Mount, image string) ([]mount.Mount, err
 // the container is only online when code-server is working.
 func (b *builder) runContainer() error {
 	cli := dockerClient()
+	defer cli.Close()
 
 	image := b.baseImage
 	if b.hatPath != "" {
@@ -325,6 +330,7 @@ func (b *builder) runContainer() error {
 // name.
 func builderFromContainer(name string) *builder {
 	cli := dockerClient()
+	defer cli.Close()
 
 	cnt, err := cli.ContainerInspect(context.Background(), name)
 	if err != nil {
