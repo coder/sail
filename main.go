@@ -37,7 +37,7 @@ func main() {
 	gfs := flag.NewFlagSet("global", flag.ExitOnError)
 
 	gfs.BoolVar(&gf.verbose, "v", false, "Enable debug logging.")
-	gfs.StringVar(&gf.configPath, "config", homeDir+"/.config/narwhal/narwhal.toml", "Path to config.")
+	gfs.StringVar(&gf.configPath, "config", homeDir+"/.config/sail/sail.toml", "Path to config.")
 
 	cmds := []command{
 		new(runcmd),
@@ -56,7 +56,7 @@ func main() {
 		fmt.Printf(`Usage: %v [GLOBAL FLAGS] COMMAND [COMMAND FLAGS] [ARGS....]
 
 A utility for managing Docker-based code-server environments.
-More info: https://github.com/codercom/narwhal
+More info: https://github.com/codercom/sail
 
 [project] can be of form <org>/<repo> for GitHub repos, or the full git clone address.
 

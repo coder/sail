@@ -1,11 +1,11 @@
-# narwhal
+# sail
 
-`narwhal` is a CLI to efficiently manage Dockerized [`code-server`](https://github.com/codercom/code-server) development environments.
+`sail` is a CLI to efficiently manage Dockerized [`code-server`](https://github.com/codercom/code-server) development environments.
 .
 
 # Features
 
-- Projects can specify their own development environment via `.narwhal/Dockerfile`.
+- Projects can specify their own development environment via `.sail/Dockerfile`.
 - Shares VS Code settings between environments.
 	- Syncs with local VS Code as well.
 - Supports Linux and MacOS.
@@ -14,26 +14,24 @@
 # Install
 
 ```
-go install go.coder.com/narwhal
-# Usually narwhal is used as `nw`.
-sudo ln -s ~/go/bin/narwhal /usr/bin/nw 
+go install go.coder.com/sail
 ```
 
 # Basic usage
 
-Spin up a secure editor for `codercom/narwhal`.
+Spin up a secure editor for `codercom/sail`.
 
 Or:
 
 ```bash
-nw run codercom/narwhal
-# Creates a Docker container called `codercom-narwhal`,
+sail run codercom/sail
+# Creates a Docker container called `codercom-sail`,
 # installs code-server in it, and creates a browser.
 ```
 
 # Projects
 
-Narwhal enforces that projects are stored on the host filesystem at `$project_root/<org>/<repo>`.
+sail enforces that projects are stored on the host filesystem at `$project_root/<org>/<repo>`.
 
 `$project_root` is a configuration variable.
 
@@ -53,7 +51,7 @@ and you can seamlessly interact with project files outside of the container.
 
 ## Project-defined environment 
 
-Projects can define their own environment by specifying a `.narwhal/Dockerfile` file.
+Projects can define their own environment by specifying a `.sail/Dockerfile` file.
 
 The dev container must have `codercom/ubuntu-dev` as a parent.
 
@@ -68,7 +66,7 @@ the host.
 
 ## Live modification
 
-The narwhal workflow promotes a unique environment for each project, with common
+The sail workflow promotes a unique environment for each project, with common
 configurations explicitely declared.
 
 
@@ -76,13 +74,13 @@ The workflow for modifying an environment goes like:
 
 1) Have code-server open in some window.
 1) Have a terminal open.
-1) Call `nw edit someorg/project`
-	1) Optionally, call `nw edit -hat someorg/project` to just modify the hat.
+1) Call `sail edit someorg/project`
+	1) Optionally, call `sail edit -hat someorg/project` to just modify the hat.
 1) Edit the file in the editor that pops up.
 1) Save
 1) code-server window reloads with changed environment.
 
-Narwhal will listen for changes to the file being edited, and will magically
+sail will listen for changes to the file being edited, and will magically
 recreate the environment as changes are made (assuming those changes make
 sense).
 
@@ -111,12 +109,12 @@ RUN chsh user -s $(which fish)
 is a hat that would install fish, and configure it as the default
 shell regardless of which shell the repository-provided image uses.
 
-The `FROM ubuntu-dev` will be replaced with `FROM <repo_image>` when narwhal
+The `FROM ubuntu-dev` will be replaced with `FROM <repo_image>` when sail
 assembles your dev container.
 
 ---
 
-`narwhal` promotes the use of Ubuntu/apt-based dev containers so that hats are 
+`sail` promotes the use of Ubuntu/apt-based dev containers so that hats are 
 reliable.
 
 You can only wear a single hat at a time.
@@ -147,7 +145,7 @@ Hats are supposed to enable global personalization, so GitHub hats should just b
 
 # Configuration
 
-A self-documenting configuration is stored  at `~/.config/narwhal/narwhal.toml`
+A self-documenting configuration is stored  at `~/.config/sail/sail.toml`
 
 Checkout `defaultconfig.go` for the default config.
 

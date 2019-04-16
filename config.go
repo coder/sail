@@ -37,7 +37,7 @@ type config struct {
 	DefaultHat   string `toml:"default_hat"`
 }
 
-const DefaultConfig = `# Narwhal configuration.
+const DefaultConfig = `# sail configuration.
 # default_image is the default Docker image to use if the repository provides none.
 default_image = "codercom/ubuntu-dev"
 

@@ -18,22 +18,22 @@ import (
 	"github.com/docker/docker/api/types/strslice"
 	"github.com/docker/docker/client"
 	"go.coder.com/flog"
-	"go.coder.com/narwhal/internal/hat"
-	"go.coder.com/narwhal/internal/xexec"
+	"go.coder.com/sail/internal/hat"
+	"go.coder.com/sail/internal/xexec"
 	"golang.org/x/xerrors"
 )
 
-// Docker labels for Narwhal state.
+// Docker labels for sail state.
 const (
-	baseImageLabel       = narwhalLabel + ".base_image"
-	hatLabel             = narwhalLabel + ".hat"
-	portLabel            = narwhalLabel + ".port"
-	projectLocalDirLabel = narwhalLabel + ".project_local_dir"
-	projectDirLabel      = narwhalLabel + ".project_dir"
-	projectNameLabel     = narwhalLabel + ".project_name"
+	baseImageLabel       = sailLabel + ".base_image"
+	hatLabel             = sailLabel + ".hat"
+	portLabel            = sailLabel + ".port"
+	projectLocalDirLabel = sailLabel + ".project_local_dir"
+	projectDirLabel      = sailLabel + ".project_dir"
+	projectNameLabel     = sailLabel + ".project_name"
 )
 
-// builder holds all the information needed to assemble a new narwhal container.
+// builder holds all the information needed to assemble a new sail container.
 // The builder stores itself as state on the container.
 // It enables quick iteration on a container with small modifications to it's config.
 // All mounts should be configured from the image.
@@ -277,7 +277,7 @@ func (b *builder) runContainer() error {
 		},
 		Image: image,
 		Labels: map[string]string{
-			narwhalLabel:         "",
+			sailLabel:         "",
 			hatLabel:             b.hatPath,
 			baseImageLabel:       b.baseImage,
 			portLabel:            b.port,

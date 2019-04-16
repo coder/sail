@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"go.coder.com/flog"
-	"go.coder.com/narwhal/internal/codeserver"
+	"go.coder.com/sail/internal/codeserver"
 	"golang.org/x/xerrors"
 )
 
@@ -25,7 +25,7 @@ func loadCodeServer(ctx context.Context) (string, error) {
 	}
 
 	cachePath := filepath.Join(
-		"/tmp/narwhal-code-server-cache",
+		"/tmp/sail-code-server-cache",
 		u[strings.LastIndex(u, "/"):],
 		"code-server",
 	)

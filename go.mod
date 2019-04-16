@@ -1,4 +1,4 @@
-module go.coder.com/narwhal
+module go.coder.com/sail
 
 go 1.12
 

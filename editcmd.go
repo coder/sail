@@ -10,10 +10,10 @@ import (
 
 	"github.com/docker/docker/api/types"
 	"go.coder.com/flog"
-	"go.coder.com/narwhal/internal/dockutil"
-	"go.coder.com/narwhal/internal/editor"
-	"go.coder.com/narwhal/internal/randstr"
-	"go.coder.com/narwhal/internal/xexec"
+	"go.coder.com/sail/internal/dockutil"
+	"go.coder.com/sail/internal/editor"
+	"go.coder.com/sail/internal/randstr"
+	"go.coder.com/sail/internal/xexec"
 	"golang.org/x/xerrors"
 )
 
@@ -67,7 +67,7 @@ func (c *editcmd) handle(gf globalFlags, fl *flag.FlagSet) {
 	// quits. The problem is user feedback. For real-time edits, we must either send build feedback to the
 	// calling terminal or start the editor in a completely different terminal. In the former option,
 	// build feedback corrupts a terminal editor's layout. In the latter option, compatibility becomes
-	// difficult, and narwhal will have a hard time being ran on server.
+	// difficult, and sail will have a hard time being ran on server.
 
 	cmd := exec.Command(editor, proj.dockerfilePath())
 	xexec.Attach(cmd)

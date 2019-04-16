@@ -6,7 +6,7 @@ import (
     "os"
 
     "go.coder.com/flog"
-    "go.coder.com/narwhal/internal/xexec"
+    "go.coder.com/sail/internal/xexec"
 )
 
 type shellcmd struct {
