@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"go.coder.com/flog"
@@ -29,15 +30,14 @@ func flagHelp(fs *flag.FlagSet) string {
 
 func main() {
 	var gf globalFlags
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		panic(err)
-	}
 
 	gfs := flag.NewFlagSet("global", flag.ExitOnError)
 
 	gfs.BoolVar(&gf.verbose, "v", false, "Enable debug logging.")
-	gfs.StringVar(&gf.configPath, "config", homeDir+"/.config/sail/sail.toml", "Path to config.")
+	gfs.StringVar(&gf.configPath, "config",
+		filepath.Join(metaRoot(), "sail.toml"),
+		"Path to config.",
+	)
 
 	cmds := []command{
 		new(runcmd),
