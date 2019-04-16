@@ -147,6 +147,10 @@ A self-documenting configuration is stored  at `~/.config/sail/sail.toml`
 
 Checkout `defaultconfig.go` for the default config.
 
+## Workflow Tips
+
+Checkout `workflow/` for useful snippets.
+
 ## Future
 
 These features are planned for future releases:

@@ -322,8 +322,6 @@ func (b *builder) runContainer() error {
 	if err != nil {
 		return xerrors.Errorf("failed to create container: %w",
 			err,
-			// spew.Sdump(containerConfig),
-			// spew.Sdump(hostConfig),
 		)
 	}
 
