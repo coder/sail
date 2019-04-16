@@ -23,7 +23,7 @@ func flagHelp(fs *flag.FlagSet) string {
 		}
 	})
 	if count == 0 {
-		return ""
+		return "\n"
 	}
 	return bd.String()
 }
@@ -61,7 +61,6 @@ More info: https://github.com/codercom/sail
 [project] can be of form <org>/<repo> for GitHub repos, or the full git clone address.
 
 Global %v
-
 Commands:
 %v
 `, os.Args[0], flagHelp(gfs), commandHelp.String())
