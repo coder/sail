@@ -124,7 +124,8 @@ func (p *project) ensureDir() error {
 }
 
 // buildImage finds the `.sail/Dockerfile` in the project directory
-// and builds it.
+// and builds it. It sets the sail base image label on the image
+// so the runner can use it when creating the container.
 func (p *project) buildImage() (string, bool, error) {
 	const relPath = ".sail/Dockerfile"
 	path := filepath.Join(p.localDir(), relPath)
@@ -139,7 +140,9 @@ func (p *project) buildImage() (string, bool, error) {
 
 	imageID := p.repo.DockerName()
 
-	cmdStr := fmt.Sprintf("docker build --network=host -t %v -f %v %v", imageID, path, p.localDir())
+	cmdStr := fmt.Sprintf("docker build --network=host -t %v -f %v %v --label %v=%v",
+		imageID, path, p.localDir(), baseImageLabel, imageID,
+	)
 	flog.Info("running %v", cmdStr)
 	cmd := xexec.Fmt(cmdStr)
 	xexec.Attach(cmd)
