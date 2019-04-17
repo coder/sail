@@ -25,8 +25,13 @@ func (c *runcmd) spec() commandSpec {
 	return commandSpec{
 		name:      "run",
 		shortDesc: "Runs a project container.",
-		longDesc:  ``,
-		usage:     "[project]",
+		longDesc: `This command is used for opening and running a project.
+	If a project is not yet created or running with the name,
+	one will be created and a new editor will be opened.
+	If a project is already up and running, this won't
+	start a new container, but instead will reuse the
+	already running container and open a new editor.`,
+		usage: "[flags] <project>",
 	}
 }
 

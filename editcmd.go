@@ -28,10 +28,15 @@ func (c *editcmd) spec() commandSpec {
 	return commandSpec{
 		name:      "edit",
 		shortDesc: "edit your environment in real-time.",
-		longDesc: `This command drops you into
-your default editor, with the repo's Dockerfile open. When the editor is closed, the environment
-is re-created to spec.'`,
-		usage: "[repo]",
+		longDesc: `This command allows you to edit your project's environment while it's running.
+	Depending on what flags are set, the Dockerfile you want to change will be opened in your default
+	editor which can be set using the "EDITOR" environment variable. Once your changes are complete
+	and the editor is closed, the environment will be rebuilt and rerun with minimal downtime.
+
+	If no flags are set, this will open your project's Dockerfile. If the -hat flag is set, this
+	will open the hat Dockerfile associated with your running project in the editor. If the -new-hat
+	flag is set, the project will be adjusted to use the new hat.`,
+		usage: "[flags] <repo>",
 	}
 }
 
