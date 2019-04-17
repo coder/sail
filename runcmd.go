@@ -110,9 +110,12 @@ func (c *runcmd) handle(gf globalFlags, fl *flag.FlagSet) {
 		flog.Fatal("failed to get current user: %v", err)
 	}
 
-	b := &builder{
-		baseImage:       image,
-		hatPath:         hatPath,
+	b := &hatBuilder{
+		baseImage: image,
+		hatPath:   hatPath,
+	}
+
+	r := &runner{
 		projectName:     proj.repo.BaseName(),
 		projectLocalDir: proj.localDir(),
 		cntName:         proj.cntName(),
@@ -122,7 +125,7 @@ func (c *runcmd) handle(gf globalFlags, fl *flag.FlagSet) {
 		testCmd:         c.testCmd,
 	}
 
-	err = c.buildOpen(gf, proj, b)
+	err = c.buildOpen(gf, proj, b, r)
 	if err != nil {
 		flog.Error("build run failed: %v", err)
 		if !c.keep {
@@ -139,9 +142,14 @@ func (c *runcmd) handle(gf globalFlags, fl *flag.FlagSet) {
 	os.Exit(0)
 }
 
-func (c *runcmd) buildOpen(gf globalFlags, proj *project, b *builder) error {
+func (c *runcmd) buildOpen(gf globalFlags, proj *project, b *hatBuilder, r *runner) error {
 	var err error
-	err = b.runContainer()
+	image := b.baseImage
+	if b.hatPath != "" {
+		image, err = b.applyHat()
+	}
+
+	err = r.runContainer(image)
 	if err != nil {
 		return xerrors.Errorf("failed to run container: %w", err)
 	}

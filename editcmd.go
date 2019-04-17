@@ -77,7 +77,7 @@ func (c *editcmd) recreate(proj *project) (err error) {
 	defer cancel()
 
 	// Get the existing container's state so re-create is seamless.
-	b, err := builderFromContainer(proj.cntName())
+	b, err := hatBuilderFromContainer(proj.cntName())
 	if err != nil {
 		return err
 	}
@@ -87,6 +87,7 @@ func (c *editcmd) recreate(proj *project) (err error) {
 	if c.hatPath != "" {
 		b.hatPath = c.hatPath
 	}
+
 	// If c.hat is set, then we want to edit the project's hat instead of the project's Dockerfile.
 	if c.hat {
 		if b.hatPath == "" {
@@ -108,8 +109,13 @@ func (c *editcmd) recreate(proj *project) (err error) {
 		}
 	}
 
+	r, err := runnerFromContainer(proj.cntName())
+	if err != nil {
+		return xerrors.Errorf("failed to initialize runner: %w", err)
+	}
+
 	builderCntName := proj.cntName() + "-builder-" + randstr.Make(5)
-	b.cntName = builderCntName
+	r.cntName = builderCntName
 
 	image, ok, err := proj.buildImage()
 	if err != nil {
@@ -121,7 +127,17 @@ func (c *editcmd) recreate(proj *project) (err error) {
 		b.baseImage = image
 	}
 
-	// Stop OG container after image is built so the period of downtime is minimized.
+	// Apply the hat before we stop the original container in order to reduce the amount
+	// of downtime and to prevent any downtime in the event of a failed hat application.
+	if b.hatPath != "" {
+		image, err = b.applyHat()
+		if err != nil {
+			return xerrors.Errorf("failed to apply hat: %w", err)
+		}
+	}
+
+	// The base and hat images have been fully built, stop the original container to swap
+	// it with the new one.
 	err = cli.ContainerStop(ctx, proj.cntName(), dockutil.DurationPtr(time.Second))
 	if err != nil {
 		return err
@@ -159,7 +175,7 @@ func (c *editcmd) recreate(proj *project) (err error) {
 	}()
 
 	// Start our new container and try to rename it to the project container name.
-	err = b.runContainer()
+	err = r.runContainer(image)
 	if err != nil {
 		return err
 	}
@@ -172,7 +188,7 @@ func (c *editcmd) recreate(proj *project) (err error) {
 		}
 	}()
 
-	err = cli.ContainerRename(ctx, b.cntName, proj.cntName())
+	err = cli.ContainerRename(ctx, r.cntName, proj.cntName())
 	if err != nil {
 		return xerrors.Errorf("failed to rename builder to project name: %w", err)
 	}
