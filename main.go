@@ -42,7 +42,6 @@ func main() {
 	cmds := []command{
 		new(runcmd),
 		new(shellcmd),
-		new(opencmd),
 		new(editcmd),
 		new(lscmd),
 	}
