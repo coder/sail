@@ -5,8 +5,8 @@ import (
 	"bytes"
 	"io/ioutil"
 
-	"go.coder.com/flog"
 	"go.coder.com/sail/internal/xexec"
+	"golang.org/x/xerrors"
 )
 
 // DockerReplaceFrom replaces the FROM clause in a Dockerfile
@@ -30,18 +30,18 @@ func DockerReplaceFrom(dockerFile []byte, base string) []byte {
 
 // ResolveGitHubPath takes a path like ammario/dotfiles
 // and downloads it into a temporary direcory.
-func ResolveGitHubPath(ghPath string) string {
+func ResolveGitHubPath(ghPath string) (string, error) {
 	dir, err := ioutil.TempDir("", "hat")
 	if err != nil {
-		flog.Fatal("failed to create tempdir: %v", err)
+		return "", xerrors.Errorf("failed to create tempdir: %w", err)
 	}
 
 	cmd := xexec.Fmt("git clone git@github.com:%v.git %v", ghPath, dir)
 	xexec.Attach(cmd)
 	err = cmd.Run()
 	if err != nil {
-		flog.Fatal("failed to clone hat: %v", err)
+		return "", xerrors.Errorf("failed to clone hat: %w", err)
 	}
 
-	return dir
+	return dir, nil
 }

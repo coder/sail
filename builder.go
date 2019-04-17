@@ -57,54 +57,55 @@ type builder struct {
 	testCmd string
 }
 
-func dockerClient() *client.Client {
+func dockerClient() (*client.Client, error) {
 	cli, err := client.NewEnvClient()
 	if err != nil {
-		flog.Fatal("failed to make docker client: %v", err)
+		return nil, xerrors.Errorf("failed to make docker client: %w", err)
 	}
 
 	// Update the API version of the client to match
 	// what the server is running.
 	cli.NegotiateAPIVersion(context.Background())
 
-	return cli
+	return cli, nil
 }
 
-func (b *builder) resolveHatPath() string {
+func (b *builder) resolveHatPath() (string, error) {
 	const ghPrefix = "github:"
 
 	hatPath := b.hatPath
 	if strings.HasPrefix(b.hatPath, ghPrefix) {
 		hatPath = strings.TrimLeft(b.hatPath, ghPrefix)
-		hatPath = hat.ResolveGitHubPath(b.hatPath)
+		return hat.ResolveGitHubPath(hatPath)
 	}
 
-	b.hatPath = hatPath
-
-	return hatPath
+	return hatPath, nil
 }
 
-func (b *builder) applyHat() string {
-	hatPath := b.resolveHatPath()
+func (b *builder) applyHat() (string, error) {
+	hatPath, err := b.resolveHatPath()
+	if err != nil {
+		return "", xerrors.Errorf("failed to resolve hat path: %w", err)
+	}
 
 	dockerFilePath := filepath.Join(hatPath, "Dockerfile")
 
 	dockerFileByt, err := ioutil.ReadFile(dockerFilePath)
 	if err != nil {
-		flog.Fatal("failed to read %v: %v", dockerFilePath, err)
+		return "", xerrors.Errorf("failed to read %v: %w", dockerFilePath, err)
 	}
 	dockerFileByt = hat.DockerReplaceFrom(dockerFileByt, b.baseImage)
 
 	fi, err := ioutil.TempFile("", "hat")
 	if err != nil {
-		flog.Fatal("failed to create temp file: %v", err)
+		return "", xerrors.Errorf("failed to create temp file: %w", err)
 	}
 	defer fi.Close()
 	defer os.Remove(fi.Name())
 
 	_, err = fi.Write(dockerFileByt)
 	if err != nil {
-		flog.Fatal("failed to write to %v: %v", fi.Name(), err)
+		return "", xerrors.Errorf("failed to write to %v: %w", fi.Name(), err)
 	}
 
 	// We tag based on the checksum of the Dockerfile to avoid spamming
@@ -119,13 +120,16 @@ func (b *builder) applyHat() string {
 	xexec.Attach(cmd)
 	err = cmd.Run()
 	if err != nil {
-		flog.Fatal("failed to build hatted baseImage: %v", err)
+		return "", xerrors.Errorf("failed to build hatted baseImage: %w", err)
 	}
-	return imageName
+	return imageName, nil
 }
 
 func (b *builder) projectDir(image string) (string, error) {
-	cli := dockerClient()
+	cli, err := dockerClient()
+	if err != nil {
+		return "", err
+	}
 	defer cli.Close()
 
 	img, _, err := cli.ImageInspectWithRaw(context.Background(), image)
@@ -142,13 +146,16 @@ func (b *builder) projectDir(image string) (string, error) {
 }
 
 // imageDefinedMounts adds a list of shares to the shares map from the image.
-func (b *builder) imageDefinedMounts(image string, mounts []mount.Mount) []mount.Mount {
-	cli := dockerClient()
+func (b *builder) imageDefinedMounts(image string, mounts []mount.Mount) ([]mount.Mount, error) {
+	cli, err := dockerClient()
+	if err != nil {
+		return nil, err
+	}
 	defer cli.Close()
 
 	ins, _, err := cli.ImageInspectWithRaw(context.Background(), image)
 	if err != nil {
-		flog.Fatal("failed to inspect %v: %v", image, err)
+		return nil, xerrors.Errorf("failed to inspect %v: %w", image, err)
 	}
 
 	for k, v := range ins.ContainerConfig.Labels {
@@ -159,7 +166,7 @@ func (b *builder) imageDefinedMounts(image string, mounts []mount.Mount) []mount
 
 		tokens := strings.Split(v, ":")
 		if len(tokens) != 2 {
-			flog.Fatal("invalid share %q", v)
+			return nil, xerrors.Errorf("invalid share %q", v)
 		}
 
 		mounts = append(mounts, mount.Mount{
@@ -168,7 +175,7 @@ func (b *builder) imageDefinedMounts(image string, mounts []mount.Mount) []mount
 			Target: tokens[1],
 		})
 	}
-	return mounts
+	return mounts, nil
 }
 
 func (b *builder) stripDuplicateMounts(mounts []mount.Mount) []mount.Mount {
@@ -256,7 +263,10 @@ func (b *builder) mounts(mounts []mount.Mount, image string) ([]mount.Mount, err
 	})
 
 	// We take the mounts from the final image so that it includes the hat and the baseImage.
-	mounts = b.imageDefinedMounts(image, mounts)
+	mounts, err = b.imageDefinedMounts(image, mounts)
+	if err != nil {
+		return nil, err
+	}
 
 	b.resolveMounts(mounts)
 	return mounts, nil
@@ -268,12 +278,19 @@ func (b *builder) mounts(mounts []mount.Mount, image string) ([]mount.Mount, err
 // We want code-server to be the root process as it gives us the nice guarantee that
 // the container is only online when code-server is working.
 func (b *builder) runContainer() error {
-	cli := dockerClient()
+	cli, err := dockerClient()
+	if err != nil {
+		return err
+	}
 	defer cli.Close()
 
 	image := b.baseImage
 	if b.hatPath != "" {
-		image = b.applyHat()
+		var err error
+		image, err = b.applyHat()
+		if err != nil {
+			return xerrors.Errorf("failed to apply hat: %w", err)
+		}
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
@@ -281,7 +298,7 @@ func (b *builder) runContainer() error {
 
 	var mounts []mount.Mount
 
-	mounts, err := b.mounts(mounts, image)
+	mounts, err = b.mounts(mounts, image)
 	if err != nil {
 		return xerrors.Errorf("failed to assemble mounts: %w", err)
 	}
@@ -343,13 +360,16 @@ func (b *builder) runContainer() error {
 
 // builderFromContainer gets a builder config from container named
 // name.
-func builderFromContainer(name string) *builder {
-	cli := dockerClient()
+func builderFromContainer(name string) (*builder, error) {
+	cli, err := dockerClient()
+	if err != nil {
+		return nil, err
+	}
 	defer cli.Close()
 
 	cnt, err := cli.ContainerInspect(context.Background(), name)
 	if err != nil {
-		flog.Fatal("failed to inspect %v: %v", name, err)
+		return nil, xerrors.Errorf("failed to inspect %v: %w", name, err)
 	}
 
 	return &builder{
@@ -361,5 +381,5 @@ func builderFromContainer(name string) *builder {
 		projectLocalDir: cnt.Config.Labels[projectLocalDirLabel],
 		projectName:     cnt.Config.Labels[projectNameLabel],
 		hostUser:        cnt.Config.User,
-	}
+	}, nil
 }

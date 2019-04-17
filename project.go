@@ -56,14 +56,11 @@ func (p *project) dockerfilePath() string {
 
 // clone clones a git repository on h.
 // It returns a path to the repository.
-func clone(repo repo, dir string) {
+func clone(repo repo, dir string) error {
 	cmd := xexec.Fmt("git clone %v %v", repo.CloneURI(), dir)
 	xexec.Attach(cmd)
 
-	err := cmd.Run()
-	if err != nil {
-		flog.Fatal("failed to clone project: %v", err)
-	}
+	return cmd.Run()
 }
 
 func isContainerNotFoundError(err error) bool {
@@ -73,53 +70,63 @@ func isContainerNotFoundError(err error) bool {
 	return strings.Contains(err.Error(), "No such container")
 }
 
-func (p *project) cntExists() bool {
-	cli := dockerClient()
+func (p *project) cntExists() (bool, error) {
+	cli, err := dockerClient()
+	if err != nil {
+		return false, err
+	}
 	defer cli.Close()
 
-	_, err := cli.ContainerInspect(context.Background(), p.cntName())
+	_, err = cli.ContainerInspect(context.Background(), p.cntName())
 	if err != nil {
 		if isContainerNotFoundError(err) {
-			return false
+			return false, nil
 		}
-		flog.Fatal("failed to inspect %v: %v", p.cntName(), err)
+		return false, xerrors.Errorf("failed to inspect %v: %w", p.cntName(), err)
 	}
-	return true
+	return true, nil
 }
 
-func (p *project) running() bool {
-	cli := dockerClient()
+func (p *project) running() (bool, error) {
+	cli, err := dockerClient()
+	if err != nil {
+		return false, err
+	}
 	defer cli.Close()
 
 	cnt, err := cli.ContainerInspect(context.Background(), p.cntName())
 	if err != nil {
-		flog.Fatal("failed to get container %v: %v", p.cntName(), err)
+		return false, xerrors.Errorf("failed to get container %v: %v", p.cntName(), err)
 	}
-	return cnt.State.Running
+	return cnt.State.Running, nil
 }
 
 func (p *project) requireRunning() {
-	if !p.running() {
+	running, err := p.running()
+	if err != nil {
+		flog.Fatal("%v", err)
+	}
+	if !running {
 		flog.Fatal("container %v is not running", p.cntName())
 	}
 }
 
-// ensureDir ensures that a
-// project directory exists or creates one if it doesn't exist.
-func (p *project) ensureDir() {
+// ensureDir ensures that a project directory exists or creates
+// one if it doesn't exist.
+func (p *project) ensureDir() error {
 	err := os.MkdirAll(p.localDir(), 0750)
 	if err != nil {
-		flog.Fatal("failed to make project dir %v: %v", p.localDir(), err)
+		return xerrors.Errorf("failed to make project dir %v: %w", p.localDir(), err)
 	}
 
 	// If the git directory exists, don't bother re-downloading the project.
 	gitDir := filepath.Join(p.localDir(), ".git")
 	_, err = os.Stat(gitDir)
 	if err == nil {
-		return
+		return nil
 	}
 
-	clone(p.repo, p.localDir())
+	return clone(p.repo, p.localDir())
 }
 
 // buildImage finds the `.sail/Dockerfile` in the project directory
@@ -155,7 +162,10 @@ func (p *project) cntName() string {
 
 // containerDir returns the directory of which the project is mounted within the container.
 func (p *project) containerDir() (string, error) {
-	client := dockerClient()
+	client, err := dockerClient()
+	if err != nil {
+		return "", err
+	}
 	defer client.Close()
 
 	cnt, err := client.ContainerInspect(context.Background(), p.cntName())
@@ -195,7 +205,10 @@ func (p *project) ExecEnv(envs []string, cmd string, args ...string) *exec.Cmd {
 
 // CodeServerPort gets the port of the running code-server binary.
 func (p *project) CodeServerPort() (string, error) {
-	cli := dockerClient()
+	cli, err := dockerClient()
+	if err != nil {
+		return "", err
+	}
 	defer cli.Close()
 
 	cnt, err := cli.ContainerInspect(context.Background(), p.cntName())
@@ -223,7 +236,10 @@ func (p *project) readCodeServerLog() ([]byte, error) {
 
 // waitOnline waits until code-server has bound to it's port.
 func (p *project) waitOnline() error {
-	cli := dockerClient()
+	cli, err := dockerClient()
+	if err != nil {
+		return err
+	}
 	defer cli.Close()
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
@@ -266,10 +282,13 @@ func (p *project) openNative(u string) error {
 }
 
 func (p *project) open() error {
-	cli := dockerClient()
+	cli, err := dockerClient()
+	if err != nil {
+		return err
+	}
 	defer cli.Close()
 
-	err := cli.ContainerStart(context.Background(), p.cntName(), types.ContainerStartOptions{})
+	err = cli.ContainerStart(context.Background(), p.cntName(), types.ContainerStartOptions{})
 	if err != nil {
 		return xerrors.Errorf("failed to start container: %w", err)
 	}

@@ -70,14 +70,20 @@ func (c *editcmd) handle(gf globalFlags, fl *flag.FlagSet) {
 }
 
 func (c *editcmd) recreate(proj *project) (err error) {
-	cli := dockerClient()
+	cli, err := dockerClient()
+	if err != nil {
+		return err
+	}
 	defer cli.Close()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	// Get the existing container's state so re-create is seamless.
-	b := builderFromContainer(proj.cntName())
+	b, err := builderFromContainer(proj.cntName())
+	if err != nil {
+		return err
+	}
 
 	editFile := proj.dockerfilePath()
 	// If custom hat provided, use it.
@@ -87,16 +93,22 @@ func (c *editcmd) recreate(proj *project) (err error) {
 	// If c.hat is set, then we want to edit the project's hat instead of the project's Dockerfile.
 	if c.hat {
 		if b.hatPath == "" {
-			flog.Fatal("unable to edit a nonexistent hat")
+			return xerrors.New("unable to edit a nonexistent hat")
 		}
-
-		editFile = filepath.Join(b.resolveHatPath(), "Dockerfile")
+		hatPath, err := b.resolveHatPath()
+		if err != nil {
+			return err
+		}
+		editFile = filepath.Join(hatPath, "Dockerfile")
 	}
 
 	// If we're just trying to change the underlying hat for the project, we don't want
 	// to prompt the user with the editor, instead just rebuild with the new hat.
 	if c.hatPath == "" || c.hat {
-		runEditor(editFile)
+		err = runEditor(editFile)
+		if err != nil {
+			return err
+		}
 	}
 
 	builderCntName := proj.cntName() + "-builder-" + randstr.Make(5)
@@ -172,10 +184,10 @@ func (c *editcmd) recreate(proj *project) (err error) {
 	return nil
 }
 
-func runEditor(file string) {
+func runEditor(file string) error {
 	editor, err := editor.Env()
 	if err != nil {
-		flog.Fatal("failed to get editor: %v", err)
+		return xerrors.Errorf("failed to get editor: %w", err)
 	}
 	// TODO: in an ideal world we could re-build the environment on each save instead of when the environment
 	// quits. The problem is user feedback. For real-time edits, we must either send build feedback to the
@@ -188,8 +200,10 @@ func runEditor(file string) {
 
 	err = cmd.Run()
 	if err != nil {
-		os.Exit(1)
+		return xerrors.Errorf("editor failed: %w", err)
 	}
+
+	return nil
 }
 
 func (c *editcmd) initFlags(fl *flag.FlagSet) {
