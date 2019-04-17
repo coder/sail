@@ -21,6 +21,7 @@ import (
 type editcmd struct {
 	noEditor bool
 	hatPath  string
+	hat      bool
 }
 
 func (c *editcmd) spec() commandSpec {
@@ -61,23 +62,6 @@ func (c *editcmd) handle(gf globalFlags, fl *flag.FlagSet) {
 		}
 	}
 
-	editor, err := editor.Env()
-	if err != nil {
-		flog.Fatal("failed to get editor: %v", err)
-	}
-	// TODO: in an ideal world we could re-build the environment on each save instead of when the environment
-	// quits. The problem is user feedback. For real-time edits, we must either send build feedback to the
-	// calling terminal or start the editor in a completely different terminal. In the former option,
-	// build feedback corrupts a terminal editor's layout. In the latter option, compatibility becomes
-	// difficult, and sail will have a hard time being ran on server.
-
-	cmd := exec.Command(editor, proj.dockerfilePath())
-	xexec.Attach(cmd)
-
-	err = cmd.Run()
-	if err != nil {
-		os.Exit(1)
-	}
 	err = c.recreate(proj)
 	if err != nil {
 		flog.Fatal("%v", err)
@@ -95,9 +79,24 @@ func (c *editcmd) recreate(proj *project) (err error) {
 	// Get the existing container's state so re-create is seamless.
 	b := builderFromContainer(proj.cntName())
 
+	editFile := proj.dockerfilePath()
 	// If custom hat provided, use it.
 	if c.hatPath != "" {
 		b.hatPath = c.hatPath
+	}
+	// If c.hat is set, then we want to edit the project's hat instead of the project's Dockerfile.
+	if c.hat {
+		if b.hatPath == "" {
+			flog.Fatal("unable to edit a nonexistent hat")
+		}
+
+		editFile = filepath.Join(b.resolveHatPath(), "Dockerfile")
+	}
+
+	// If we're just trying to change the underlying hat for the project, we don't want
+	// to prompt the user with the editor, instead just rebuild with the new hat.
+	if c.hatPath == "" || c.hat {
+		runEditor(editFile)
 	}
 
 	builderCntName := proj.cntName() + "-builder-" + randstr.Make(5)
@@ -173,6 +172,27 @@ func (c *editcmd) recreate(proj *project) (err error) {
 	return nil
 }
 
+func runEditor(file string) {
+	editor, err := editor.Env()
+	if err != nil {
+		flog.Fatal("failed to get editor: %v", err)
+	}
+	// TODO: in an ideal world we could re-build the environment on each save instead of when the environment
+	// quits. The problem is user feedback. For real-time edits, we must either send build feedback to the
+	// calling terminal or start the editor in a completely different terminal. In the former option,
+	// build feedback corrupts a terminal editor's layout. In the latter option, compatibility becomes
+	// difficult, and sail will have a hard time being ran on server.
+
+	cmd := exec.Command(editor, file)
+	xexec.Attach(cmd)
+
+	err = cmd.Run()
+	if err != nil {
+		os.Exit(1)
+	}
+}
+
 func (c *editcmd) initFlags(fl *flag.FlagSet) {
-	fl.StringVar(&c.hatPath, "hat", "", "Path to new hat.")
+	fl.StringVar(&c.hatPath, "new-hat", "", "Path to new hat.")
+	fl.BoolVar(&c.hat, "hat", false, "Edit the hat associated with this project.")
 }

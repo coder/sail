@@ -70,7 +70,7 @@ func dockerClient() *client.Client {
 	return cli
 }
 
-func (b *builder) applyHat() string {
+func (b *builder) resolveHatPath() string {
 	const ghPrefix = "github:"
 
 	hatPath := b.hatPath
@@ -78,6 +78,14 @@ func (b *builder) applyHat() string {
 		hatPath = strings.TrimLeft(b.hatPath, ghPrefix)
 		hatPath = hat.ResolveGitHubPath(b.hatPath)
 	}
+
+	b.hatPath = hatPath
+
+	return hatPath
+}
+
+func (b *builder) applyHat() string {
+	hatPath := b.resolveHatPath()
 
 	dockerFilePath := filepath.Join(hatPath, "Dockerfile")
 
@@ -138,9 +146,9 @@ func (b *builder) imageDefinedMounts(image string, mounts []mount.Mount) []mount
 	cli := dockerClient()
 	defer cli.Close()
 
-	ins, _, err := cli.ImageInspectWithRaw(context.Background(), b.baseImage)
+	ins, _, err := cli.ImageInspectWithRaw(context.Background(), image)
 	if err != nil {
-		flog.Fatal("failed to inspect %v: %v", b.baseImage, err)
+		flog.Fatal("failed to inspect %v: %v", image, err)
 	}
 
 	for k, v := range ins.ContainerConfig.Labels {

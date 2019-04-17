@@ -1,4 +1,6 @@
 FROM codercom/ubuntu-dev
 
-RUN apt-get -y install fish
-RUN chsh root -s $(which fish)
+RUN sudo apt-get -y install fish
+RUN sudo chsh user -s $(which fish)
+
+LABEL share.fish="~/.config/fish:~/.config/fish"
