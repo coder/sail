@@ -89,17 +89,8 @@ Commands:
 		}
 		fs := flag.NewFlagSet(cmd.spec().name, flag.ExitOnError)
 		cmd.initFlags(fs)
-		fs.Usage = func() {
-			fmt.Printf(`Usage: %v %v %v
-%v
-%v
+		fs.Usage = usageFunc(wantCmd, cmd, fs)
 
-%v`,
-				os.Args[0], wantCmd, cmd.spec().usage,
-				cmd.spec().shortDesc, cmd.spec().longDesc,
-				flagHelp(fs),
-			)
-		}
 		if help {
 			fs.Usage()
 			os.Exit(0)
@@ -116,4 +107,28 @@ Commands:
 	flog.Error("command %q not found", wantCmd)
 	gfs.Usage()
 	os.Exit(2)
+}
+
+func usageFunc(wantCmd string, cmd command, flagSet *flag.FlagSet) func() {
+	return func() {
+		help := fmt.Sprintf(`NAME:
+	%s %s - %s
+
+USAGE:
+	%s %s %s
+
+DESCRIPTION:
+	%s`,
+			os.Args[0], wantCmd, cmd.spec().shortDesc,
+			os.Args[0], wantCmd, cmd.spec().usage,
+			cmd.spec().longDesc,
+		)
+
+		flagHelpMsg := flagHelp(flagSet)
+		if flagHelpMsg == "" {
+			fmt.Printf("%s", help)
+		} else {
+			fmt.Printf("%s\n\n%s", help, flagHelpMsg)
+		}
+	}
 }

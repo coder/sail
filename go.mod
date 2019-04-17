@@ -5,7 +5,6 @@ go 1.12
 require (
 	github.com/BurntSushi/toml v0.3.1
 	github.com/Microsoft/go-winio v0.4.12 // indirect
-	github.com/davecgh/go-spew v1.1.1
 	github.com/docker/distribution v2.7.1+incompatible // indirect
 	github.com/docker/docker v0.7.3-0.20190416080540-ad9362bb1567
 	github.com/docker/go-connections v0.4.0 // indirect
