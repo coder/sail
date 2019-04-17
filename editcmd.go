@@ -70,10 +70,7 @@ func (c *editcmd) handle(gf globalFlags, fl *flag.FlagSet) {
 }
 
 func (c *editcmd) recreate(proj *project) (err error) {
-	cli, err := dockerClient()
-	if err != nil {
-		return err
-	}
+	cli := dockerClient()
 	defer cli.Close()
 
 	ctx, cancel := context.WithCancel(context.Background())
