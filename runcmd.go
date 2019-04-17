@@ -49,7 +49,10 @@ func (c *runcmd) handle(gf globalFlags, fl *flag.FlagSet) {
 	proj := gf.project(fl)
 
 	// Abort if container already exists.
-	exists := proj.cntExists()
+	exists, err := proj.cntExists()
+	if err != nil {
+		flog.Fatal("%v", err)
+	}
 	if exists {
 		gf.debug("opening existing project")
 
@@ -60,7 +63,10 @@ func (c *runcmd) handle(gf globalFlags, fl *flag.FlagSet) {
 		return
 	}
 
-	proj.ensureDir()
+	err = proj.ensureDir()
+	if err != nil {
+		flog.Fatal("%v", err)
+	}
 
 	var image string
 	if c.image != "" {
@@ -122,8 +128,12 @@ func (c *runcmd) handle(gf globalFlags, fl *flag.FlagSet) {
 		if !c.keep {
 			// We remove the container if it fails to start as that means the developer
 			// can iterate w/o having to do the obnoxious `docker rm` step.
+			cli, err := dockerClient()
+			if err != nil {
+				flog.Fatal("%v", err)
+			}
 			gf.debug("removing %v", proj.cntName())
-			err = dockutil.StopRemove(context.Background(), dockerClient(), proj.cntName())
+			err = dockutil.StopRemove(context.Background(), cli, proj.cntName())
 			if err != nil {
 				flog.Error("failed to remove %v", proj.cntName())
 			}
