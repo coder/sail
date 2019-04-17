@@ -1,0 +1,47 @@
+// Colors: https://color.adobe.com/create/color-wheel/
+$primary-color:  #3364dd;
+$font-color: black;
+$background-color: desaturate(#fcfaf3, 80%);
+
+body {
+  margin: 0 auto;
+  max-width: 50em;
+  font-family: 'Helvetica', serif;
+  background-color: $background-color;
+
+  line-height: 1.5;
+  padding: 4em 1em;
+}
+
+code {
+    color: $primary-color;
+    background-color: white;
+}
+
+// Override bootstrap.
+pre code {
+    color: $primary-color;
+    background-color: white;
+}
+
+p.leading {
+  font-size: larger;
+}
+
+a.button {
+    -webkit-appearance: button;
+    -moz-appearance: button;
+    appearance: button;
+
+    text-decoration: none;
+    color: initial;
+    padding: 3px;
+}
+
+// Hugo Table of Contents
+nav ul {
+  padding-inline-start: 0px;
+}
+nav li {
+  padding-inline-start: 15px;
+}

@@ -1,0 +1,65 @@
+{{ define "main" }}
+
+{{ $style := resources.Get "doc.scss" | resources.ToCSS | resources.Minify | resources.Fingerprint }}
+<link rel="stylesheet" href="{{ $style.Permalink }}">
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-lg">
+            <h1>Sail Documentation</h1>
+        </div>
+    </div>
+    <hr />
+    <div class="row">
+        <div class="col-lg-2 sidebar">
+            <dl>
+                <dt>Usage</dt>
+                <ul>
+                    <li>Getting started</li>
+                    <li>Updating</li>
+                </ul>
+
+                <dt>Concepts</dt>
+                <ul>
+                    <li>Hats</li>
+                    <li>Docker</li>
+                    <li>Immutable workspaces</li>
+                    <li>Shares</li>
+                    <li>Permissions</li>
+                    <li>Project Structure</li>
+                    <li>Configuration</li>
+                </ul>
+
+                <dt>Commands</dt>
+                <ul>
+                    <li>run</li>
+                    <li>ls</li>
+                    <li>edit</li>
+                    <li>rm</li>
+                </ul>
+
+                <dt>Best Practices</dt>
+                <ul>
+                    <li>Dockerfile</li>
+                </ul>
+
+                <dt>Workflow Tips</dt>
+                <ul>
+                    <li>Fuzzy run</li>
+                </ul>
+            </dl>
+        </div>
+        <div class="col-lg">
+            <h1> {{ .Title }} </h1>
+            {{ .Content }}
+        </div>
+        <div class="col-lg-3">
+            <span class="text-muted"><strong> In This Page </strong></span>
+
+            <!-- {{ $emtLiPtrn := "(?s)<ul>\\s<li>\\s<ul>(.*)</li>\\s</ul>" }}
+            {{ $rplcEmtLi := "<ul>$1" }}
+            {{ .TableOfContents | replaceRE $emtLiPtrn $rplcEmtLi | safeHTML }} -->
+            {{ .TableOfContents }}
+        </div>
+    </div>
+</div> {{ end }}

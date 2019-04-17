@@ -1,0 +1,25 @@
+// This file supercedes main.scss with documentation-specific styling.
+
+body {
+    max-width: 100em;
+}
+
+.sidebar {
+    border-right: 2px solid lightgray;
+}
+
+.container-fluid {
+    width: 75%;
+}
+
+ul {
+    padding-inline-start: 25px;
+    list-style-type: none;
+    color: grey;
+}
+
+#TableOfContents > ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
