@@ -128,12 +128,8 @@ func (c *runcmd) handle(gf globalFlags, fl *flag.FlagSet) {
 		if !c.keep {
 			// We remove the container if it fails to start as that means the developer
 			// can iterate w/o having to do the obnoxious `docker rm` step.
-			cli, err := dockerClient()
-			if err != nil {
-				flog.Fatal("%v", err)
-			}
 			gf.debug("removing %v", proj.cntName())
-			err = dockutil.StopRemove(context.Background(), cli, proj.cntName())
+			err = dockutil.StopRemove(context.Background(), dockerClient(), proj.cntName())
 			if err != nil {
 				flog.Error("failed to remove %v", proj.cntName())
 			}

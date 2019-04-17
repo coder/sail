@@ -30,10 +30,7 @@ func (c *lscmd) initFlags(fl *flag.FlagSet) {
 }
 
 func (c *lscmd) handle(gf globalFlags, fl *flag.FlagSet) {
-	cli, err := dockerClient()
-	if err != nil {
-		flog.Fatal("%v", err)
-	}
+	cli := dockerClient()
 	defer cli.Close()
 
 	ctx, cancel := context.WithCancel(context.Background())

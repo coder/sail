@@ -71,13 +71,10 @@ func isContainerNotFoundError(err error) bool {
 }
 
 func (p *project) cntExists() (bool, error) {
-	cli, err := dockerClient()
-	if err != nil {
-		return false, err
-	}
+	cli := dockerClient()
 	defer cli.Close()
 
-	_, err = cli.ContainerInspect(context.Background(), p.cntName())
+	_, err := cli.ContainerInspect(context.Background(), p.cntName())
 	if err != nil {
 		if isContainerNotFoundError(err) {
 			return false, nil
@@ -88,10 +85,7 @@ func (p *project) cntExists() (bool, error) {
 }
 
 func (p *project) running() (bool, error) {
-	cli, err := dockerClient()
-	if err != nil {
-		return false, err
-	}
+	cli := dockerClient()
 	defer cli.Close()
 
 	cnt, err := cli.ContainerInspect(context.Background(), p.cntName())
@@ -162,10 +156,7 @@ func (p *project) cntName() string {
 
 // containerDir returns the directory of which the project is mounted within the container.
 func (p *project) containerDir() (string, error) {
-	client, err := dockerClient()
-	if err != nil {
-		return "", err
-	}
+	client := dockerClient()
 	defer client.Close()
 
 	cnt, err := client.ContainerInspect(context.Background(), p.cntName())
@@ -205,10 +196,7 @@ func (p *project) ExecEnv(envs []string, cmd string, args ...string) *exec.Cmd {
 
 // CodeServerPort gets the port of the running code-server binary.
 func (p *project) CodeServerPort() (string, error) {
-	cli, err := dockerClient()
-	if err != nil {
-		return "", err
-	}
+	cli := dockerClient()
 	defer cli.Close()
 
 	cnt, err := cli.ContainerInspect(context.Background(), p.cntName())
@@ -236,10 +224,7 @@ func (p *project) readCodeServerLog() ([]byte, error) {
 
 // waitOnline waits until code-server has bound to it's port.
 func (p *project) waitOnline() error {
-	cli, err := dockerClient()
-	if err != nil {
-		return err
-	}
+	cli := dockerClient()
 	defer cli.Close()
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
@@ -282,13 +267,10 @@ func (p *project) openNative(u string) error {
 }
 
 func (p *project) open() error {
-	cli, err := dockerClient()
-	if err != nil {
-		return err
-	}
+	cli := dockerClient()
 	defer cli.Close()
 
-	err = cli.ContainerStart(context.Background(), p.cntName(), types.ContainerStartOptions{})
+	err := cli.ContainerStart(context.Background(), p.cntName(), types.ContainerStartOptions{})
 	if err != nil {
 		return xerrors.Errorf("failed to start container: %w", err)
 	}

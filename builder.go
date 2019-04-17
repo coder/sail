@@ -57,17 +57,20 @@ type builder struct {
 	testCmd string
 }
 
-func dockerClient() (*client.Client, error) {
+// dockerClient returns an instantiated docker client that
+// is using the correct API version. If the client can't be
+// constructed, this will panic.
+func dockerClient() *client.Client {
 	cli, err := client.NewEnvClient()
 	if err != nil {
-		return nil, xerrors.Errorf("failed to make docker client: %w", err)
+		panicf("failed to make docker client: %w", err)
 	}
 
 	// Update the API version of the client to match
 	// what the server is running.
 	cli.NegotiateAPIVersion(context.Background())
 
-	return cli, nil
+	return cli
 }
 
 func (b *builder) resolveHatPath() (string, error) {
@@ -126,10 +129,7 @@ func (b *builder) applyHat() (string, error) {
 }
 
 func (b *builder) projectDir(image string) (string, error) {
-	cli, err := dockerClient()
-	if err != nil {
-		return "", err
-	}
+	cli := dockerClient()
 	defer cli.Close()
 
 	img, _, err := cli.ImageInspectWithRaw(context.Background(), image)
@@ -147,10 +147,7 @@ func (b *builder) projectDir(image string) (string, error) {
 
 // imageDefinedMounts adds a list of shares to the shares map from the image.
 func (b *builder) imageDefinedMounts(image string, mounts []mount.Mount) ([]mount.Mount, error) {
-	cli, err := dockerClient()
-	if err != nil {
-		return nil, err
-	}
+	cli := dockerClient()
 	defer cli.Close()
 
 	ins, _, err := cli.ImageInspectWithRaw(context.Background(), image)
@@ -278,10 +275,7 @@ func (b *builder) mounts(mounts []mount.Mount, image string) ([]mount.Mount, err
 // We want code-server to be the root process as it gives us the nice guarantee that
 // the container is only online when code-server is working.
 func (b *builder) runContainer() error {
-	cli, err := dockerClient()
-	if err != nil {
-		return err
-	}
+	cli := dockerClient()
 	defer cli.Close()
 
 	image := b.baseImage
@@ -296,7 +290,10 @@ func (b *builder) runContainer() error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 	defer cancel()
 
-	var mounts []mount.Mount
+	var (
+		err    error
+		mounts []mount.Mount
+	)
 
 	mounts, err = b.mounts(mounts, image)
 	if err != nil {
@@ -361,10 +358,7 @@ func (b *builder) runContainer() error {
 // builderFromContainer gets a builder config from container named
 // name.
 func builderFromContainer(name string) (*builder, error) {
-	cli, err := dockerClient()
-	if err != nil {
-		return nil, err
-	}
+	cli := dockerClient()
 	defer cli.Close()
 
 	cnt, err := cli.ContainerInspect(context.Background(), name)
