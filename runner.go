@@ -85,7 +85,6 @@ func (r *runner) runContainer(image string) error {
 		"; code-server --host 127.0.0.1" +
 		" --port " + r.port +
 		" --data-dir ~/.config/Code --extensions-dir ~/.vscode/extensions --allow-http --no-auth 2>&1 | tee " + containerLogPath
-
 	if r.testCmd != "" {
 		cmd = r.testCmd + "; exit 1"
 	}
@@ -189,7 +188,34 @@ func (r *runner) mounts(mounts []mount.Mount, image string) ([]mount.Mount, erro
 	}
 
 	r.resolveMounts(mounts)
+
+	err = r.ensureMountSources(mounts)
+	if err != nil {
+		return nil, err
+	}
+
 	return mounts, nil
+}
+
+// ensureMountSources ensures that the mount's source exists. If the source
+// doesn't exist, it will be created as a directory on the host.
+func (r *runner) ensureMountSources(mounts []mount.Mount) error {
+	for _, mount := range mounts {
+		_, err := os.Stat(mount.Source)
+		if err == nil {
+			continue
+		}
+		if !os.IsNotExist(err) {
+			return xerrors.Errorf("failed to stat mount source %v: %w", mount.Source, err)
+		}
+
+		err = os.MkdirAll(mount.Source, 0755)
+		if err != nil {
+			return xerrors.Errorf("failed to create mount source %v: %w", mount.Source, err)
+		}
+	}
+
+	return nil
 }
 
 // imageDefinedMounts adds a list of shares to the shares map from the image.
