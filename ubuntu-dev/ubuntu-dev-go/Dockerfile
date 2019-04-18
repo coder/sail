@@ -7,6 +7,9 @@ RUN sudo ln -s /usr/local/go/bin/go /usr/local/bin/go
 ADD install_go_tools.sh /tmp/
 RUN bash /tmp/install_go_tools.sh
 
+# This technically has no effect until #35 is resolved.
+RUN code-server --install-extension ms-vscode.go
+
 LABEL share.go_mod "~/go/pkg/mod:~/go/pkg/mod"
 LABEL project_root "~/go/src/"
 
