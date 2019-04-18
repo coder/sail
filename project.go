@@ -10,10 +10,10 @@ import (
 	"strings"
 	"time"
 
+	"go.coder.com/sail/internal/browserapp"
+
 	"github.com/docker/docker/api/types"
-	"github.com/skratchdot/open-golang/open"
 	"go.coder.com/flog"
-	"go.coder.com/sail/internal/nohup"
 	"go.coder.com/sail/internal/xexec"
 	"go.coder.com/sail/internal/xnet"
 	"golang.org/x/xerrors"
@@ -257,18 +257,6 @@ func (p *project) waitOnline() error {
 	return ctx.Err()
 }
 
-const coderNativeBin = "cdrnative"
-
-func (p *project) hasCoderNative() bool {
-	_, err := exec.LookPath(coderNativeBin)
-	return err == nil
-}
-
-func (p *project) openNative(u string) error {
-	err := nohup.Start(coderNativeBin, "--", "--open", u)
-	return err
-}
-
 func (p *project) open() error {
 	cli := dockerClient()
 	defer cli.Close()
@@ -284,14 +272,7 @@ func (p *project) open() error {
 	}
 
 	u := "http://" + net.JoinHostPort("127.0.0.1", port)
-	if p.hasCoderNative() {
-		flog.Info("opening coder native")
-		err = p.openNative(u)
-		// Uncomment below line to debug native startup failure.
-		// select {}
-		return err
-	}
 
-	flog.Info("opening browser serving %v", u)
-	return open.Run(u)
+	flog.Info("opening %v", u)
+	return browserapp.Open(u)
 }
