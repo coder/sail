@@ -12,11 +12,12 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
-	"nhooyr.io/websocket"
 	"strconv"
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"nhooyr.io/websocket"
 
 	"go.coder.com/cli"
 	"go.coder.com/flog"

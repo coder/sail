@@ -26,7 +26,7 @@ func Test_project(t *testing.T) {
 		expCustomBldImg bool
 	}{
 		{
-			"ssh",
+			"https",
 			"OK",
 			"codercom/bigdur",
 			"codercom_bigdur",
@@ -34,7 +34,7 @@ func Test_project(t *testing.T) {
 			true,
 		},
 		{
-			"ssh",
+			"https",
 			"RepoNotExist",
 			"codercom/do-not-exist",
 			"codercom_do-not-exist",

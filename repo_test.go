@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestParseRepo(t *testing.T) {
+func Test_parseRepo(t *testing.T) {
 	var tests = []struct {
 		defSchema string
 		defHost   string
@@ -84,17 +84,6 @@ func TestParseRepo(t *testing.T) {
 			"git",
 			"ssh",
 			"ssh://git@github.com/cdr/sail.git",
-		},
-		// ensure custom host works
-		{
-			"https",
-			"my.private-git.com",
-			"private/repo",
-			"private/repo",
-			"my.private-git.com",
-			"",
-			"https",
-			"https://my.private-git.com/private/repo.git",
 		},
 	}
 

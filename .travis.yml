@@ -1,0 +1,28 @@
+language: go
+
+dist: xenial
+services:
+  - docker
+
+go:
+- 1.12
+
+go_import_path: go.coder.com/sail
+
+install: true
+env:
+  - GO111MODULE=on
+script:
+  - env
+  - ci/build.sh
+  - cat /etc/passwd
+  - sudo usermod -u 1000 travis
+  - sudo groupmod -g 1000 travis
+  - go test -v ./...
+
+deploy:
+  provider: releases
+  api_key: "GITHUB OAUTH TOKEN"
+  file: "bin/sail-linux-amd64"
+  skip_cleanup: true
+  draft: true

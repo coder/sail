@@ -34,7 +34,7 @@ func Port(containerName string) (string, error) {
 	// tcp        0      0 127.0.0.53:domain       0.0.0.0:*               LISTEN      -
 	out, err := dockutil.Exec(containerName, "netstat", "-tpl").CombinedOutput()
 	if err != nil {
-		return "", xerrors.Errorf("failed to netstat: %s, %w", out, err)
+		return "", xerrors.Errorf("failed to netstat %s: %w", out, err)
 	}
 
 	lines := strings.Split(string(out), "\n")

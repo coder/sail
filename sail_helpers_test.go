@@ -129,6 +129,10 @@ func requireProjectsNotRunning(t *testing.T, projects ...string) {
 	}
 }
 
+func requireUbuntuDevImage(t *testing.T) {
+	require.NoError(t, ensureImage("codercom/ubuntu-dev"))
+}
+
 func requireGetImageLabels(t *testing.T, image string) map[string]string {
 	return requireImageInspect(t, image).ContainerConfig.Labels
 }
@@ -183,10 +187,6 @@ func requireContainerRemove(t *testing.T, cntName string) {
 
 	err := dockutil.StopRemove(context.Background(), cli, cntName)
 	require.NoError(t, err)
-}
-
-func requireUbuntuDevImage(t *testing.T) {
-	require.NoError(t, ensureImage("codercom/ubuntu-dev"))
 }
 
 type rollback struct {
