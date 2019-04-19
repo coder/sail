@@ -62,16 +62,6 @@ func (r *runner) runContainer(image string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 	defer cancel()
 
-	var (
-		err    error
-		mounts []mount.Mount
-	)
-
-	mounts, err = r.mounts(mounts, image)
-	if err != nil {
-		return xerrors.Errorf("failed to assemble mounts: %w", err)
-	}
-
 	projectDir, err := r.projectDir(image)
 	if err != nil {
 		return err
@@ -116,6 +106,14 @@ func (r *runner) runContainer(image string) error {
 		return xerrors.Errorf("failed to add image defined labels: %w", err)
 	}
 
+	var mounts []mount.Mount
+	mounts = r.addHatMount(mounts, containerConfig.Labels)
+
+	mounts, err = r.mounts(mounts, image)
+	if err != nil {
+		return xerrors.Errorf("failed to assemble mounts: %w", err)
+	}
+
 	hostConfig := &container.HostConfig{
 		Mounts:      mounts,
 		NetworkMode: "host",
@@ -136,6 +134,20 @@ func (r *runner) runContainer(image string) error {
 	}
 
 	return nil
+}
+
+// addHatMount mounts the hat into the user's container if they've specified one.
+func (r *runner) addHatMount(mounts []mount.Mount, labels map[string]string) []mount.Mount {
+	hatPath, ok := labels[hatLabel]
+	if !ok {
+		return mounts
+	}
+
+	return append(mounts, mount.Mount{
+		Type:   "bind",
+		Source: hatPath,
+		Target: "~/.hat",
+	})
 }
 
 func (r *runner) mounts(mounts []mount.Mount, image string) ([]mount.Mount, error) {
