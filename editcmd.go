@@ -114,7 +114,7 @@ func (c *editcmd) recreate(proj *project) (err error) {
 		}
 	}
 
-	r, err := runnerFromContainer(proj.cntName())
+	r, err := runnerFromContainer(proj.cntName(), proj.conf.DefaultNetwork)
 	if err != nil {
 		return xerrors.Errorf("failed to initialize runner: %w", err)
 	}

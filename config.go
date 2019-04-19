@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -32,22 +33,53 @@ func resolvePath(homedir string, path string) string {
 // config describes the config.toml.
 // Changes to this should be accompanied by changes to DefaultConfig.
 type config struct {
-	DefaultImage string `toml:"default_image"`
-	ProjectRoot  string `toml:"project_root"`
-	DefaultHat   string `toml:"default_hat"`
+	DefaultImage   string `toml:"default_image"`
+	ProjectRoot    string `toml:"project_root"`
+	DefaultHat     string `toml:"default_hat"`
+	DefaultNetwork string `toml:"default_network"`
+	DefaultSubnet  string `toml:"default_subnet"`
 }
 
-const DefaultConfig = `# sail configuration.
+func (c config) setEmptyToDefault() config {
+	if c.DefaultImage == "" {
+		c.DefaultImage = "codercom/ubuntu-dev"
+	}
+	if c.ProjectRoot == "" {
+		c.ProjectRoot = "~/Projects"
+	}
+	if c.DefaultNetwork == "" {
+		c.DefaultNetwork = "sail"
+	}
+	if c.DefaultSubnet == "" {
+		c.DefaultSubnet = "172.20.0.0/16"
+	}
+
+	return c
+}
+
+func (c config) tomlString() string {
+	return fmt.Sprintf(`# sail configuration.
 # default_image is the default Docker image to use if the repository provides none.
-default_image = "codercom/ubuntu-dev"
+default_image = "%s"
 
 # project_root is the base from which projects are mounted.
 # projects are stored in directories with form "<root>/<org>/<repo."
-project_root = "~/Projects"
+project_root = "%s"
 
 # default hat lets you configure a hat that's applied automatically by default.
-# default_hat = ""
-`
+# default_hat = "%s"
+
+# default_network is the name of the docker network to use for creating and
+# configuring containers.
+default_network = "%s"
+
+# default_subnet is the subnet to use if we need to create the default network.
+# If the default network already exists with a different subnet, the existing
+# subnet will be used.
+default_subnet = "%s"
+
+`, c.DefaultImage, c.ProjectRoot, c.DefaultHat, c.DefaultNetwork, c.DefaultSubnet)
+}
 
 // metaRoot returns the root path of all metadata stored on the host.
 func metaRoot() string {
@@ -73,7 +105,8 @@ func mustReadConfig(path string) config {
 				flog.Fatal("failed to mkdirall %v: %v", baseDir, err)
 			}
 
-			err = ioutil.WriteFile(path, []byte(DefaultConfig), 0644)
+			c = c.setEmptyToDefault()
+			err = ioutil.WriteFile(path, []byte(c.tomlString()), 0644)
 			if err != nil {
 				flog.Fatal("failed to write default config @ %v\n%v", path, err)
 			}
@@ -82,5 +115,5 @@ func mustReadConfig(path string) config {
 		}
 		flog.Fatal("failed to parse config @ %v\n%v", path, err)
 	}
-	return c
+	return c.setEmptyToDefault()
 }

@@ -1,11 +1,13 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"os/exec"
 
 	"github.com/fatih/color"
 	"go.coder.com/flog"
+	"go.coder.com/sail/internal/dockutil"
 )
 
 type globalFlags struct {
@@ -47,6 +49,17 @@ func requireRepo(fl *flag.FlagSet) repo {
 		flog.Fatal("failed to parse repo %q: %v", repoURI, err)
 	}
 	return r
+}
+
+// ensureDockerNetwork ensures that the sail network is created.
+func (gf *globalFlags) ensureDockerNetwork() {
+	cli := dockerClient()
+	defer cli.Close()
+
+	err := dockutil.EnsureNetwork(context.Background(), cli, gf.config().DefaultNetwork, gf.config().DefaultSubnet)
+	if err != nil {
+		flog.Fatal("%v", err)
+	}
 }
 
 // project reads the project as the first parameter.

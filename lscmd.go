@@ -4,9 +4,12 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"net"
 	"os"
 	"strings"
 	"text/tabwriter"
+
+	"go.coder.com/sail/internal/dockutil"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
@@ -73,7 +76,16 @@ func listProjects() ([]projectInfo, error) {
 		// TODO: this is super janky.
 		info.name = strings.Replace(info.name, "-", "/", 1)
 
-		info.url = "http://127.0.0.1:" + cnt.Labels[portLabel]
+		if cnt.NetworkSettings == nil {
+			return nil, xerrors.Errorf("container %s has invalid network settings", info.name)
+		}
+
+		ip, err := dockutil.IPFromEndpointSettings(cnt.NetworkSettings.Networks)
+		if err != nil {
+			return nil, xerrors.Errorf("failed to find container %s IP: %w", info.name, err)
+		}
+
+		info.url = fmt.Sprintf("http://%s", net.JoinHostPort(ip, codeServerPort))
 		info.hat = cnt.Labels[hatLabel]
 
 		infos = append(infos, info)

@@ -14,6 +14,9 @@ import (
 	"golang.org/x/xerrors"
 )
 
+// codeServerPort is the default port that code-server listens on.
+const codeServerPort = "8443"
+
 // loadCodeServer produces a path containing the code-server binary.
 // It will attempt to cache the binary.
 func loadCodeServer(ctx context.Context) (string, error) {

@@ -8,6 +8,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/docker/docker/api/types/network"
+	"go.coder.com/sail/internal/dockutil"
+
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/mount"
@@ -19,7 +22,6 @@ import (
 const (
 	baseImageLabel       = sailLabel + ".base_image"
 	hatLabel             = sailLabel + ".hat"
-	portLabel            = sailLabel + ".port"
 	projectLocalDirLabel = sailLabel + ".project_local_dir"
 	projectDirLabel      = sailLabel + ".project_dir"
 	projectNameLabel     = sailLabel + ".project_name"
@@ -35,13 +37,14 @@ type runner struct {
 
 	hostname string
 
-	port string
-
 	projectLocalDir string
 
 	// hostUser is the uid on the host which is mapped to
 	// the container's "user" user.
 	hostUser string
+
+	network string
+	ip      string
 
 	testCmd string
 }
@@ -76,7 +79,7 @@ func (r *runner) runContainer(image string) error {
 	// We want the code-server logs to be available inside the container for easy
 	// access during development, but also going to stdout so `docker logs` can be used
 	// to debug a failed code-server startup.
-	cmd := "cd " + projectDir + "; code-server --port " + r.port + " --data-dir ~/.config/Code --extensions-dir ~/.vscode/extensions --allow-http --no-auth 2>&1 | tee " + containerLogPath
+	cmd := "cd " + projectDir + "; code-server --data-dir ~/.config/Code --extensions-dir ~/.vscode/extensions --allow-http --no-auth 2>&1 | tee " + containerLogPath
 	if r.testCmd != "" {
 		cmd = r.testCmd + "; exit 1"
 	}
@@ -89,7 +92,6 @@ func (r *runner) runContainer(image string) error {
 		Image: image,
 		Labels: map[string]string{
 			sailLabel:            "",
-			portLabel:            r.port,
 			projectDirLabel:      projectDir,
 			projectLocalDirLabel: r.projectLocalDir,
 			projectNameLabel:     r.projectName,
@@ -103,15 +105,20 @@ func (r *runner) runContainer(image string) error {
 	}
 
 	hostConfig := &container.HostConfig{
-		Mounts:      mounts,
-		NetworkMode: "host",
-		Privileged:  true,
-		ExtraHosts: []string{
-			r.hostname + ":127.0.0.1",
+		Mounts:     mounts,
+		Privileged: true,
+	}
+
+	netConfig := &network.NetworkingConfig{
+		EndpointsConfig: map[string]*network.EndpointSettings{
+			r.network: &network.EndpointSettings{
+				NetworkID: r.network,
+				IPAddress: r.ip,
+			},
 		},
 	}
 
-	_, err = cli.ContainerCreate(ctx, containerConfig, hostConfig, nil, r.cntName)
+	_, err = cli.ContainerCreate(ctx, containerConfig, hostConfig, netConfig, r.cntName)
 	if err != nil {
 		return xerrors.Errorf("failed to create container: %w", err)
 	}
@@ -288,21 +295,28 @@ func (r *runner) projectDir(image string) (string, error) {
 
 // runnerFromContainer gets a runner from container named
 // name.
-func runnerFromContainer(name string) (*runner, error) {
+func runnerFromContainer(name, network string) (*runner, error) {
 	cli := dockerClient()
 	defer cli.Close()
 
-	cnt, err := cli.ContainerInspect(context.Background(), name)
+	ctx := context.Background()
+	cnt, err := cli.ContainerInspect(ctx, name)
 	if err != nil {
 		return nil, xerrors.Errorf("failed to inspect %v: %w", name, err)
 	}
-
-	return &runner{
+	r := &runner{
 		cntName:         name,
 		hostname:        cnt.Config.Hostname,
-		port:            cnt.Config.Labels[portLabel],
 		projectLocalDir: cnt.Config.Labels[projectLocalDirLabel],
 		projectName:     cnt.Config.Labels[projectNameLabel],
 		hostUser:        cnt.Config.User,
-	}, nil
+		network:         network,
+	}
+
+	r.ip, err = dockutil.ContainerIP(ctx, cli, name)
+	if err != nil {
+		return nil, xerrors.Errorf("failed to get container %s IP: %w", name, err)
+	}
+
+	return r, nil
 }

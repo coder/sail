@@ -11,11 +11,11 @@ import (
 	"time"
 
 	"go.coder.com/sail/internal/browserapp"
+	"go.coder.com/sail/internal/dockutil"
 
 	"github.com/docker/docker/api/types"
 	"go.coder.com/flog"
 	"go.coder.com/sail/internal/xexec"
-	"go.coder.com/sail/internal/xnet"
 	"golang.org/x/xerrors"
 )
 
@@ -197,23 +197,6 @@ func (p *project) ExecEnv(envs []string, cmd string, args ...string) *exec.Cmd {
 	return exec.Command("docker", args...)
 }
 
-// CodeServerPort gets the port of the running code-server binary.
-func (p *project) CodeServerPort() (string, error) {
-	cli := dockerClient()
-	defer cli.Close()
-
-	cnt, err := cli.ContainerInspect(context.Background(), p.cntName())
-	if err != nil {
-		return "", err
-	}
-
-	port, ok := cnt.Config.Labels[portLabel]
-	if !ok {
-		return "", xerrors.Errorf("no %v label found", portLabel)
-	}
-	return port, nil
-}
-
 func (p *project) readCodeServerLog() ([]byte, error) {
 	cmd := xexec.Fmt("docker logs %v", p.cntName())
 
@@ -242,13 +225,15 @@ func (p *project) waitOnline() error {
 			return xerrors.Errorf("container %v not running", p.cntName())
 		}
 
-		port, ok := cnt.Config.Labels[portLabel]
-		if !ok {
-			return xerrors.Errorf("no %v label found", portLabel)
+		top, err := cli.ContainerTop(ctx, p.cntName(), nil)
+		if err != nil {
+			return err
 		}
 
-		if !xnet.PortFree(port) {
-			return nil
+		for _, proc := range top.Processes {
+			if strings.Contains(strings.Join(proc, " "), "/usr/bin/code-server") {
+				return nil
+			}
 		}
 
 		time.Sleep(time.Millisecond * 100)
@@ -261,17 +246,18 @@ func (p *project) open() error {
 	cli := dockerClient()
 	defer cli.Close()
 
-	err := cli.ContainerStart(context.Background(), p.cntName(), types.ContainerStartOptions{})
+	ctx := context.Background()
+	err := cli.ContainerStart(ctx, p.cntName(), types.ContainerStartOptions{})
 	if err != nil {
 		return xerrors.Errorf("failed to start container: %w", err)
 	}
 
-	port, err := p.CodeServerPort()
+	ip, err := dockutil.ContainerIP(ctx, cli, p.cntName())
 	if err != nil {
 		return err
 	}
 
-	u := "http://" + net.JoinHostPort("127.0.0.1", port)
+	u := "http://" + net.JoinHostPort(ip, codeServerPort)
 
 	flog.Info("opening %v", u)
 	return browserapp.Open(u)
