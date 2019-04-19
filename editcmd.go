@@ -296,7 +296,7 @@ func watch(proj *project, hat bool, newHatPath string) error {
 
 	select {
 	case signal := <-signals:
-		flog.Info("exiting, received signal %s", signal)
+		flog.Info("exiting, received signal: %v", signal)
 		cancel()
 		wg.Wait()
 
