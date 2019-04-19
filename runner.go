@@ -24,7 +24,6 @@ const (
 
 	baseImageLabel       = sailLabel + ".base_image"
 	hatLabel             = sailLabel + ".hat"
-	portLabel            = sailLabel + ".port"
 	projectLocalDirLabel = sailLabel + ".project_local_dir"
 	projectDirLabel      = sailLabel + ".project_dir"
 	projectNameLabel     = sailLabel + ".project_name"
@@ -97,7 +96,6 @@ func (r *runner) runContainer(image string) error {
 		Image: image,
 		Labels: map[string]string{
 			sailLabel:            "",
-			portLabel:            r.port,
 			projectDirLabel:      projectDir,
 			projectLocalDirLabel: r.projectLocalDir,
 			projectNameLabel:     r.projectName,
@@ -332,10 +330,15 @@ func runnerFromContainer(name string) (*runner, error) {
 		return nil, xerrors.Errorf("failed to inspect %v: %w", name, err)
 	}
 
+	port, err := codeServerPort(name)
+	if err != nil {
+		return nil, xerrors.Errorf("failed to find code server port: %w", err)
+	}
+
 	return &runner{
 		cntName:         name,
 		hostname:        cnt.Config.Hostname,
-		port:            cnt.Config.Labels[portLabel],
+		port:            port,
 		projectLocalDir: cnt.Config.Labels[projectLocalDirLabel],
 		projectName:     cnt.Config.Labels[projectNameLabel],
 		hostUser:        cnt.Config.User,

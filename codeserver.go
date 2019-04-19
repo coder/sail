@@ -67,3 +67,32 @@ func loadCodeServer(ctx context.Context) (string, error) {
 
 	return cachePath, nil
 }
+
+// codeServerPort gets the port of the running code-server binary.
+//
+// It will retry for 5 seconds if we fail to find the port in case
+// the code-server binary is still starting up.
+func codeServerPort(cntName string) (string, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+
+	var (
+		port string
+		err  error
+	)
+
+	for ctx.Err() == nil {
+		port, err = codeserver.Port(cntName)
+		if err == nil {
+			return port, nil
+		}
+
+		if !xerrors.Is(err, codeserver.PortNotFoundError) {
+			return "", err
+		}
+
+		time.Sleep(time.Millisecond * 100)
+	}
+
+	return "", xerrors.Errorf("failed while trying to find code-server port: %w", err)
+}

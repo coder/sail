@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"go.coder.com/flog"
+	"go.coder.com/sail/internal/dockutil"
 	"go.coder.com/sail/internal/xexec"
 )
 
@@ -26,12 +27,12 @@ func (c *shellcmd) handle(gf globalFlags, fl *flag.FlagSet) {
 	proj := gf.project(fl)
 	gf.ensureDockerDaemon()
 
-	out, err := proj.FmtExec("grep ^.*:.*:$(id -u): /etc/passwd | cut -d : -f 7-").CombinedOutput()
+	out, err := dockutil.FmtExec(proj.cntName(), "grep ^.*:.*:$(id -u): /etc/passwd | cut -d : -f 7-").CombinedOutput()
 	if err != nil {
 		flog.Fatal("failed to get default shell: %v\n%s", err, out)
 	}
 
-	cmd := proj.ExecTTY(guestHomeDir, string(bytes.TrimSpace(out)))
+	cmd := dockutil.ExecTTY(proj.cntName(), guestHomeDir, string(bytes.TrimSpace(out)))
 	xexec.Attach(cmd)
 	err = cmd.Run()
 	if err != nil {
