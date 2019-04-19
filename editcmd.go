@@ -5,10 +5,14 @@ import (
 	"flag"
 	"os"
 	"os/exec"
+	"os/signal"
 	"path/filepath"
+	"sync"
+	"syscall"
 	"time"
 
 	"github.com/docker/docker/api/types"
+	"github.com/fsnotify/fsnotify"
 
 	"go.coder.com/flog"
 	"go.coder.com/sail/internal/dockutil"
@@ -22,6 +26,7 @@ type editcmd struct {
 	noEditor bool
 	hatPath  string
 	hat      bool
+	watch    bool
 }
 
 func (c *editcmd) spec() commandSpec {
@@ -67,14 +72,22 @@ func (c *editcmd) handle(gf globalFlags, fl *flag.FlagSet) {
 		}
 	}
 
-	err = c.recreate(proj)
+	if c.watch {
+		err = watch(proj, c.hat, c.hatPath)
+		if err != nil {
+			flog.Fatal("%v", err)
+		}
+		os.Exit(0)
+	}
+
+	err = recreate(proj, c.hat, c.hatPath, true)
 	if err != nil {
 		flog.Fatal("%v", err)
 	}
 	os.Exit(0)
 }
 
-func (c *editcmd) recreate(proj *project) (err error) {
+func recreate(proj *project, hat bool, newHatPath string, enableEditor bool) (err error) {
 	cli := dockerClient()
 	defer cli.Close()
 
@@ -89,12 +102,12 @@ func (c *editcmd) recreate(proj *project) (err error) {
 
 	editFile := proj.dockerfilePath()
 	// If custom hat provided, use it.
-	if c.hatPath != "" {
-		b.hatPath = c.hatPath
+	if newHatPath != "" {
+		b.hatPath = newHatPath
 	}
 
-	// If c.hat is set, then we want to edit the project's hat instead of the project's Dockerfile.
-	if c.hat {
+	// If hat is set, then we want to edit the project's hat instead of the project's Dockerfile.
+	if hat {
 		if b.hatPath == "" {
 			return xerrors.New("unable to edit a nonexistent hat")
 		}
@@ -107,7 +120,7 @@ func (c *editcmd) recreate(proj *project) (err error) {
 
 	// If we're just trying to change the underlying hat for the project, we don't want
 	// to prompt the user with the editor, instead just rebuild with the new hat.
-	if c.hatPath == "" || c.hat {
+	if enableEditor && (newHatPath == "" || hat) {
 		err = runEditor(editFile)
 		if err != nil {
 			return err
@@ -202,6 +215,116 @@ func (c *editcmd) recreate(proj *project) (err error) {
 	return nil
 }
 
+func watch(proj *project, hat bool, newHatPath string) error {
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		return xerrors.Errorf("failed to create filesystem watcher: %w", err)
+	}
+	defer watcher.Close()
+
+	err = watcher.Add(proj.dockerfilePath())
+	if err != nil {
+		return xerrors.Errorf("failed to watch project's dockerfile %s: %w", proj.dockerfilePath(), err)
+	}
+
+	switch {
+	case hat && newHatPath == "":
+		hatPath, err := containerHatPath(proj.cntName())
+		if err != nil {
+			return err
+		}
+		err = watcher.Add(hatPath)
+		if err != nil {
+			return xerrors.Errorf("failed to watch hat %s: %w", hatPath, err)
+		}
+
+	case newHatPath != "":
+		err = watcher.Add(newHatPath)
+		if err != nil {
+			return xerrors.Errorf("failed to watch hat %s: %w", newHatPath, err)
+		}
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	var (
+		wg       sync.WaitGroup
+		watchErr error
+	)
+
+	wg.Add(1)
+	// Event handler
+	go func() {
+		defer wg.Done()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+
+			case evt := <-watcher.Events:
+				if evt.Op == fsnotify.Write {
+					err := recreate(proj, hat, newHatPath, false)
+					if err != nil {
+						flog.Error("failed to recreate environment: %v", err)
+					}
+				}
+			}
+		}
+	}()
+
+	wg.Add(1)
+	// Error handler
+	go func() {
+		defer wg.Done()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+
+			case watchErr = <-watcher.Errors:
+				flog.Error("Exiting watcher, received error while watching changes: %v", watchErr)
+				cancel()
+				return
+			}
+		}
+	}()
+
+	flog.Info("watching for changes...")
+
+	signals := make(chan os.Signal, 1)
+	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM)
+
+	select {
+	case signal := <-signals:
+		flog.Info("exiting, received signal %s", signal)
+		cancel()
+		wg.Wait()
+
+	case <-ctx.Done():
+		// This means we received an error from the watcher.
+		return watchErr
+	}
+
+	return nil
+}
+
+func containerHatPath(cntName string) (string, error) {
+	cli := dockerClient()
+	defer cli.Close()
+
+	insp, err := cli.ContainerInspect(context.Background(), cntName)
+	if err != nil {
+		return "", xerrors.Errorf("failed to inspect %s: %w", cntName, err)
+	}
+
+	hatPath, ok := insp.Config.Labels[hatLabel]
+	if !ok {
+		return "", xerrors.New("project does not have a hat")
+	}
+
+	return hatPath, nil
+}
+
 func runEditor(file string) error {
 	editor, err := editor.Env()
 	if err != nil {
@@ -227,4 +350,5 @@ func runEditor(file string) error {
 func (c *editcmd) initFlags(fl *flag.FlagSet) {
 	fl.StringVar(&c.hatPath, "new-hat", "", "Path to new hat.")
 	fl.BoolVar(&c.hat, "hat", false, "Edit the hat associated with this project.")
+	fl.BoolVar(&c.watch, "watch", false, "Watch for changes on the Project's sail Dockerfile.")
 }

@@ -10,6 +10,7 @@ require (
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-units v0.3.3 // indirect
 	github.com/fatih/color v1.7.0
+	github.com/fsnotify/fsnotify v1.4.7
 	github.com/go-check/check v0.0.0-20180628173108-788fd7840127 // indirect
 	github.com/gogo/protobuf v1.2.1 // indirect
 	github.com/google/go-github/v24 v24.0.1
@@ -20,7 +21,7 @@ require (
 	github.com/opencontainers/image-spec v1.0.1 // indirect
 	github.com/pkg/errors v0.8.1 // indirect
 	github.com/sirupsen/logrus v1.4.1 // indirect
-	github.com/skratchdot/open-golang v0.0.0-20190331143844-1a48294fa5dd
+	github.com/skratchdot/open-golang v0.0.0-20190331143844-1a48294fa5dd // indirect
 	github.com/stretchr/testify v1.3.0
 	github.com/uudashr/gopkgs v2.0.1+incompatible // indirect
 	go.coder.com/flog v0.0.0-20190129195112-eaed154a0db8
