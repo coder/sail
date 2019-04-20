@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"go.coder.com/sail/internal/dockutil"
 	"net"
 	"os"
 	"os/exec"
@@ -275,4 +276,11 @@ func (p *project) open() error {
 
 	flog.Info("opening %v", u)
 	return browserapp.Open(u)
+}
+
+func (p *project) delete() error {
+	cli := dockerClient()
+	defer cli.Close()
+
+	return dockutil.StopRemove(context.Background(), cli, p.cntName())
 }

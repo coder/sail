@@ -63,7 +63,12 @@ func (c *runcmd) handle(gf globalFlags, fl *flag.FlagSet) {
 
 		err = proj.open()
 		if err != nil {
-			flog.Fatal("failed to open project: %v", err)
+			flog.Error("failed to open project: %v", err)
+			err = proj.delete()
+			if err != nil {
+				flog.Error("failed to delete project container: %v", err)
+			}
+			os.Exit(1)
 		}
 		return
 	}
