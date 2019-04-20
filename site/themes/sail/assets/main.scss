@@ -20,12 +20,14 @@ code {
     color: $primary-color;
     background-color: white;
     font-family: "Ubuntu Mono";
+    width: 100%;
 }
 
 // Override bootstrap.
 pre code {
     color: $primary-color;
     background-color: white;
+    display: inline-block;
 }
 
 p.leading {

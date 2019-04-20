@@ -7,31 +7,31 @@ Welcome to the the Sail docs.
 
 ## Install Stable Release
 
-### Linux
-Binary release
-
-dpkg
-
-### MacOS
-
-### Windows
-
-- Linux
-    - amd64
-    - x86
-- MacOS/Darwin
+Binary releases can be found on our [GitHub.](https://github.com/codercom/sail/releases)
 
 ## Install From Source
 
 To install `sail` the latest version of sail, run:
 
 ```bash
-go install sail.dev
+go install go.coder.com/sail
 ```
 
-If you don't have Go installed, you can grab it [here](https://golang.org/dl/).
+_`go install` will install to ~/go/bin_
 
-`go install` will install sail to `~/go/bin/sail`.
+## First steps
 
+Spin up a secure editor for `codercom/sail`.
 
-### Sub
+```bash
+sail run codercom/sail
+# Creates a Docker container called `codercom-sail`,
+# installs code-server in it, and creates a browser.
+```
+
+## Updating
+
+To gracefully update `sail`, simply overwrite the binary with the binary 
+in the new release.
+
+If you installed via `go install`, just run the same command again.
