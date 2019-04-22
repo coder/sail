@@ -7,8 +7,13 @@ import (
 )
 
 // Start runs cmd with args.
-// It returns an error if it fails to start.
+// It returns an error if it fails to start or the command doesn't exist.
 func Start(cmd string, args ...string) error {
+	_, err := exec.LookPath(cmd)
+	if err != nil {
+		return err
+	}
+
 	c := exec.Command("nohup", append([]string{cmd}, args...)...)
 	return c.Start()
 }
