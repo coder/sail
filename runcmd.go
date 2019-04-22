@@ -31,7 +31,7 @@ func (c *runcmd) spec() commandSpec {
 	If a project is already up and running, this won't
 	start a new container, but instead will reuse the
 	already running container and open a new editor.`,
-		usage: "[flags] <project>",
+		usage: "[flags] <repo>",
 	}
 }
 

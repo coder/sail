@@ -44,6 +44,7 @@ func main() {
 		new(shellcmd),
 		new(editcmd),
 		new(lscmd),
+		new(rmcmd),
 	}
 
 	gfs.Usage = func() {

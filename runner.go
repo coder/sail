@@ -15,8 +15,13 @@ import (
 	"golang.org/x/xerrors"
 )
 
+// containerLogPath is the location of the code-server log.
+const containerLogPath = "/tmp/code-server.log"
+
 // Docker labels for sail state.
 const (
+	sailLabel = "com.coder.sail"
+
 	baseImageLabel       = sailLabel + ".base_image"
 	hatLabel             = sailLabel + ".hat"
 	portLabel            = sailLabel + ".port"
