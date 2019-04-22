@@ -3,13 +3,14 @@ package main
 import (
 	"context"
 	"fmt"
-	"go.coder.com/sail/internal/dockutil"
 	"net"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
+
+	"go.coder.com/sail/internal/dockutil"
 
 	"go.coder.com/sail/internal/browserapp"
 
@@ -55,13 +56,17 @@ func (p *project) dockerfilePath() string {
 	return filepath.Join(p.localDir(), ".sail", "Dockerfile")
 }
 
-// clone clones a git repository on h.
-// It returns a path to the repository.
+// clone clones a git repository to dir.
 func clone(repo repo, dir string) error {
-	cmd := xexec.Fmt("git clone %v %v", repo.CloneURI(), dir)
+	uri := repo.CloneURI()
+	cmd := xexec.Fmt("git clone %v %v", uri, dir)
 	xexec.Attach(cmd)
 
-	return cmd.Run()
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		xerrors.Errorf("failed to clone '%s' to '%s': %s, %w", uri, dir, out, err)
+	}
+	return nil
 }
 
 func isContainerNotFoundError(err error) bool {
