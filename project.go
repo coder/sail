@@ -138,10 +138,16 @@ func (p *project) buildImage() (string, bool, error) {
 
 	_, err := os.Stat(path)
 	if err != nil {
-		if os.IsNotExist(err) {
-			return "", false, nil
+		if !os.IsNotExist(err) {
+			return "", false, xerrors.Errorf("failed to stat %v: %w", path, err)
 		}
-		return "", false, xerrors.Errorf("failed to stat %v: %w", path, err)
+
+		err = p.ensureDefaultImage()
+		if err != nil {
+			return "", false, xerrors.Errorf("failed to pull default image %v: %w", p.conf.DefaultImage, err)
+		}
+
+		return "", false, nil
 	}
 
 	imageID := p.repo.DockerName()
@@ -157,6 +163,15 @@ func (p *project) buildImage() (string, bool, error) {
 		return "", false, xerrors.Errorf("failed to build: %w", err)
 	}
 	return imageID, true, nil
+}
+
+func (p *project) ensureDefaultImage() error {
+	flog.Info("ensuring default image %v exists", p.conf.DefaultImage)
+
+	cmd := xexec.Fmt("docker pull %s", p.conf.DefaultImage)
+	xexec.Attach(cmd)
+
+	return cmd.Run()
 }
 
 func (p *project) cntName() string {
