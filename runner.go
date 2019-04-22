@@ -76,7 +76,11 @@ func (r *runner) runContainer(image string) error {
 	// We want the code-server logs to be available inside the container for easy
 	// access during development, but also going to stdout so `docker logs` can be used
 	// to debug a failed code-server startup.
-	cmd := "cd " + projectDir + "; code-server --port " + r.port + " --data-dir ~/.config/Code --extensions-dir ~/.vscode/extensions --allow-http --no-auth 2>&1 | tee " + containerLogPath
+	cmd := "cd " + projectDir +
+		"; code-server --host 127.0.0.1" +
+		" --port " + r.port +
+		" --data-dir ~/.config/Code --extensions-dir ~/.vscode/extensions --allow-http --no-auth 2>&1 | tee " + containerLogPath
+
 	if r.testCmd != "" {
 		cmd = r.testCmd + "; exit 1"
 	}
