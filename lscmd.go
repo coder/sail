@@ -41,19 +41,7 @@ type projectInfo struct {
 
 // listProjects grabs a list of all projects.:
 func listProjects() ([]projectInfo, error) {
-	cli := dockerClient()
-	defer cli.Close()
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	filter := filters.NewArgs()
-	filter.Add("label", sailLabel)
-
-	cnts, err := cli.ContainerList(ctx, types.ContainerListOptions{
-		All:     true,
-		Filters: filter,
-	})
+	cnts, err := listContainers()
 	if err != nil {
 		return nil, xerrors.Errorf("failed to list containers: %w", err)
 	}
@@ -62,16 +50,13 @@ func listProjects() ([]projectInfo, error) {
 
 	for _, cnt := range cnts {
 		var info projectInfo
-		if len(cnt.Names) == 0 {
-			// All sail containers should be named.
+
+		info.name = trimDockerName(cnt)
+		if info.name == "" {
 			flog.Error("container %v doesn't have a name.", cnt.ID)
 			continue
 		}
-		info.name = strings.TrimPrefix(cnt.Names[0], "/")
-		// Convert the first - into a / in order to produce a
-		// sail-friendly name.
-		// TODO: this is super janky.
-		info.name = strings.Replace(info.name, "-", "/", 1)
+		info.name = toSailName(info.name)
 
 		info.url = "http://127.0.0.1:" + cnt.Labels[portLabel]
 		info.hat = cnt.Labels[hatLabel]
@@ -97,4 +82,48 @@ func (c *lscmd) handle(gf globalFlags, fl *flag.FlagSet) {
 	tw.Flush()
 
 	os.Exit(0)
+}
+
+// listContainers lists the sail containers on the host that
+// are filterable by the sail label: com.coder.sail
+func listContainers() ([]types.Container, error) {
+	cli := dockerClient()
+	defer cli.Close()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	filter := filters.NewArgs()
+	filter.Add("label", sailLabel)
+
+	return cli.ContainerList(ctx, types.ContainerListOptions{
+		All:     true,
+		Filters: filter,
+	})
+}
+
+// trimDockerName trims the `/` prefix from the docker container name.
+// If the container isn't named, this will return the empty string.
+func trimDockerName(cnt types.Container) string {
+	if len(cnt.Names) == 0 {
+		// All sail containers should be named.
+		return ""
+	}
+	return strings.TrimPrefix(cnt.Names[0], "/")
+}
+
+// toSailName converts the first - into a / in order to produce a
+// sail-friendly name.
+//
+// TODO: this is super janky.
+func toSailName(dockerName string) string {
+	return strings.Replace(dockerName, "-", "/", 1)
+}
+
+// toDockerName converts the first / into a - in order to produce
+// a docker-friendly name.
+//
+// TODO: this is super janky.
+func toDockerName(sailName string) string {
+	return strings.Replace(sailName, "/", "-", 1)
 }
