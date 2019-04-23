@@ -61,7 +61,7 @@ func (c *runcmd) handle(gf globalFlags, fl *flag.FlagSet) {
 	}
 
 	if c.noBrowser {
-		port, err := proj.CodeServerPort()
+		port, err := codeServerPort(proj.cntName())
 		if err != nil {
 			flog.Fatal("failed to get code-server port: %v", err)
 		}
