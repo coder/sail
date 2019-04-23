@@ -88,8 +88,16 @@ func (r *runner) runContainer(image string) error {
 		cmd = r.testCmd + "; exit 1"
 	}
 
+	var envs []string
+	sshAuthSock, exists := os.LookupEnv("SSH_AUTH_SOCK")
+	if exists {
+		s := fmt.Sprintf("SSH_AUTH_SOCK=%s", sshAuthSock)
+		envs = append(envs, s)
+	}
+
 	containerConfig := &container.Config{
 		Hostname: r.hostname,
+		Env:      envs,
 		Cmd: strslice.StrSlice{
 			"bash", "-c", cmd,
 		},
@@ -142,6 +150,19 @@ func (r *runner) mounts(mounts []mount.Mount, image string) ([]mount.Mount, erro
 		Source: "~/.vscode/extensions",
 		Target: "~/.vscode/extensions",
 	})
+
+	// 'SSH_AUTH_SOCK' is provided by a running ssh-agent. Passing in the
+	// socket to the container allows for using the user's existing setup for
+	// ssh authentication instead of having to create a new keys or explicity
+	// pass them in.
+	sshAuthSock, exists := os.LookupEnv("SSH_AUTH_SOCK")
+	if exists {
+		mounts = append(mounts, mount.Mount{
+			Type:   "bind",
+			Source: sshAuthSock,
+			Target: sshAuthSock,
+		})
+	}
 
 	localGlobalStorageDir := filepath.Join(metaRoot(), r.cntName, "globalStorage")
 	err := os.MkdirAll(localGlobalStorageDir, 0750)
