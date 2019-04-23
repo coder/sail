@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+	"net"
 	"os"
 	"os/user"
 
@@ -14,10 +15,11 @@ import (
 type runcmd struct {
 	repoArg string
 
-	image   string
-	hat     string
-	keep    bool
-	testCmd string
+	image     string
+	hat       string
+	keep      bool
+	noBrowser bool
+	testCmd   string
 }
 
 func (c *runcmd) spec() commandSpec {
@@ -40,6 +42,7 @@ func (c *runcmd) initFlags(fl *flag.FlagSet) {
 	fl.StringVar(&c.image, "image", "", "Custom docker image to use.")
 	fl.StringVar(&c.hat, "hat", "", "Custom hat to use.")
 	fl.BoolVar(&c.keep, "keep", false, "Keep container when it fails to build.")
+	fl.BoolVar(&c.noBrowser, "no-browser", false, "Don't open browser after starting code-server")
 	fl.StringVar(&c.testCmd, "test-cmd", "", "A command to use in-place of starting code-server for testing purposes.")
 }
 
@@ -55,6 +58,17 @@ func (c *runcmd) handle(gf globalFlags, fl *flag.FlagSet) {
 	}
 	if !exists {
 		c.build(gf, fl)
+	}
+
+	if c.noBrowser {
+		port, err := proj.CodeServerPort()
+		if err != nil {
+			flog.Fatal("failed to get code-server port: %v", err)
+		}
+
+		u := "http://" + net.JoinHostPort("127.0.0.1", port)
+		flog.Info("code-server running at: %v", u)
+		return
 	}
 
 	err = proj.open()
