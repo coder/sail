@@ -38,7 +38,12 @@ const injectGithub = (): void => {
 				a.classList.remove("disabled");
 				console.log(serverMsg);
 			}).catch((ex) => {
-				a.classList.remove("disabled");
+				console.error(ex);
+				a.innerText = ex.toString();
+				setTimeout(() => {
+					a.innerText = "Open in Sail";
+					a.classList.remove("disabled");
+				}, 5000);
 			});
 		});
 	}

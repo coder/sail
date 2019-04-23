@@ -108,16 +108,24 @@ func WriteNativeChromeManifest() error {
 	if err != nil {
 		return err
 	}
+	err = os.MkdirAll(nativeHostDir, os.ModePerm)
+	if err != nil {
+		return err
+	}
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return err
+	}
 
 	return ioutil.WriteFile(path.Join(nativeHostDir, "com.coder.sail.json"), []byte(fmt.Sprintf(`{
 	"name": "com.coder.sail",
 	"description": "Example app",
-	"path": "%s native-messaging",
+	"path": "%s",
 	"type": "stdio",
 	"allowed_origins": [
 		"chrome-extension://emhbehmeaolbmnbafkmdmiedpfhaabjg/"
 	]
-}`, path.Join("~/go", "bin", "sail"))), 0644)
+}`, path.Join(homeDir, "go", "bin", "sail"))), 0644)
 }
 
 // NativeMessagingDirectory returns the directory to place the native messaging host manifest within
