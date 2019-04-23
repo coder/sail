@@ -112,18 +112,18 @@ func trimDockerName(cnt types.Container) string {
 	return strings.TrimPrefix(cnt.Names[0], "/")
 }
 
-// toSailName converts the first - into a / in order to produce a
+// toSailName converts the first _ into a / in order to produce a
 // sail-friendly name.
 //
 // TODO: this is super janky.
 func toSailName(dockerName string) string {
-	return strings.Replace(dockerName, "-", "/", 1)
+	return strings.Replace(dockerName, "_", "/", 1)
 }
 
-// toDockerName converts the first / into a - in order to produce
+// toDockerName converts the first / into a _ in order to produce
 // a docker-friendly name.
 //
 // TODO: this is super janky.
 func toDockerName(sailName string) string {
-	return strings.Replace(sailName, "/", "-", 1)
+	return strings.Replace(sailName, "/", "_", 1)
 }

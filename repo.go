@@ -35,8 +35,8 @@ func (r repo) CloneURI() string {
 }
 
 func (r repo) DockerName() string {
-	return strings.Replace(
-		strings.TrimSuffix(r.Path, ".git"), "/", "-", -1,
+	return toDockerName(
+		strings.TrimSuffix(r.Path, ".git"),
 	)
 }
 
