@@ -9,7 +9,6 @@ RUN apt-get install -y ripgrep
 RUN apt-get install -y net-tools
 
 LABEL share.ssh="~/.ssh:~/.ssh"
-LABEL share.gitconfig="~/.gitconfig:~/.gitconfig"
 
 # Download in code-server into path. sail will typically override the binary
 # anyways, but it's nice to have this during the build pipepline so we can
