@@ -46,34 +46,31 @@ func (c *runcmd) initFlags(fl *flag.FlagSet) {
 const guestHomeDir = "/home/user"
 
 func (c *runcmd) handle(gf globalFlags, fl *flag.FlagSet) {
-	var (
-		err error
-	)
 	gf.ensureDockerDaemon()
-
 	proj := gf.project(fl)
 
-	// Abort if container already exists.
 	exists, err := proj.cntExists()
 	if err != nil {
 		flog.Fatal("%v", err)
 	}
-	if exists {
-		gf.debug("opening existing project")
-
-		err = proj.open()
-		if err != nil {
-			flog.Error("failed to open project: %v", err)
-			err = proj.delete()
-			if err != nil {
-				flog.Error("failed to delete project container: %v", err)
-			}
-			os.Exit(1)
-		}
-		return
+	if !exists {
+		c.build(gf, fl)
 	}
 
-	err = proj.ensureDir()
+	err = proj.open()
+	if err != nil {
+		flog.Error("failed to open project: %v", err)
+		err = proj.delete()
+		if err != nil {
+			flog.Error("failed to delete project container: %v", err)
+		}
+		os.Exit(1)
+	}
+}
+
+func (c *runcmd) build(gf globalFlags, fl *flag.FlagSet) {
+	proj := gf.project(fl)
+	err := proj.ensureDir()
 	if err != nil {
 		flog.Fatal("%v", err)
 	}
@@ -131,7 +128,7 @@ func (c *runcmd) handle(gf globalFlags, fl *flag.FlagSet) {
 		testCmd:  c.testCmd,
 	}
 
-	err = c.buildOpen(gf, proj, b, r)
+	err = c.run(gf, proj, b, r)
 	if err != nil {
 		flog.Error("build run failed: %v", err)
 		if !c.keep {
@@ -145,14 +142,16 @@ func (c *runcmd) handle(gf globalFlags, fl *flag.FlagSet) {
 		}
 		os.Exit(1)
 	}
-	os.Exit(0)
 }
 
-func (c *runcmd) buildOpen(gf globalFlags, proj *project, b *hatBuilder, r *runner) error {
+func (c *runcmd) run(gf globalFlags, proj *project, b *hatBuilder, r *runner) error {
 	var err error
 	image := b.baseImage
 	if b.hatPath != "" {
 		image, err = b.applyHat()
+		if err != nil {
+			return err
+		}
 	}
 
 	err = r.runContainer(image)
@@ -177,9 +176,5 @@ func (c *runcmd) buildOpen(gf globalFlags, proj *project, b *hatBuilder, r *runn
 
 	gf.debug("code-server online")
 
-	err = proj.open()
-	if err != nil {
-		return xerrors.Errorf("failed to open project: %w", err)
-	}
 	return nil
 }
