@@ -8,7 +8,6 @@ import (
 
 	"go.coder.com/flog"
 	"go.coder.com/sail/internal/dockutil"
-	"go.coder.com/sail/internal/xnet"
 	"golang.org/x/xerrors"
 )
 
@@ -111,11 +110,6 @@ func (c *runcmd) handle(gf globalFlags, fl *flag.FlagSet) {
 	}
 	gf.debug("host home dir: %v", hostHomeDir)
 
-	port, err := xnet.FindAvailablePort()
-	if err != nil {
-		flog.Fatal("failed to find available port: %v", err)
-	}
-
 	u, err := user.Current()
 	if err != nil {
 		flog.Fatal("failed to get current user: %v", err)
@@ -131,9 +125,10 @@ func (c *runcmd) handle(gf globalFlags, fl *flag.FlagSet) {
 		projectLocalDir: proj.localDir(),
 		cntName:         proj.cntName(),
 		hostname:        proj.repo.BaseName(),
-		port:            port,
-		hostUser:        u.Uid,
-		testCmd:         c.testCmd,
+		// Use `0` as the port so that the host assigns an available one.
+		port:     "0",
+		hostUser: u.Uid,
+		testCmd:  c.testCmd,
 	}
 
 	err = c.buildOpen(gf, proj, b, r)

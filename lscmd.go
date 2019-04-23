@@ -51,14 +51,18 @@ func listProjects() ([]projectInfo, error) {
 	for _, cnt := range cnts {
 		var info projectInfo
 
-		info.name = trimDockerName(cnt)
-		if info.name == "" {
+		dockerName := trimDockerName(cnt)
+		if dockerName == "" {
 			flog.Error("container %v doesn't have a name.", cnt.ID)
 			continue
 		}
-		info.name = toSailName(info.name)
+		info.name = toSailName(dockerName)
 
-		info.url = "http://127.0.0.1:" + cnt.Labels[portLabel]
+		port, err := codeServerPort(dockerName)
+		if err != nil {
+			return nil, xerrors.Errorf("failed to find container %s port: %w", info.name, err)
+		}
+		info.url = "http://127.0.0.1:" + port
 		info.hat = cnt.Labels[hatLabel]
 
 		infos = append(infos, info)

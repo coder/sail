@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
@@ -13,11 +12,11 @@ import (
 	"go.coder.com/sail/internal/dockutil"
 
 	"go.coder.com/sail/internal/browserapp"
+	"go.coder.com/sail/internal/codeserver"
 
 	"github.com/docker/docker/api/types"
 	"go.coder.com/flog"
 	"go.coder.com/sail/internal/xexec"
-	"go.coder.com/sail/internal/xnet"
 	"golang.org/x/xerrors"
 )
 
@@ -194,47 +193,6 @@ func (p *project) containerDir() (string, error) {
 	return dir, nil
 }
 
-func (p *project) Exec(cmd string, args ...string) *exec.Cmd {
-	args = append([]string{"exec", "-i", p.cntName(), cmd}, args...)
-	return exec.Command("docker", args...)
-}
-
-func (p *project) ExecTTY(dir string, cmd string, args ...string) *exec.Cmd {
-	args = append([]string{"exec", "-w", dir, "-it", p.cntName(), cmd}, args...)
-	return exec.Command("docker", args...)
-}
-
-func (p *project) FmtExec(cmdFmt string, args ...interface{}) *exec.Cmd {
-	return p.Exec("bash", "-c", fmt.Sprintf(cmdFmt, args...))
-}
-
-func (p *project) DetachedExec(cmd string, args ...string) *exec.Cmd {
-	args = append([]string{"exec", "-d", p.cntName(), cmd}, args...)
-	return exec.Command("docker", args...)
-}
-
-func (p *project) ExecEnv(envs []string, cmd string, args ...string) *exec.Cmd {
-	args = append([]string{"exec", "-e", strings.Join(envs, ","), "-i", p.cntName(), cmd}, args...)
-	return exec.Command("docker", args...)
-}
-
-// CodeServerPort gets the port of the running code-server binary.
-func (p *project) CodeServerPort() (string, error) {
-	cli := dockerClient()
-	defer cli.Close()
-
-	cnt, err := cli.ContainerInspect(context.Background(), p.cntName())
-	if err != nil {
-		return "", err
-	}
-
-	port, ok := cnt.Config.Labels[portLabel]
-	if !ok {
-		return "", xerrors.Errorf("no %v label found", portLabel)
-	}
-	return port, nil
-}
-
 func (p *project) readCodeServerLog() ([]byte, error) {
 	cmd := xexec.Fmt("docker logs %v", p.cntName())
 
@@ -263,12 +221,8 @@ func (p *project) waitOnline() error {
 			return xerrors.Errorf("container %v not running", p.cntName())
 		}
 
-		port, ok := cnt.Config.Labels[portLabel]
-		if !ok {
-			return xerrors.Errorf("no %v label found", portLabel)
-		}
-
-		if !xnet.PortFree(port) {
+		_, err = codeserver.PID(p.cntName())
+		if err == nil {
 			return nil
 		}
 
@@ -287,7 +241,7 @@ func (p *project) open() error {
 		return xerrors.Errorf("failed to start container: %w", err)
 	}
 
-	port, err := p.CodeServerPort()
+	port, err := codeServerPort(p.cntName())
 	if err != nil {
 		return err
 	}
