@@ -12,14 +12,21 @@ body {
     width: 75%;
 }
 
-ul {
-    padding-inline-start: 25px;
-    list-style-type: none;
-    color: grey;
+.content-box {
+    padding-inline-start: 3em;
 }
 
-#TableOfContents > ul {
-    list-style: none;
-    margin: 0;
-    padding: 0;
+// Hugo Table of Contents
+// ul {
+//     list-style-type: none;
+//     padding-inline-start: 0;
+// }
+
+nav > ul, nav > ul > li > ul {
+    list-style-type: none;
+    padding-inline-start: 0;
+}
+
+#TableOfContents > li {
+    padding-inline-start: 25px;
 }

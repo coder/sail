@@ -17,6 +17,7 @@ func (gf *globalFlags) debug(msg string, args ...interface{}) {
 	if !gf.verbose {
 		return
 	}
+
 	flog.Log(
 		flog.Level(color.New(color.FgHiMagenta).Sprint("DEBUG")),
 		msg, args...,

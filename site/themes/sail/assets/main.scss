@@ -3,10 +3,13 @@ $primary-color:  #3364dd;
 $font-color: black;
 $background-color: desaturate(#fcfaf3, 80%);
 
+@import url('https://fonts.googleapis.com/css?family=Roboto');
+@import url('https://fonts.googleapis.com/css?family=Ubuntu+Mono');
+
 body {
   margin: 0 auto;
   max-width: 50em;
-  font-family: 'Helvetica', serif;
+  font-family: -apple-system, 'Roboto',  serif;
   background-color: $background-color;
 
   line-height: 1.5;
@@ -16,12 +19,15 @@ body {
 code {
     color: $primary-color;
     background-color: white;
+    font-family: "Ubuntu Mono";
+    width: 100%;
 }
 
 // Override bootstrap.
 pre code {
     color: $primary-color;
     background-color: white;
+    display: inline-block;
 }
 
 p.leading {
@@ -36,12 +42,4 @@ a.button {
     text-decoration: none;
     color: initial;
     padding: 3px;
-}
-
-// Hugo Table of Contents
-nav ul {
-  padding-inline-start: 0px;
-}
-nav li {
-  padding-inline-start: 15px;
 }
