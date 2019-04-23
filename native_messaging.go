@@ -79,7 +79,7 @@ func handleNativeMessaging() {
 			}
 			break
 		case "run":
-			cmd := exec.Command("/home/kyle/go/bin/sail", "run", nm.RunEvent.Repo)
+			cmd := exec.Command(os.Args[0], "run", nm.RunEvent.Repo)
 			err = cmd.Run()
 			if err != nil {
 				setError(err.Error())
