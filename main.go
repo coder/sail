@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	ps "github.com/mitchellh/go-ps"
 	"go.coder.com/flog"
 )
 
@@ -67,10 +68,6 @@ Commands:
 	_ = gfs.Parse(os.Args[1:])
 
 	wantCmd := gfs.Arg(0)
-	if wantCmd == "" {
-		gfs.Usage()
-		os.Exit(1)
-	}
 
 	// help indicates if we're trying to access a command's help.
 	var help bool
@@ -101,6 +98,32 @@ Commands:
 		cmd.handle(gf, fs)
 
 		os.Exit(0)
+	}
+
+	if wantCmd == "install" {
+		err := WriteNativeChromeManifest()
+		if err != nil {
+			flog.Fatal("failed to write chrome manifest: %v", err)
+		}
+
+		flog.Success("wrote chrome manifest. load the extension")
+		return
+	}
+
+	// When the parent process is Chrome we've been launched from our extension
+	// https://developer.chrome.com/extensions/nativeMessaging
+	parentProcess, err := ps.FindProcess(os.Getppid())
+	if err == nil {
+		execName := parentProcess.Executable()
+		if execName == "chrome" {
+			handleNativeMessaging()
+			return
+		}
+	}
+
+	if wantCmd == "" {
+		gfs.Usage()
+		os.Exit(1)
 	}
 
 	// Command not found.

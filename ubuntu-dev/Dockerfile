@@ -1,7 +1,10 @@
 FROM ubuntu:18.10
 
 RUN apt-get update && \
-    apt-get install -y vim neovim git curl wget lsof inetutils-ping gcc sudo htop
+    apt-get install -y vim neovim git curl wget lsof inetutils-ping gcc sudo htop locales
+
+RUN locale-gen en_US.UTF-8
+ENV LC_ALL=en_US.UTF-8
 
 RUN apt-get install -y ripgrep
 
@@ -20,3 +23,4 @@ RUN wget -O /usr/bin/code-server https://codesrv-ci.cdr.sh/latest-linux && \
 RUN adduser --gecos '' --disabled-password user && \
     echo "user ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers.d/nopasswd
 USER user
+ENV HOME /home/user

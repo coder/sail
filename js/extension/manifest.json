@@ -1,0 +1,33 @@
+{
+	"manifest_version": 2,
+
+	"name": "Sail",
+	"version": "0.0.1",
+	"author": "Coder",
+	"description": "Work in immutable, pre-configured development environments.",
+
+	"key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAn32io47hajbRgmEg95WdVTlt6KqGArY0sXk0INlDBlabvMHaatxJRdcGivmoRT2hNEOY4lDLzGsW8kxaGaER+UNvePInv1yDz9KXB1betvt5D5e8tpdtYYFQaIC8AQfghinRzgoROsBkvCMtZEoWruz0itoWOHyJzsPYdACouIFmO/ElgoSHpad97lleOeH/zSYxKj5mgiluA9gwdlH2lu1NmGMcFURob5iPJNI6tJ6cNGdJ3VAFBW+PHKlLD8R6+nHTQfwm+26/HwNYaXSmDq70/RP7esCNPiYvAA4bXxVVoDDJviSZo8hyduTZsHo6qOXVRzrO7YkDtIjKwnTmJQIDAQAB",
+	"background": {
+		"scripts": [
+			"out/background.js"
+		],
+		"persistent": false
+	},
+	"content_scripts": [
+		{
+			"matches": [
+				"https://github.com/*"
+			],
+			"js": [
+				"out/content.js"
+			]
+		}
+	],
+	"permissions": [
+		"nativeMessaging"
+	],
+	"browser_action": {
+		"default_title": "Sail",
+		"default_popup": "out/popup.html"
+	}
+}

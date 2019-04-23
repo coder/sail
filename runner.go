@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"time"
 
@@ -81,11 +82,22 @@ func (r *runner) runContainer(image string) error {
 		cmd = r.testCmd + "; exit 1"
 	}
 
+	env := []string{}
+	if runtime.GOOS == "linux" {
+		// When on linux and the display variable exists we forward it so
+		// we can X11 forward.
+		display, exists := os.LookupEnv("DISPLAY")
+		if exists {
+			env = []string{fmt.Sprintf("DISPLAY=%s", display)}
+		}
+	}
+
 	containerConfig := &container.Config{
 		Hostname: r.hostname,
 		Cmd: strslice.StrSlice{
 			"bash", "-c", cmd,
 		},
+		Env:   env,
 		Image: image,
 		Labels: map[string]string{
 			sailLabel:            "",
@@ -136,6 +148,14 @@ func (r *runner) mounts(mounts []mount.Mount, image string) ([]mount.Mount, erro
 		Source: "~/.vscode/extensions",
 		Target: "~/.vscode/extensions",
 	})
+	if runtime.GOOS == "linux" {
+		// Mount X11 socket
+		mounts = append(mounts, mount.Mount{
+			Type:   "bind",
+			Source: "/tmp/.X11-unix",
+			Target: "/tmp/.X11-unix",
+		})
+	}
 
 	localGlobalStorageDir := filepath.Join(metaRoot(), r.cntName, "globalStorage")
 	err := os.MkdirAll(localGlobalStorageDir, 0750)

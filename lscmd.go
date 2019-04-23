@@ -33,10 +33,10 @@ func (c *lscmd) initFlags(fl *flag.FlagSet) {
 // projectInfo contains high-level project metadata as returned by the ls
 // command.
 type projectInfo struct {
-	name   string
-	hat    string
-	url    string
-	status string
+	Name   string `json:"name,omitempty"`
+	Hat    string `json:"hat,omitempty"`
+	Url    string `json:"url,omitempty"`
+	Status string `json:"status,omitempty"`
 }
 
 // listProjects grabs a list of all projects.:
@@ -67,14 +67,14 @@ func listProjects() ([]projectInfo, error) {
 			flog.Error("container %v doesn't have a name.", cnt.ID)
 			continue
 		}
-		info.name = strings.TrimPrefix(cnt.Names[0], "/")
+		info.Name = strings.TrimPrefix(cnt.Names[0], "/")
 		// Convert the first - into a / in order to produce a
 		// sail-friendly name.
 		// TODO: this is super janky.
-		info.name = strings.Replace(info.name, "-", "/", 1)
+		info.Name = strings.Replace(info.Name, "-", "/", 1)
 
-		info.url = "http://127.0.0.1:" + cnt.Labels[portLabel]
-		info.hat = cnt.Labels[hatLabel]
+		info.Url = "http://127.0.0.1:" + cnt.Labels[portLabel]
+		info.Hat = cnt.Labels[hatLabel]
 
 		infos = append(infos, info)
 	}
@@ -92,7 +92,7 @@ func (c *lscmd) handle(gf globalFlags, fl *flag.FlagSet) {
 
 	fmt.Fprintf(tw, "name\that\turl\tstatus\n")
 	for _, info := range infos {
-		fmt.Fprintf(tw, "%v\t%v\t%v\t%v\n", info.name, info.hat, info.url, info.status)
+		fmt.Fprintf(tw, "%v\t%v\t%v\t%v\n", info.Name, info.Hat, info.Url, info.Status)
 	}
 	tw.Flush()
 

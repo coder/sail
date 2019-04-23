@@ -16,11 +16,12 @@ require (
 	github.com/karrick/godirwalk v1.8.0 // indirect
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/mdempsky/gocode v0.0.0-20190203001940-7fb65232883f // indirect
+	github.com/mitchellh/go-ps v0.0.0-20170309133038-4fdf99ab2936
 	github.com/opencontainers/go-digest v1.0.0-rc1 // indirect
 	github.com/opencontainers/image-spec v1.0.1 // indirect
 	github.com/pkg/errors v0.8.1 // indirect
 	github.com/sirupsen/logrus v1.4.1 // indirect
-	github.com/skratchdot/open-golang v0.0.0-20190331143844-1a48294fa5dd
+	github.com/skratchdot/open-golang v0.0.0-20190331143844-1a48294fa5dd // indirect
 	github.com/stretchr/testify v1.3.0
 	github.com/uudashr/gopkgs v2.0.1+incompatible // indirect
 	go.coder.com/flog v0.0.0-20190129195112-eaed154a0db8

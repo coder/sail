@@ -1,0 +1,22 @@
+{
+	"name": "sail-extension",
+	"displayName": "Sail Extension",
+	"scripts": {
+		"build": "webpack"
+	},
+	"dependencies": {
+		"vue": "^2.6.10"
+	},
+	"devDependencies": {
+		"@types/chrome": "^0.0.82",
+		"copy-webpack-plugin": "^5.0.2",
+		"css-loader": "^2.1.1",
+		"happypack": "^5.0.1",
+		"node-sass": "^4.11.0",
+		"sass-loader": "^7.1.0",
+		"ts-loader": "^5.3.3",
+		"typescript": "^3.4.4",
+		"webpack": "^4.30.0",
+		"webpack-cli": "^3.3.0"
+	}
+}
