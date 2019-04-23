@@ -2,6 +2,7 @@
 type="docs"
 title="edit"
 browser_title="Sail - Commands - edit"
+section_order=1
 +++
 
 ```
@@ -46,4 +47,4 @@ Iteration is seamless because
 1. `code-server` automatically reconnects the page when the new environment is
 created.
 1. The project folder is always persisted so WIP changes are safe.
-1. UI state is persisted so the exact layout of your editor in undisturbed.
+1. UI state is persisted so the exact layout of your editor is undisturbed.

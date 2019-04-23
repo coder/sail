@@ -1,6 +1,6 @@
 theme = "sail"
 languageCode = "en-us"
 defaultContentLanguage="en"
-title = "My New Hugo Site"
+title = "Sail"
 
 sectionPagesMenu = "main"
