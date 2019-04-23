@@ -142,7 +142,14 @@ func (c *runcmd) build(gf globalFlags, fl *flag.FlagSet) {
 		testCmd:  c.testCmd,
 	}
 
-	err = c.run(gf, proj, b, r)
+	if b.hatPath != "" {
+		image, err = b.applyHat()
+		if err != nil {
+			flog.Fatal("failed to apply hat: %v", err)
+		}
+	}
+
+	err = c.run(gf, proj, r, image)
 	if err != nil {
 		flog.Error("build run failed: %v", err)
 		if !c.keep {
@@ -158,17 +165,8 @@ func (c *runcmd) build(gf globalFlags, fl *flag.FlagSet) {
 	}
 }
 
-func (c *runcmd) run(gf globalFlags, proj *project, b *hatBuilder, r *runner) error {
-	var err error
-	image := b.baseImage
-	if b.hatPath != "" {
-		image, err = b.applyHat()
-		if err != nil {
-			return err
-		}
-	}
-
-	err = r.runContainer(image)
+func (c *runcmd) run(gf globalFlags, proj *project, r *runner, image string) error {
+	err := r.runContainer(image)
 	if err != nil {
 		return xerrors.Errorf("failed to run container: %w", err)
 	}
