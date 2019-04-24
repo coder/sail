@@ -1,5 +1,5 @@
 +++
-type="doc"
+type="docs"
 title="Immutability"
 browser_title="Sail - Docs - Immutability"
 draft=true

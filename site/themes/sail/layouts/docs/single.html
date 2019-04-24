@@ -1,0 +1,40 @@
+{{ define "main" }}
+
+{{ $style := resources.Get "doc.scss" | resources.ToCSS | resources.Minify | resources.Fingerprint }}
+<link rel="stylesheet" href="{{ $style.Permalink }}">
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-lg">
+            <h1>Sail Documentation</h1>
+        </div>
+    </div>
+    <hr />
+    <div class="row">
+        <div class="col-lg-2 d-xs-none">
+            {{ partial "sidebar.html" . }}
+        </div>
+
+        <div class="col-lg content-box">
+            <div class="content">
+                <h1> {{ .Title }} </h1>
+                {{ .Content }}
+
+            </div>
+            <hr />
+            <!-- <div class="row pagination">
+                {{if .PrevInSection }}
+                    <a href="{{ .PrevInSection.Permalink }}" class="last btn btn-outline-primary btn-lg">Last Page: {{ .PrevInSection.Title }}</a>
+                {{end}}
+                {{if .NextInSection }}
+                    <a href="{{ .NextInSection.Permalink }}" class="next btn btn-outline-primary btn-lg">Next Page: {{ .NextInSection.Title }}</a>
+                {{end}}
+            </div> -->
+        </div>
+        <!-- <div class="col-lg-3 d-xs-none">
+            <span class="text-muted"><strong> In This Page </strong></span>
+            {{ .TableOfContents }}
+        </div> -->
+    </div>
+</div>
+{{ end }}

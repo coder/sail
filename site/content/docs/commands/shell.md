@@ -1,5 +1,5 @@
 +++
-type="doc"
+type="docs"
 title="shell"
 browser_title="Sail - Commands - shell"
 +++

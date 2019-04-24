@@ -1,5 +1,5 @@
 +++
-type="doc"
+type="docs"
 title="ls"
 browser_title="Sail - Commands - ls"
 +++

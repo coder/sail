@@ -1,0 +1,4 @@
+{
+    // Disable formatting so Go templates can be properly indented.
+    "html.format.enable": false
+}

@@ -1,6 +1,6 @@
 
 +++
-type="doc"
+type="docs"
 title="Docker"
 browser_title="Sail - Docs - Docker"
 draft=true

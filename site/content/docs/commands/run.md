@@ -1,5 +1,5 @@
 +++
-type="doc"
+type="docs"
 title="run"
 browser_title="Sail - Commands - run"
 +++

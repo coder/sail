@@ -1,5 +1,5 @@
 +++
-type="doc"
+type="docs"
 title="Permissions"
 browser_title="Sail - Docs - Permissions"
 +++

@@ -1,5 +1,7 @@
 // This file supercedes main.scss with documentation-specific styling.
 
+@import "vars.scss";
+
 body {
     max-width: 100em;
 }
@@ -29,4 +31,22 @@ nav > ul, nav > ul > li > ul {
 
 #TableOfContents > li {
     padding-inline-start: 25px;
+}
+
+aside > dl > ul {
+    list-style-type: none;
+    padding-inline-start: 0;
+}
+
+.active {
+    background-color: darken($background-color, 20%);
+}
+
+.content-box > .content {
+    min-height: 30em;
+}
+
+// Pagination stuff
+.pagination > .next {
+    margin-left: auto;
 }

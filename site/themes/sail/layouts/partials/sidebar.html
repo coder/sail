@@ -1,0 +1,26 @@
+<!-- sidebar start -->
+<aside>
+    <dl>
+        {{ $currentPage := . }}
+
+        {{ $docPages := where ( where $.Site.Pages "Type" "docs") "Kind" "page" }}
+
+        {{ $sections := slice "" "Concepts" "Commands" "Workflow" }}
+
+        {{ range $sections }}
+            {{ $section := . }}
+            {{ $sectionPages := where $docPages "Parent.Title" $section}}
+
+            <dt> {{ $section }}</dt>
+            <ul>
+                {{ range $sectionPages }}
+                    <!-- Match "{{ $section }}" -> {{ .Kind}}<>{{ .Type }}<>{{ .Parent.Title }}<>"{{ .Title }}" -->
+                    <li class="{{ if eq $currentPage.URL .URL }}active{{ end}}">
+                        <a href="{{ .URL }}">{{ .Title }}</a>
+                    </li>
+                {{ end }}
+            </ul>
+        {{ end }}
+
+    </dl>
+</aside>
