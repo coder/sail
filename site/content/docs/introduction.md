@@ -42,6 +42,3 @@ Sail is a completely new paradigm for development. Some of the key benefits for 
 # installs code-server in it, and opens the project in vscode.
 sail run codercom/sail
 ```
-
-See [Getting Started](/docs/getting-started) for installation instructions.
- 

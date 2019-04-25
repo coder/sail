@@ -1,7 +1,7 @@
 +++
 type="docs"
-title="Getting Started"
-browser_title="Sail - Docs - Getting Started"
+title="Installation"
+browser_title="Sail - Docs - Installation"
 section_order=1
 +++
 
