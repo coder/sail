@@ -3,9 +3,13 @@ package main
 import (
 	"context"
 	"io"
+	"net"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"runtime"
+	"strings"
 	"time"
 
 	"go.coder.com/flog"
@@ -85,13 +89,36 @@ func codeServerPort(cntName string) (string, error) {
 	)
 
 	for ctx.Err() == nil {
-		port, err = codeserver.Port(cntName)
-		if err == nil {
-			return port, nil
+		if runtime.GOOS == "darwin" {
+			// macOS uses port forwarding instead of host networking so netstat stuff below will not work
+			// as it will find the port inside the container, which we already know is 8443.
+			cmd := exec.CommandContext(ctx, "docker", "port", cntName, "8443")
+			var out []byte
+			out, err = cmd.CombinedOutput()
+			if err != nil {
+				continue
+			}
+
+			addr := strings.TrimSpace(string(out))
+			_, port, err = net.SplitHostPort(addr)
+			if err != nil {
+				return "", xerrors.Errorf("invalid address from docker port: %q", string(out))
+			}
+		} else {
+			port, err = codeserver.Port(cntName)
+			if xerrors.Is(err, codeserver.PortNotFoundError) {
+				continue
+			}
+			if err != nil {
+				return "", err
+			}
 		}
 
-		if !xerrors.Is(err, codeserver.PortNotFoundError) {
-			return "", err
+		var resp *http.Response
+		resp, err = http.Get("http://localhost:" + port)
+		if err == nil {
+			resp.Body.Close()
+			return port, nil
 		}
 
 		time.Sleep(time.Millisecond * 100)

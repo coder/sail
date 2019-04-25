@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"net"
 	"os"
 	"path/filepath"
 	"strings"
@@ -244,7 +243,7 @@ func (p *project) open() error {
 		return err
 	}
 
-	u := "http://" + net.JoinHostPort("127.0.0.1", port)
+	u := "http://localhost:" + port
 
 	flog.Info("opening %v", u)
 	return browserapp.Open(u)

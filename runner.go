@@ -3,8 +3,10 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/docker/go-connections/nat"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"time"
 
@@ -67,15 +69,24 @@ func (r *runner) runContainer(image string) error {
 		return err
 	}
 
+	containerAddr := "localhost"
+	containerPort := r.port
+	if runtime.GOOS == "darwin" {
+		// See justification below.
+		containerPort = "8443"
+		containerAddr = "0.0.0.0"
+	}
+
 	// We want the code-server logs to be available inside the container for easy
 	// access during development, but also going to stdout so `docker logs` can be used
 	// to debug a failed code-server startup.
-	cmd := "cd " + projectDir +
-		"; code-server --host 127.0.0.1" +
-		" --port " + r.port +
-		" --data-dir ~/.config/Code --extensions-dir ~/.vscode/extensions --allow-http --no-auth 2>&1 | tee " + containerLogPath
+	cmd := fmt.Sprintf(`set -euxo pipefail || exit 1
+cd %v
+code-server --host %v --port %v \
+	--data-dir ~/.config/Code --extensions-dir ~/.vscode/extensions --allow-http --no-auth 2>&1 | tee %v
+`, projectDir, containerAddr, containerPort, containerLogPath)
 	if r.testCmd != "" {
-		cmd = r.testCmd + "; exit 1"
+		cmd = r.testCmd + "\n exit 1"
 	}
 
 	var envs []string
@@ -98,7 +109,10 @@ func (r *runner) runContainer(image string) error {
 			projectLocalDirLabel: r.projectLocalDir,
 			projectNameLabel:     r.projectName,
 		},
-		User: r.hostUser + ":user",
+		// The user inside has uid 1000. This works even on macOS where the default user has uid 501.
+		// See https://stackoverflow.com/questions/43097341/docker-on-macosx-does-not-translate-file-ownership-correctly-in-volumes
+		// The docker image runs it as uid 1000 so we don't need to set anything.
+		User: "",
 	}
 
 	err = r.addImageDefinedLabels(image, containerConfig.Labels)
@@ -121,6 +135,19 @@ func (r *runner) runContainer(image string) error {
 		ExtraHosts: []string{
 			r.hostname + ":127.0.0.1",
 		},
+	}
+
+	// macOS does not support host networking.
+	// See https://github.com/docker/for-mac/issues/2716
+	if runtime.GOOS == "darwin" {
+		portSpec := fmt.Sprintf("127.0.0.1:%v:%v/tcp", r.port, "8443")
+		hostConfig.NetworkMode = ""
+		exposed, bindings, err := nat.ParsePortSpecs([]string{portSpec})
+		if err != nil {
+			return xerrors.Errorf("failed to parse port spec: %w", err)
+		}
+		containerConfig.ExposedPorts = exposed
+		hostConfig.PortBindings = bindings
 	}
 
 	_, err = cli.ContainerCreate(ctx, containerConfig, hostConfig, nil, r.cntName)
