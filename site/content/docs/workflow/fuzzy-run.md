@@ -2,6 +2,7 @@
 type="docs"
 title="Fuzzy Run"
 browser_title="Sail - Docs - Fuzzy Run"
+section_order=0
 +++
 
 If you frequently use `sail` from the command line,

@@ -5,7 +5,7 @@
 
         {{ $docPages := where ( where $.Site.Pages "Type" "docs") "Kind" "page" }}
 
-        {{ $sections := slice "" "Concepts" "Commands" "Workflow" }}
+        {{ $sections := slice "Introduction" "Concepts" "Commands" "Workflow" }}
 
         {{ range $sections }}
             {{ $section := . }}
@@ -13,10 +13,10 @@
 
             <dt> {{ $section }}</dt>
             <ul>
-                {{ range $sectionPages }}
+                {{ range sort $sectionPages ".Params.section_order"  }}
                     <!-- Match "{{ $section }}" -> {{ .Kind}}<>{{ .Type }}<>{{ .Parent.Title }}<>"{{ .Title }}" -->
-                    <li class="{{ if eq $currentPage.URL .URL }}active{{ end}}">
-                        <a href="{{ .URL }}">{{ .Title }}</a>
+                    <li class="{{ if eq $currentPage.Permalink .Permalink }}active{{ end}}">
+                        <a href="{{ .Permalink }}">{{ .Title }}</a>
                     </li>
                 {{ end }}
             </ul>

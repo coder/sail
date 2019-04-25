@@ -2,6 +2,7 @@
 type="docs"
 title="shell"
 browser_title="Sail - Commands - shell"
+section_order=4
 +++
 
 ```

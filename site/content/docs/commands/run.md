@@ -2,6 +2,7 @@
 type="docs"
 title="run"
 browser_title="Sail - Commands - run"
+section_order=0
 +++
 
 ```
@@ -26,11 +27,12 @@ Flags:
 	-test-cmd	A command to use in-place of starting code-server for testing purposes.
 ```
 
-The `run` command starts up a container, and plops you into code-server.
+The `run` command starts up a container, and opens a browser window pointing to
+the project's running code-server.
 
 ## Browser
 
-Chrome is always used if it is available, because we can open it in `--app` mode,
-which makes the code-server interface feel exactly live native VS Code.
+Chrome is always used if it is available, because sail can open it in `--app` mode,
+which makes the code-server interface feel exactly like native VS Code.
 
-If Chrome isn't available, we open the URL in the OS's default browser.
+If Chrome isn't available, sail opens the URL in the OS's default browser.
