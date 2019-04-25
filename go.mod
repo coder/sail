@@ -8,7 +8,7 @@ require (
 	github.com/Microsoft/go-winio v0.4.12 // indirect
 	github.com/docker/distribution v2.7.1+incompatible // indirect
 	github.com/docker/docker v0.7.3-0.20190416080540-ad9362bb1567
-	github.com/docker/go-connections v0.4.0 // indirect
+	github.com/docker/go-connections v0.4.0
 	github.com/docker/go-units v0.3.3 // indirect
 	github.com/fatih/color v1.7.0
 	github.com/gogo/protobuf v1.2.1 // indirect
