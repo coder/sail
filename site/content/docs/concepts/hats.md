@@ -1,5 +1,5 @@
 +++
-type="doc"
+type="docs"
 title="Hats"
 browser_title="Sail - Docs - Hats"
 +++

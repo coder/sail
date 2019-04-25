@@ -1,5 +1,5 @@
 +++
-type="doc"
+type="docs"
 title="Shares"
 browser_title="Sail - Docs - Shares"
 +++

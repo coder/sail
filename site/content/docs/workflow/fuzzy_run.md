@@ -1,5 +1,5 @@
 +++
-type="doc"
+type="docs"
 title="Fuzzy Run"
 browser_title="Sail - Docs - Fuzzy Run"
 +++

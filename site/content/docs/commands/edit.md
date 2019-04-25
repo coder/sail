@@ -1,5 +1,5 @@
 +++
-type="doc"
+type="docs"
 title="edit"
 browser_title="Sail - Commands - edit"
 +++

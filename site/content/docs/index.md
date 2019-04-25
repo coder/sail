@@ -1,6 +1,6 @@
 +++
-type="doc"
-title="Getting Started"
+type="docs"
+title="Introduction"
 browser_title="Sail - Docs - Getting Started"
 +++
 Welcome to the the Sail docs.

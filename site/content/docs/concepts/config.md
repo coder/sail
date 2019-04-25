@@ -1,5 +1,5 @@
 +++
-type="doc"
+type="docs"
 title="Configuration"
 browser_title="Sail - Docs - Configuration"
 +++

@@ -1,5 +1,5 @@
 +++
-type="doc"
+type="docs"
 title="Projects"
 browser_title="Sail - Docs - Projects"
 +++
