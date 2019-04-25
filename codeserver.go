@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"strings"
 	"time"
 
 	"go.coder.com/flog"
@@ -19,16 +18,20 @@ import (
 func loadCodeServer(ctx context.Context) (string, error) {
 	start := time.Now()
 
+	const cachePath = "/tmp/sail-code-server-cache/code-server"
+
+	// Only check for a new codeserver if it's over an hour old.
+	info, err := os.Stat(cachePath)
+	if err == nil {
+		if info.ModTime().Add(time.Hour).After(time.Now()) {
+			return cachePath, nil
+		}
+	}
+
 	u, err := codeserver.DownloadURL(ctx)
 	if err != nil {
 		return "", err
 	}
-
-	cachePath := filepath.Join(
-		"/tmp/sail-code-server-cache",
-		u[strings.LastIndex(u, "/"):],
-		"code-server",
-	)
 
 	err = os.MkdirAll(filepath.Dir(cachePath), 0750)
 	if err != nil {

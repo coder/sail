@@ -29,7 +29,6 @@ const (
 
 // project represents a sail project.
 type project struct {
-	gf   *globalFlags
 	conf config
 	repo repo
 }
@@ -61,9 +60,9 @@ func clone(repo repo, dir string) error {
 	cmd := xexec.Fmt("git clone %v %v", uri, dir)
 	xexec.Attach(cmd)
 
-	out, err := cmd.CombinedOutput()
+	err := cmd.Run()
 	if err != nil {
-		xerrors.Errorf("failed to clone '%s' to '%s': %s, %w", uri, dir, out, err)
+		return xerrors.Errorf("failed to clone '%s' to '%s': %w", uri, dir, err)
 	}
 	return nil
 }
@@ -145,7 +144,6 @@ func (p *project) buildImage() (string, bool, error) {
 		if err != nil {
 			return "", false, xerrors.Errorf("failed to pull default image %v: %w", p.conf.DefaultImage, err)
 		}
-
 		return "", false, nil
 	}
 

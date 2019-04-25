@@ -53,7 +53,6 @@ func requireRepo(fl *flag.FlagSet) repo {
 // project reads the project as the first parameter.
 func (gf *globalFlags) project(fl *flag.FlagSet) *project {
 	return &project{
-		gf:   gf,
 		conf: gf.config(),
 		repo: requireRepo(fl),
 	}
