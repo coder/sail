@@ -54,14 +54,14 @@ const extensionIndicator = "# DO NOT EDIT. EXTENSIONS MANAGED BY SAIL."
 // DockerfileSetExtensions takes a raw Dockerfile and replaces all extensions with the provided slice.
 func DockerfileSetExtensions(fi []byte, exts []string) ([]byte, error) {
 	var (
-		sep    = bytes.Split(fi, []byte{10})
+		sep    = splitNewline(fi)
 		fmtted = FmtExtensions(exts)
 	)
 
 	if len(fi) == 0 {
 		buf := bytes.NewBuffer(nil)
 		buf.WriteString("FROM codercom/ubuntu-dev\n")
-		buf.Write(bytes.Join(fmtted, []byte{10}))
+		buf.Write(joinNewline(fmtted))
 		return buf.Bytes(), nil
 	}
 
@@ -72,13 +72,13 @@ func DockerfileSetExtensions(fi []byte, exts []string) ([]byte, error) {
 		return nil, err
 	}
 
-	return bytes.Join(append(sep[:start], append(fmtted, sep[end+1:]...)...), []byte{10}), nil
+	return joinNewline(append(sep[:start], append(fmtted, sep[end+1:]...)...)), nil
 }
 
 // DockerfileAddExtensions takes a raw Dockerfile and adds the given extensions ignoring duplicates,
 // returning the resulting Dockerfile.
 func DockerfileAddExtensions(fi []byte, toAdd []string) ([]byte, error) {
-	existing := extensionsFromDockerfile(bytes.Split(fi, []byte{10}))
+	existing := extensionsFromDockerfile(splitNewline(fi))
 	merged := merge(existing, toAdd)
 
 	return DockerfileSetExtensions(fi, merged)
@@ -87,7 +87,7 @@ func DockerfileAddExtensions(fi []byte, toAdd []string) ([]byte, error) {
 // DockerfileRemoveExtensions takes a raw Dockerfile and removes all given extensions,
 // returning the resulting Dockerfile.
 func DockerfileRemoveExtensions(fi []byte, toRemove []string) ([]byte, error) {
-	existing := extensionsFromDockerfile(bytes.Split(fi, []byte{10}))
+	existing := extensionsFromDockerfile(splitNewline(fi))
 	merged := diff(existing, toRemove)
 
 	return DockerfileSetExtensions(fi, merged)
@@ -205,6 +205,14 @@ func FmtExtensions(exts []string) [][]byte {
 	b.WriteString("\n")
 	b.WriteString(extensionIndicator)
 	b.WriteString("\n")
-	return bytes.Split(b.Bytes(), []byte{10})
+	return splitNewline(b.Bytes())
 
+}
+
+func joinNewline(b [][]byte) []byte {
+	return bytes.Join(b, []byte{10})
+}
+
+func splitNewline(b []byte) [][]byte {
+	return bytes.Split(b, []byte{10})
 }

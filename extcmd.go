@@ -179,7 +179,7 @@ func (c *extCmd) set(fl *flag.FlagSet) error {
 		}
 		buf.Write(r)
 	} else {
-		buf.Write(bytes.Join(extensions.FmtExtensions(exts), []byte{10}))
+		buf.Write(joinNewline(extensions.FmtExtensions(exts)))
 	}
 
 	if file == "" {
@@ -316,8 +316,7 @@ func (e vscodeEdition) extensionDir() string {
 // for the current edition.
 // There are currently 3 editions: code, code-oss, and code-insiders.
 func extractVSCodeEdition(out []byte) (vscodeEdition, error) {
-	// newline character
-	sp := bytes.Split(out, []byte{10})
+	sp := splitNewline(out)
 	if len(sp) == 0 {
 		return "", xerrors.New("invalid input: no newlines found")
 	}
@@ -332,4 +331,12 @@ func extractVSCodeEdition(out []byte) (vscodeEdition, error) {
 	}
 
 	return "", xerrors.New("failed to find primary vscode version")
+}
+
+func joinNewline(b [][]byte) []byte {
+	return bytes.Join(b, []byte{10})
+}
+
+func splitNewline(b []byte) [][]byte {
+	return bytes.Split(b, []byte{10})
 }
