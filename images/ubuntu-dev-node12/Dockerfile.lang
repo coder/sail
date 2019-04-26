@@ -1,0 +1,12 @@
+FROM %BASE
+
+# Add n version manager.
+RUN sudo npm install -g n
+
+# Install typescript.
+RUN sudo npm install -g typescript
+
+# This technically has no effect until #35 is resolved.
+RUN code-server --install-extension dbaeumer.vscode-eslint
+RUN code-server --install-extension ms-vscode.vscode-typescript-tslint-plugin
+

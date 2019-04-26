@@ -1,4 +1,4 @@
-FROM ubuntu:18.10
+FROM %BASE
 
 RUN apt-get update && \
     apt-get install -y vim neovim git curl wget lsof inetutils-ping gcc sudo htop
