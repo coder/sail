@@ -58,11 +58,11 @@ func listProjects() ([]projectInfo, error) {
 		}
 		info.name = toSailName(dockerName)
 
-		port, err := codeServerPort(dockerName)
+		url, err := proxyURL(dockerName)
 		if err != nil {
 			return nil, xerrors.Errorf("failed to find container %s port: %w", info.name, err)
 		}
-		info.url = "http://127.0.0.1:" + port
+		info.url = url
 		info.hat = cnt.Labels[hatLabel]
 
 		infos = append(infos, info)

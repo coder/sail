@@ -3,12 +3,13 @@ package main
 import (
 	"context"
 	"flag"
-	"os"
-	"os/user"
-
 	"go.coder.com/flog"
 	"go.coder.com/sail/internal/dockutil"
 	"golang.org/x/xerrors"
+	"net/http"
+	"os"
+	"os/user"
+	"time"
 )
 
 type runcmd struct {
@@ -61,16 +62,43 @@ func (c *runcmd) handle(gf globalFlags, fl *flag.FlagSet) {
 	if exists {
 		gf.debug("opening existing project")
 
-		err = proj.open()
+		u, err := proj.proxyURL()
 		if err != nil {
-			flog.Error("failed to open project: %v", err)
-			err = proj.delete()
-			if err != nil {
-				flog.Error("failed to delete project container: %v", err)
-			}
-			os.Exit(1)
+			flog.Fatal("%v", err)
 		}
-		return
+
+		resp, err := http.Get(u+"/sail/api/v1/heartbeat")
+		if err == nil {
+			resp.Body.Close()
+
+			err = proj.open()
+			if err != nil {
+				flog.Error("failed to open project: %v", err)
+				err = proj.delete()
+				if err != nil {
+					flog.Error("failed to delete project container: %v", err)
+				}
+				os.Exit(1)
+			}
+			os.Exit(0)
+		}
+
+		// Proxy is not up, meaning the container shut down at some point, or the proxy
+		// was killed. We're going to restart the proxy and update the container label.
+
+
+		cli := dockerClient()
+		defer cli.Close()
+
+		ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+		defer cancel()
+
+		err = dockutil.StopRemove(ctx, cli ,proj.cntName())
+		if err != nil {
+			flog.Fatal("failed to remove container without running proxy: %v", err)
+		}
+
+		// The container will be rebuilt properly.
 	}
 
 	err = proj.ensureDir()
@@ -153,6 +181,12 @@ func (c *runcmd) buildOpen(gf globalFlags, proj *project, b *hatBuilder, r *runn
 	image := b.baseImage
 	if b.hatPath != "" {
 		image, err = b.applyHat()
+	}
+
+	// TODO proxy if container already exists.
+	err = r.forkProxy()
+	if err != nil {
+		return xerrors.Errorf("failed to start proxy: %w", err)
 	}
 
 	err = r.runContainer(image)

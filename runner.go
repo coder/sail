@@ -4,10 +4,15 @@ import (
 	"context"
 	"fmt"
 	"github.com/docker/go-connections/nat"
+	"go.coder.com/flog"
+	"io/ioutil"
+	"net/url"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/docker/docker/api/types"
@@ -29,6 +34,7 @@ const (
 	projectLocalDirLabel = sailLabel + ".project_local_dir"
 	projectDirLabel      = sailLabel + ".project_dir"
 	projectNameLabel     = sailLabel + ".project_name"
+	proxyURLLabel        = sailLabel + ".proxy_url"
 )
 
 // runner holds all the information needed to assemble a new sail container.
@@ -50,6 +56,8 @@ type runner struct {
 	hostUser string
 
 	testCmd string
+
+	proxyURL string
 }
 
 // runContainer creates and runs a new container.
@@ -108,6 +116,7 @@ code-server --host %v --port %v \
 			projectDirLabel:      projectDir,
 			projectLocalDirLabel: r.projectLocalDir,
 			projectNameLabel:     r.projectName,
+			proxyURLLabel:        r.proxyURL,
 		},
 		// The user inside has uid 1000. This works even on macOS where the default user has uid 501.
 		// See https://stackoverflow.com/questions/43097341/docker-on-macosx-does-not-translate-file-ownership-correctly-in-volumes
@@ -401,6 +410,50 @@ func runnerFromContainer(name string) (*runner, error) {
 		port:            port,
 		projectLocalDir: cnt.Config.Labels[projectLocalDirLabel],
 		projectName:     cnt.Config.Labels[projectNameLabel],
+		proxyURL:     cnt.Config.Labels[proxyURLLabel],
 		hostUser:        cnt.Config.User,
 	}, nil
+}
+
+func (r *runner) forkProxy() error {
+	var err error
+	r.proxyURL, err = forkProxy(r.cntName)
+	return err
+}
+
+func forkProxy(cntName string) (proxyURL string, _ error) {
+	sailProxy := exec.Command(os.Args[0], "proxy", cntName)
+	stdout, err := sailProxy.StdoutPipe()
+	if err != nil {
+		return "", xerrors.Errorf("failed to create stdout pipe: %v", err)
+	}
+	defer stdout.Close()
+
+	f, err := ioutil.TempFile("", "sailproxy_"+cntName)
+	if err != nil {
+		return "", xerrors.Errorf("failed to open /tmp: %w", err)
+	}
+	defer f.Close()
+
+	flog.Info("writing sail proxy logs to %v", f.Name())
+
+	sailProxy.Stderr = f
+
+	sailProxy.SysProcAttr = &syscall.SysProcAttr{
+		// See https://grokbase.com/t/gg/golang-nuts/147jmc4h0k/go-nuts-starting-detached-child-process#201407185ia7a7ldk3veno3linjktq4dve
+		Setpgid: true,
+	}
+	err = sailProxy.Start()
+
+	_, err = fmt.Fscan(stdout, &proxyURL)
+	if err != nil {
+		return "", xerrors.Errorf("proxy failed to output URL: %v", err)
+	}
+
+	_, err = url.Parse(proxyURL)
+	if err != nil {
+		return "", xerrors.Errorf("failed to parse proxy url from proxy: %v", err)
+	}
+
+	return proxyURL, nil
 }
