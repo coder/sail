@@ -259,4 +259,5 @@ func (c *proxycmd) Run(fl *flag.FlagSet) {
 		flog.Fatal("failed to proxy: %v", err)
 	}
 	fmt.Println(u)
+	select {}
 }
