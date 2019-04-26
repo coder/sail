@@ -1,0 +1,5 @@
+FROM %BASE
+
+# This technically has no effect until #35 is resolved.
+RUN code-server --install-extension rebornix.Ruby
+RUN code-server --install-extension castwide.solargraph
