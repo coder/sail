@@ -246,9 +246,10 @@ console.log("injected")
 
 func (c *proxycmd) Spec() cli.CommandSpec {
 	return cli.CommandSpec{
-		Name:  "proxy",
-		Usage: "[url]",
-		Desc:  "Proxies to url. Prints the frontend address.",
+		Name:   "proxy",
+		Usage:  "[url]",
+		Desc:   "Proxies to url. Prints the frontend address.",
+		Hidden: true,
 	}
 }
 
