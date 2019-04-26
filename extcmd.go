@@ -207,8 +207,6 @@ func (c *extCmd) set(fl *flag.FlagSet) error {
 		return xerrors.Errorf("failed to write to Dockerfile: %w", err)
 	}
 
-	err = fi.Close()
-
 	return nil
 }
 
