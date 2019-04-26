@@ -84,6 +84,19 @@ Commands:
 		}
 	}
 
+	if wantCmd == "proxy" {
+		if len(os.Args) != 3 {
+			gfs.Usage()
+			return
+		}
+		url, err := proxycmd(os.Args[2])
+		if err != nil {
+			flog.Fatal("failed to proxy: %v", err)
+		}
+		fmt.Println(url)
+		select {}
+	}
+
 	for _, cmd := range cmds {
 		if wantCmd != cmd.spec().name {
 			continue
