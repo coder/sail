@@ -17,6 +17,12 @@
 go get go.coder.com/sail
 ```
 
+Add autocomplete to the current shell:
+
+```bash
+sail --install-autocomplete
+```
+
 ## Basic usage
 
 Spin up a secure editor for `codercom/sail`.

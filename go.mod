@@ -21,6 +21,7 @@ require (
 	github.com/opencontainers/image-spec v1.0.1 // indirect
 	github.com/pkg/browser v0.0.0-20180916011732-0a3d74bf9ce4
 	github.com/pkg/errors v0.8.1 // indirect
+	github.com/posener/complete v1.2.2-0.20190308074557-af07aa5181b3
 	github.com/sirupsen/logrus v1.4.1 // indirect
 	github.com/stretchr/testify v1.3.0
 	go.coder.com/cli v0.1.1-0.20190426214427-610063ae7153

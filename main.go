@@ -4,6 +4,8 @@ import (
 	"flag"
 	"path/filepath"
 
+	"github.com/posener/complete"
+
 	"go.coder.com/cli"
 )
 
@@ -40,6 +42,10 @@ func (r *rootCmd) RegisterFlags(fl *flag.FlagSet) {
 		filepath.Join(metaRoot(), "sail.toml"),
 		"Path to config.",
 	)
+
+	// We don't use these directly, just added for visability on fl.Usage().
+	fl.Bool("install-autocomplete", false, "Install autocomplete")
+	fl.Bool("uninstall-autocomplete", false, "Uninstall autocomplete")
 }
 
 func (r rootCmd) Subcommands() []cli.Command {
@@ -55,5 +61,37 @@ func (r rootCmd) Subcommands() []cli.Command {
 
 func main() {
 	root := &rootCmd{}
+
+	if handleAutocomplete(root) {
+		return
+	}
+
 	cli.RunRoot(root)
+}
+
+func handleAutocomplete(root interface {
+	cli.Command
+	cli.ParentCommand
+	cli.FlaggedCommand
+}) bool {
+	cmds := []cli.Command{root}
+	cmds = append(cmds, expandCommands(root)...)
+
+	cmp := complete.New("sail", genAutocomplete(cmds))
+	cmp.InstallName = "install-autocomplete"
+	cmp.UninstallName = "uninstall-autocomplete"
+	return cmp.Run()
+}
+
+func expandCommands(cmd cli.ParentCommand) []cli.Command {
+	cmds := []cli.Command{}
+	for _, c := range cmd.Subcommands() {
+		cmds = append(cmds, c)
+
+		if subs, ok := c.(cli.ParentCommand); ok {
+			cmds = append(cmds, expandCommands(subs)...)
+		}
+	}
+
+	return cmds
 }
