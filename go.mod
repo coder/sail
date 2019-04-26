@@ -23,6 +23,7 @@ require (
 	github.com/pkg/errors v0.8.1 // indirect
 	github.com/sirupsen/logrus v1.4.1 // indirect
 	github.com/stretchr/testify v1.3.0
+	go.coder.com/cli v0.1.1-0.20190426214427-610063ae7153
 	go.coder.com/flog v0.0.0-20190129195112-eaed154a0db8
 	golang.org/x/sys v0.0.0-20190415145633-3fd5a3612ccd // indirect
 	golang.org/x/time v0.0.0-20190308202827-9d24e82272b4 // indirect

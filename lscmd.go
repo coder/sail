@@ -10,6 +10,7 @@ import (
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
+	"go.coder.com/cli"
 	"go.coder.com/flog"
 	"golang.org/x/xerrors"
 )
@@ -18,15 +19,14 @@ type lscmd struct {
 	all bool
 }
 
-func (c *lscmd) spec() commandSpec {
-	return commandSpec{
-		name:      "ls",
-		shortDesc: "Lists all sail containers.",
-		longDesc:  fmt.Sprintf(`Queries docker for all containers with the %v label.`, sailLabel),
+func (c *lscmd) Spec() cli.CommandSpec {
+	return cli.CommandSpec{
+		Name: "ls",
+		Desc: fmt.Sprintf(`Lists all containers with the %v label.`, sailLabel),
 	}
 }
 
-func (c *lscmd) initFlags(fl *flag.FlagSet) {
+func (c *lscmd) RegisterFlags(fl *flag.FlagSet) {
 	fl.BoolVar(&c.all, "all", false, "Show stopped container.")
 }
 
@@ -64,6 +64,7 @@ func listProjects() ([]projectInfo, error) {
 		}
 		info.url = url
 		info.hat = cnt.Labels[hatLabel]
+		info.status = cnt.Status
 
 		infos = append(infos, info)
 	}
@@ -71,7 +72,7 @@ func listProjects() ([]projectInfo, error) {
 	return infos, nil
 }
 
-func (c *lscmd) handle(gf globalFlags, fl *flag.FlagSet) {
+func (c *lscmd) Run(fl *flag.FlagSet) {
 	infos, err := listProjects()
 	if err != nil {
 		flog.Fatal("failed to list projects: %v", err)

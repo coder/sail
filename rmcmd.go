@@ -6,32 +6,35 @@ import (
 	"os"
 	"time"
 
+	"go.coder.com/cli"
 	"go.coder.com/sail/internal/dockutil"
 
 	"go.coder.com/flog"
 )
 
 type rmcmd struct {
+	gf *globalFlags
+
 	repoArg string
 	all     bool
 }
 
-func (c *rmcmd) spec() commandSpec {
-	return commandSpec{
-		name:      "rm",
-		shortDesc: "Remove a sail container from the system.",
-		longDesc: `This command allows for removing a single container
-	or all of the containers on a system with the -all flag.`,
-		usage: "[flags] <repo>",
+func (c *rmcmd) Spec() cli.CommandSpec {
+	return cli.CommandSpec{
+		Name:  "rm",
+		Usage: "[flags] <repo>",
+		Desc: `Remove a sail container from the system.
+This command allows for removing a single container
+    or all of the containers on a system with the -all flag.`,
 	}
 }
 
-func (c *rmcmd) initFlags(fl *flag.FlagSet) {
+func (c *rmcmd) RegisterFlags(fl *flag.FlagSet) {
 	fl.BoolVar(&c.all, "all", false, "Remove all sail containers.")
 }
 
-func (c *rmcmd) handle(gf globalFlags, fl *flag.FlagSet) {
-	gf.ensureDockerDaemon()
+func (c *rmcmd) Run(fl *flag.FlagSet) {
+	c.gf.ensureDockerDaemon()
 
 	c.repoArg = fl.Arg(0)
 

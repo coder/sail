@@ -4,9 +4,8 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
+	"flag"
 	"fmt"
-	"go.coder.com/flog"
-	"golang.org/x/xerrors"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -18,6 +17,10 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"go.coder.com/cli"
+	"go.coder.com/flog"
+	"golang.org/x/xerrors"
 )
 
 func codeServerProxy(w http.ResponseWriter, r *http.Request, port string) {
@@ -202,7 +205,10 @@ please try to reload soon
 	codeServerProxy(w, r, port)
 }
 
-func proxycmd(cntName string) (addr string, err error) {
+type proxycmd struct {
+}
+
+func (c *proxycmd) proxy(cntName string) (addr string, err error) {
 	l, err := net.Listen("tcp", "localhost:0")
 	if err != nil {
 		return "", xerrors.Errorf("failed to listen: %w", err)
@@ -236,4 +242,21 @@ console.log("injected")
 	}()
 
 	return p.url, nil
+}
+
+func (c *proxycmd) Spec() cli.CommandSpec {
+	return cli.CommandSpec{
+		Name:   "proxy",
+		Usage:  "[url]",
+		Desc:   "Proxies to url. Prints the frontend address.",
+		Hidden: true,
+	}
+}
+
+func (c *proxycmd) Run(fl *flag.FlagSet) {
+	u, err := c.proxy(fl.Arg(0))
+	if err != nil {
+		flog.Fatal("failed to proxy: %v", err)
+	}
+	fmt.Println(u)
 }

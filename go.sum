@@ -70,6 +70,10 @@ github.com/stretchr/objx v0.1.1/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+
 github.com/stretchr/testify v1.2.2/go.mod h1:a8OnRcib4nhh0OaRAV+Yts87kKdq0PP7pXfy6kDkUVs=
 github.com/stretchr/testify v1.3.0 h1:TivCn/peBQ7UY8ooIcPgZFpTNSz0Q2U6UrFlUfqbe0Q=
 github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UVUgZn+9EI=
+go.coder.com/cli v0.1.0 h1:ZAjpjXJxMnwj1TqXUi7nnXXuxiPRfwfoC2kViN93oMM=
+go.coder.com/cli v0.1.0/go.mod h1:pbVagI9YH/HHMManxPFML4P527GDREwsb+yciZ7mtB8=
+go.coder.com/cli v0.1.1-0.20190426214427-610063ae7153 h1:HbUKnOToXGQdfnqU8Pkex07q4JDxnnU6GhJk7Vk1NYA=
+go.coder.com/cli v0.1.1-0.20190426214427-610063ae7153/go.mod h1:pbVagI9YH/HHMManxPFML4P527GDREwsb+yciZ7mtB8=
 go.coder.com/flog v0.0.0-20190129195112-eaed154a0db8 h1:PtQ3moPi4EAz3cyQhkUs1IGIXa2QgJpP60yMjOdu0kk=
 go.coder.com/flog v0.0.0-20190129195112-eaed154a0db8/go.mod h1:83JsYgXYv0EOaXjIMnaZ1Fl6ddNB3fJnDZ/8845mUJ8=
 golang.org/x/crypto v0.0.0-20180820150726-614d502a4dac/go.mod h1:6SG95UA2DQfeDnfUPMdvaQW0Q7yPrPDi9nlGo2tz2b4=

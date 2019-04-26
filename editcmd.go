@@ -10,6 +10,7 @@ import (
 
 	"github.com/docker/docker/api/types"
 
+	"go.coder.com/cli"
 	"go.coder.com/flog"
 	"go.coder.com/sail/internal/dockutil"
 	"go.coder.com/sail/internal/editor"
@@ -19,16 +20,18 @@ import (
 )
 
 type editcmd struct {
+	gf *globalFlags
+
 	noEditor bool
 	hatPath  string
 	hat      bool
 }
 
-func (c *editcmd) spec() commandSpec {
-	return commandSpec{
-		name:      "edit",
-		shortDesc: "edit your environment in real-time.",
-		longDesc: `This command allows you to edit your project's environment while it's running.
+func (c *editcmd) Spec() cli.CommandSpec {
+	return cli.CommandSpec{
+		Name:  "edit",
+		Usage: "[flags] <repo>",
+		Desc: `This command allows you to edit your project's environment while it's running.
 	Depending on what flags are set, the Dockerfile you want to change will be opened in your default
 	editor which can be set using the "EDITOR" environment variable. Once your changes are complete
 	and the editor is closed, the environment will be rebuilt and rerun with minimal downtime.
@@ -36,14 +39,13 @@ func (c *editcmd) spec() commandSpec {
 	If no flags are set, this will open your project's Dockerfile. If the -hat flag is set, this
 	will open the hat Dockerfile associated with your running project in the editor. If the -new-hat
 	flag is set, the project will be adjusted to use the new hat.`,
-		usage: "[flags] <repo>",
 	}
 }
 
-func (c *editcmd) handle(gf globalFlags, fl *flag.FlagSet) {
-	proj := gf.project(fl)
+func (c *editcmd) Run(fl *flag.FlagSet) {
+	proj := c.gf.project(fl)
 
-	gf.ensureDockerDaemon()
+	c.gf.ensureDockerDaemon()
 
 	err := os.MkdirAll(filepath.Dir(proj.dockerfilePath()), 0755)
 	if err != nil {
@@ -224,7 +226,9 @@ func runEditor(file string) error {
 	return nil
 }
 
-func (c *editcmd) initFlags(fl *flag.FlagSet) {
+var _ cli.FlaggedCommand = new(editcmd)
+
+func (c *editcmd) RegisterFlags(fl *flag.FlagSet) {
 	fl.StringVar(&c.hatPath, "new-hat", "", "Path to new hat.")
 	fl.BoolVar(&c.hat, "hat", false, "Edit the hat associated with this project.")
 }
