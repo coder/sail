@@ -54,7 +54,7 @@ func Test_runner(t *testing.T) {
 			require.NoError(t, err)
 
 			assert.Equal(t, p.runner.cntName, runner.cntName)
-			assert.Equal(t, p.runner.hostUser+":user", runner.hostUser)
+			assert.Equal(t, "user", runner.hostUser)
 			assert.Equal(t, p.runner.hostname, runner.hostname)
 			assert.Equal(t, p.runner.port, runner.port)
 			assert.Equal(t, p.runner.projectLocalDir, runner.projectLocalDir)
