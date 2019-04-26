@@ -131,7 +131,7 @@ func (p *proxy) shouldDie() error {
 }
 
 func (p *proxy) gc() {
-	t := time.NewTicker(time.Second * 30)
+	t := time.NewTicker(time.Second * 10)
 	defer t.Stop()
 
 	errs := 0
@@ -143,9 +143,9 @@ func (p *proxy) gc() {
 		} else {
 			errs = 0
 		}
-		// On the 5th error we fatal. We wait till the 5th in case
+		// On the 2nd error we fatal. We wait till the 2nd in case
 		// the container is being restarted.
-		if errs == 5 {
+		if errs == 2 {
 			flog.Fatal("terminating due to too many should die errors")
 		}
 	}
