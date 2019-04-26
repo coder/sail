@@ -6,12 +6,18 @@ import (
 	"os"
 	"os/user"
 
+	"net/http"
+	"time"
+
+	"go.coder.com/cli"
 	"go.coder.com/flog"
 	"go.coder.com/sail/internal/dockutil"
 	"golang.org/x/xerrors"
 )
 
 type runcmd struct {
+	gf *globalFlags
+
 	repoArg string
 
 	image   string
@@ -20,21 +26,20 @@ type runcmd struct {
 	testCmd string
 }
 
-func (c *runcmd) spec() commandSpec {
-	return commandSpec{
-		name:      "run",
-		shortDesc: "Runs a project container.",
-		longDesc: `This command is used for opening and running a project.
-	If a project is not yet created or running with the name,
-	one will be created and a new editor will be opened.
-	If a project is already up and running, this won't
-	start a new container, but instead will reuse the
-	already running container and open a new editor.`,
-		usage: "[flags] <repo>",
+func (c *runcmd) Spec() cli.CommandSpec {
+	return cli.CommandSpec{
+		Name:  "run",
+		Usage: "[flags] <repo>",
+		Desc: `Runs a project container.
+If a project is not yet created or running with the name,
+one will be created and a new editor will be opened.
+If a project is already up and running, this won't
+start a new container, but instead will reuse the
+already running container and open a new editor.`,
 	}
 }
 
-func (c *runcmd) initFlags(fl *flag.FlagSet) {
+func (c *runcmd) RegisterFlags(fl *flag.FlagSet) {
 	c.repoArg = fl.Arg(0)
 
 	fl.StringVar(&c.image, "image", "", "Custom docker image to use.")
@@ -45,13 +50,13 @@ func (c *runcmd) initFlags(fl *flag.FlagSet) {
 
 const guestHomeDir = "/home/user"
 
-func (c *runcmd) handle(gf globalFlags, fl *flag.FlagSet) {
+func (c *runcmd) Run(fl *flag.FlagSet) {
 	var (
 		err error
 	)
-	gf.ensureDockerDaemon()
+	c.gf.ensureDockerDaemon()
 
-	proj := gf.project(fl)
+	proj := c.gf.project(fl)
 
 	// Abort if container already exists.
 	exists, err := proj.cntExists()
@@ -59,18 +64,44 @@ func (c *runcmd) handle(gf globalFlags, fl *flag.FlagSet) {
 		flog.Fatal("%v", err)
 	}
 	if exists {
-		gf.debug("opening existing project")
+		c.gf.debug("opening existing project")
 
-		err = proj.open()
+		u, err := proj.proxyURL()
 		if err != nil {
-			flog.Error("failed to open project: %v", err)
-			err = proj.delete()
-			if err != nil {
-				flog.Error("failed to delete project container: %v", err)
-			}
-			os.Exit(1)
+			flog.Fatal("%v", err)
 		}
-		return
+
+		resp, err := http.Get(u + "/sail/api/v1/heartbeat")
+		if err == nil {
+			resp.Body.Close()
+
+			err = proj.open()
+			if err != nil {
+				flog.Error("failed to open project: %v", err)
+				err = proj.delete()
+				if err != nil {
+					flog.Error("failed to delete project container: %v", err)
+				}
+				os.Exit(1)
+			}
+			os.Exit(0)
+		}
+
+		// Proxy is not up, meaning the container shut down at some point, or the proxy
+		// was killed. We're going to restart the proxy and update the container label.
+
+		cli := dockerClient()
+		defer cli.Close()
+
+		ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+		defer cancel()
+
+		err = dockutil.StopRemove(ctx, cli, proj.cntName())
+		if err != nil {
+			flog.Fatal("failed to remove container without running proxy: %v", err)
+		}
+
+		// The container will be rebuilt properly.
 	}
 
 	err = proj.ensureDir()
@@ -88,8 +119,8 @@ func (c *runcmd) handle(gf globalFlags, fl *flag.FlagSet) {
 			flog.Fatal("failed to build image: %v", err)
 		}
 		if !customImageExists {
-			flog.Info("using default image %v", gf.config().DefaultImage)
-			image = gf.config().DefaultImage
+			flog.Info("using default image %v", c.gf.config().DefaultImage)
+			image = c.gf.config().DefaultImage
 		} else {
 			flog.Info("using repo image %v", image)
 		}
@@ -100,15 +131,15 @@ func (c *runcmd) handle(gf globalFlags, fl *flag.FlagSet) {
 	switch {
 	case c.hat != "":
 		hatPath = c.hat
-	case gf.config().DefaultHat != "":
-		hatPath = gf.config().DefaultHat
+	case c.gf.config().DefaultHat != "":
+		hatPath = c.gf.config().DefaultHat
 	}
 
 	hostHomeDir, err := os.UserHomeDir()
 	if err != nil {
 		panic(err)
 	}
-	gf.debug("host home dir: %v", hostHomeDir)
+	c.gf.debug("host home dir: %v", hostHomeDir)
 
 	u, err := user.Current()
 	if err != nil {
@@ -131,13 +162,13 @@ func (c *runcmd) handle(gf globalFlags, fl *flag.FlagSet) {
 		testCmd:  c.testCmd,
 	}
 
-	err = c.buildOpen(gf, proj, b, r)
+	err = c.buildOpen(c.gf, proj, b, r)
 	if err != nil {
 		flog.Error("build run failed: %v", err)
 		if !c.keep {
 			// We remove the container if it fails to start as that means the developer
 			// can iterate w/o having to do the obnoxious `docker rm` step.
-			gf.debug("removing %v", proj.cntName())
+			c.gf.debug("removing %v", proj.cntName())
 			err = dockutil.StopRemove(context.Background(), dockerClient(), proj.cntName())
 			if err != nil {
 				flog.Error("failed to remove %v", proj.cntName())
@@ -148,11 +179,17 @@ func (c *runcmd) handle(gf globalFlags, fl *flag.FlagSet) {
 	os.Exit(0)
 }
 
-func (c *runcmd) buildOpen(gf globalFlags, proj *project, b *hatBuilder, r *runner) error {
+func (c *runcmd) buildOpen(gf *globalFlags, proj *project, b *hatBuilder, r *runner) error {
 	var err error
 	image := b.baseImage
 	if b.hatPath != "" {
 		image, err = b.applyHat()
+	}
+
+	// TODO proxy if container already exists.
+	err = r.forkProxy()
+	if err != nil {
+		return xerrors.Errorf("failed to start proxy: %w", err)
 	}
 
 	err = r.runContainer(image)

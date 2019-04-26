@@ -42,7 +42,7 @@ const DefaultConfig = `# sail configuration.
 default_image = "codercom/ubuntu-dev"
 
 # project_root is the base from which projects are mounted.
-# projects are stored in directories with form "<root>/<org>/<repo."
+# projects are stored in directories with form "<root>/<org>/<repo>"
 project_root = "~/Projects"
 
 # default hat lets you configure a hat that's applied automatically by default.

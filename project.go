@@ -190,6 +190,26 @@ func (p *project) containerDir() (string, error) {
 	return dir, nil
 }
 
+// proxyAddr returns the address of the sail proxy for the container.
+func (p *project) proxyURL() (string, error)  {
+	return proxyURL(p.cntName())
+}
+
+func proxyURL(cntName string) (string, error) {
+	client := dockerClient()
+	defer client.Close()
+
+	cnt, err := client.ContainerInspect(context.Background(), cntName)
+	if err != nil {
+		return "", err
+	}
+	proxyURL, ok := cnt.Config.Labels[proxyURLLabel]
+	if !ok {
+		return "", xerrors.Errorf("no %v label", proxyURLLabel)
+	}
+	return proxyURL, nil
+}
+
 func (p *project) readCodeServerLog() ([]byte, error) {
 	cmd := xexec.Fmt("docker logs %v", p.cntName())
 
@@ -238,15 +258,18 @@ func (p *project) open() error {
 		return xerrors.Errorf("failed to start container: %w", err)
 	}
 
-	port, err := codeServerPort(p.cntName())
+	u, err := p.proxyURL()
 	if err != nil {
 		return err
 	}
 
-	u := "http://localhost:" + port
-
 	flog.Info("opening %v", u)
-	return browserapp.Open(u)
+
+	err = browserapp.Open(u)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (p *project) delete() error {
