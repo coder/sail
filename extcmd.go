@@ -67,7 +67,6 @@ func (c *extCmd) add(fl *flag.FlagSet) error {
 		ext = c.nextArg(fl)
 		fi  = c.nextArg(fl)
 	)
-	fmt.Println(ext, fi)
 
 	stat, err := os.Stat(fi)
 	if err != nil {
@@ -125,35 +124,36 @@ func (c *extCmd) remove(fl *flag.FlagSet) error {
 // set overrides all previously set extensions with the ones in the local VS Code extension folder.
 func (c *extCmd) set(fl *flag.FlagSet) error {
 	var (
-		hatFile   = fl.Arg(1)
-		hatExists = false
+		file       = fl.Arg(1)
+		fileExists = false
 	)
 
-	stat, err := os.Stat(hatFile)
+	stat, err := os.Stat(file)
 	if err == nil {
-		hatExists = true
+		fileExists = true
 	}
 
 	extDir, err := vscodeExtensionDir()
 	if err != nil {
-		return xerrors.Errorf("failed to find vscode edition: %s", err)
+		return xerrors.Errorf("failed to find vscode edition: %w", err)
 	}
 
 	exts, err := extensions.ParseExtensionList(extDir)
 	if err != nil {
-		return xerrors.Errorf("failed to parse extension list: %s", err)
+		return xerrors.Errorf("failed to parse extension list: %w", err)
 	}
 
 	if len(exts) == 0 {
 		fmt.Println("No extensions found.")
+		// is adding a config option the best way for this?
 		fmt.Println("Is this a mistake? Edit your sail.toml with the correct VS Code path.")
 		return nil
 	}
 
-	if hatExists {
-		raw, err := ioutil.ReadFile(hatFile)
+	if fileExists {
+		raw, err := ioutil.ReadFile(file)
 		if err != nil {
-			return xerrors.Errorf("failed to read hat file: %s", err)
+			return xerrors.Errorf("failed to read Dockerfile: %w", err)
 		}
 
 		r, err := extensions.DockerfileSetExtensions(raw, exts)
@@ -161,9 +161,9 @@ func (c *extCmd) set(fl *flag.FlagSet) error {
 		// that means we can't find the extension block and it'll be added
 		// below.
 		if err == nil {
-			err = ioutil.WriteFile(hatFile, r, stat.Mode())
+			err = ioutil.WriteFile(file, r, stat.Mode())
 			if err != nil {
-				return xerrors.Errorf("failed to write hat file: %s", err)
+				return xerrors.Errorf("failed to write Dockerfile: %w", err)
 			}
 
 			return nil
@@ -172,35 +172,42 @@ func (c *extCmd) set(fl *flag.FlagSet) error {
 	}
 
 	buf := bytes.NewBuffer(nil)
-	if !hatExists && hatFile != "" {
+	if !fileExists && file != "" {
 		r, err := extensions.DockerfileSetExtensions(nil, exts)
 		if err != nil {
-			return xerrors.Errorf("failed to set extensions: %s", err)
+			return xerrors.Errorf("failed to set extensions: %w", err)
 		}
 		buf.Write(r)
 	} else {
 		buf.Write(bytes.Join(extensions.FmtExtensions(exts), []byte{10}))
 	}
 
-	if hatFile == "" {
-		io.Copy(os.Stdout, buf)
+	if file == "" {
+		_, err := io.Copy(os.Stdout, buf)
+		if err != nil {
+			return xerrors.Errorf("failed to copy Dockerfile to stdout: %w", err)
+		}
+
 		return nil
 	}
 
-	fi, err := os.OpenFile(hatFile, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0644)
+	fi, err := os.OpenFile(file, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0644)
 	if err != nil {
-		return xerrors.Errorf("failed to open hat file: %s", err)
+		return xerrors.Errorf("failed to open Dockerfile: %w", err)
 	}
+	defer func() {
+		err := fi.Close()
+		if err != nil {
+			flog.Error("failed to close Dockerfile: %s", err)
+		}
+	}()
 
 	_, err = io.Copy(fi, buf)
 	if err != nil {
-		return xerrors.Errorf("failed to write to hat file: %s", err)
+		return xerrors.Errorf("failed to write to Dockerfile: %w", err)
 	}
 
 	err = fi.Close()
-	if err != nil {
-		return xerrors.Errorf("failed to close hat file: %s", err)
-	}
 
 	return nil
 }
