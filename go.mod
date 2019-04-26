@@ -6,6 +6,9 @@ require (
 	github.com/Azure/go-ansiterm v0.0.0-20170929234023-d6e3b3328b78 // indirect
 	github.com/BurntSushi/toml v0.3.1
 	github.com/Microsoft/go-winio v0.4.12 // indirect
+	github.com/alecthomas/assert v0.0.0-20170929043011-405dbfeb8e38
+	github.com/alecthomas/colour v0.0.0-20160524082231-60882d9e2721 // indirect
+	github.com/alecthomas/repr v0.0.0-20181024024818-d37bc2a10ba1 // indirect
 	github.com/docker/distribution v2.7.1+incompatible // indirect
 	github.com/docker/docker v0.7.3-0.20190416080540-ad9362bb1567
 	github.com/docker/go-connections v0.4.0
@@ -21,6 +24,7 @@ require (
 	github.com/opencontainers/image-spec v1.0.1 // indirect
 	github.com/pkg/browser v0.0.0-20180916011732-0a3d74bf9ce4
 	github.com/pkg/errors v0.8.1 // indirect
+	github.com/sergi/go-diff v1.0.0 // indirect
 	github.com/sirupsen/logrus v1.4.1 // indirect
 	github.com/stretchr/testify v1.3.0
 	go.coder.com/flog v0.0.0-20190129195112-eaed154a0db8

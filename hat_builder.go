@@ -10,10 +10,11 @@ import (
 	"strings"
 
 	"github.com/docker/docker/client"
+	"golang.org/x/xerrors"
+
 	"go.coder.com/flog"
 	"go.coder.com/sail/internal/hat"
 	"go.coder.com/sail/internal/xexec"
-	"golang.org/x/xerrors"
 )
 
 // hatBuilder is responsible for applying a hat to a base image.
