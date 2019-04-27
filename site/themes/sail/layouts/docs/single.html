@@ -3,38 +3,45 @@
 {{ $style := resources.Get "doc.scss" | resources.ToCSS | resources.Minify | resources.Fingerprint }}
 <link rel="stylesheet" href="{{ $style.Permalink }}">
 
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-lg">
-            <h1>Sail Documentation</h1>
+<nav class="navbar navbar-expand-lg topbar">
+    <div class="container">
+        <a class="navbar-brand" href="#">Sail Docs</a>
+
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <div class="navbar-collapse collapse justify-content-end">
+                <ul class="navbar-nav ml-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Enterprise</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Download</a>
+                    </li>
+                    <li class="nav-item active">
+                        <a class="nav-link" href="#">Docs</a>
+                    </li>
+                </ul>
+            </div>
         </div>
     </div>
-    <hr />
-    <div class="row">
-        <div class="col-lg-2 d-xs-none">
-            {{ partial "sidebar.html" . }}
-        </div>
+</nav>
 
-        <div class="col-lg content-box">
-            <div class="content">
-                <h1> {{ .Title }} </h1>
-                {{ .Content }}
-
+<div id="content">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-2 d-xs-none">
+                {{ partial "sidebar.html" . }}
             </div>
-            <hr />
-            <!-- <div class="row pagination">
-                {{if .PrevInSection }}
-                    <a href="{{ .PrevInSection.Permalink }}" class="last btn btn-outline-primary btn-lg">Last Page: {{ .PrevInSection.Title }}</a>
-                {{end}}
-                {{if .NextInSection }}
-                    <a href="{{ .NextInSection.Permalink }}" class="next btn btn-outline-primary btn-lg">Next Page: {{ .NextInSection.Title }}</a>
-                {{end}}
-            </div> -->
+
+            <div class="col-lg col-md-8 content-box">
+                <div class="content">
+                    <h1> {{ .Title }} </h1>
+                    {{ .Content }}
+
+                </div>
+                <hr />
+  
+            </div>
         </div>
-        <!-- <div class="col-lg-3 d-xs-none">
-            <span class="text-muted"><strong> In This Page </strong></span>
-            {{ .TableOfContents }}
-        </div> -->
     </div>
 </div>
 {{ end }}
