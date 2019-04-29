@@ -3,8 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/docker/go-connections/nat"
-	"go.coder.com/flog"
 	"io/ioutil"
 	"net/url"
 	"os"
@@ -14,6 +12,9 @@ import (
 	"strings"
 	"syscall"
 	"time"
+
+	"github.com/docker/go-connections/nat"
+	"go.coder.com/flog"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
@@ -410,7 +411,7 @@ func runnerFromContainer(name string) (*runner, error) {
 		port:            port,
 		projectLocalDir: cnt.Config.Labels[projectLocalDirLabel],
 		projectName:     cnt.Config.Labels[projectNameLabel],
-		proxyURL:     cnt.Config.Labels[proxyURLLabel],
+		proxyURL:        cnt.Config.Labels[proxyURLLabel],
 		hostUser:        cnt.Config.User,
 	}, nil
 }

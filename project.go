@@ -139,10 +139,6 @@ func (p *project) buildImage() (string, bool, error) {
 			return "", false, xerrors.Errorf("failed to stat %v: %w", path, err)
 		}
 
-		err = p.ensureDefaultImage()
-		if err != nil {
-			return "", false, xerrors.Errorf("failed to pull default image %v: %w", p.conf.DefaultImage, err)
-		}
 		return "", false, nil
 	}
 
@@ -161,10 +157,38 @@ func (p *project) buildImage() (string, bool, error) {
 	return imageID, true, nil
 }
 
-func (p *project) ensureDefaultImage() error {
-	flog.Info("ensuring default image %v exists", p.conf.DefaultImage)
+func fmtImage(img string) string {
+	return fmt.Sprintf("codercom/ubuntu-dev-%s", img)
+}
 
-	cmd := xexec.Fmt("docker pull %s", p.conf.DefaultImage)
+// defaultRepoImage returns a base image suitable for development with the
+// repo's language. If the repo language isn't able to be determined, this
+// returns the default image from the sail config.
+func (p *project) defaultRepoImage() string {
+	lang := p.repo.language()
+
+	switch strings.ToLower(lang) {
+	case "go":
+		return fmtImage("go")
+	case "javascript", "typescript":
+		return fmtImage("node12")
+	case "python":
+		return fmtImage("python3.7")
+	case "c", "c++":
+		return fmtImage("gcc8")
+	case "java":
+		return fmtImage("openjdk12")
+	case "ruby":
+		return fmtImage("ruby2.6")
+	default:
+		return p.conf.DefaultImage
+	}
+}
+
+func (p *project) ensureImage(image string) error {
+	flog.Info("ensuring image %v exists", image)
+
+	cmd := xexec.Fmt("docker pull %s", image)
 	xexec.Attach(cmd)
 
 	return cmd.Run()
@@ -191,7 +215,7 @@ func (p *project) containerDir() (string, error) {
 }
 
 // proxyAddr returns the address of the sail proxy for the container.
-func (p *project) proxyURL() (string, error)  {
+func (p *project) proxyURL() (string, error) {
 	return proxyURL(p.cntName())
 }
 

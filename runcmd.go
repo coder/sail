@@ -119,8 +119,13 @@ func (c *runcmd) Run(fl *flag.FlagSet) {
 			flog.Fatal("failed to build image: %v", err)
 		}
 		if !customImageExists {
-			flog.Info("using default image %v", c.gf.config().DefaultImage)
-			image = c.gf.config().DefaultImage
+			image = proj.defaultRepoImage()
+			flog.Info("using default image %v", image)
+
+			err = proj.ensureImage(image)
+			if err != nil {
+				flog.Fatal("failed to ensure image %v: %v", image, err)
+			}
 		} else {
 			flog.Info("using repo image %v", image)
 		}
