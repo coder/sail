@@ -2,13 +2,11 @@
 # https://github.com/nodejs/docker-node/blob/master/12/stretch/Dockerfile
 #
 # Modifications:
-# Changed FROM to be compatible with `buildfrom.sh`
+# Removed node user and group add since we use the user `user`.
+# Changed FROM to be compatible with `buildfrom.sh`.
 # Removed CMD ["node"] at the end.
 
 FROM %BASE
-
-RUN groupadd --gid 1000 node \
-  && useradd --uid 1000 --gid node --shell /bin/bash --create-home node
 
 ENV NODE_VERSION 12.0.0
 

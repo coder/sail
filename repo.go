@@ -1,11 +1,16 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"path"
 	"regexp"
 	"strings"
+
+	"github.com/google/go-github/v24/github"
+	"go.coder.com/flog"
 )
 
 var repoRegex = regexp.MustCompile(`^(?P<user>\w+@)?(?P<host>\S+:)?(?P<path>\S+)$`)
@@ -36,7 +41,7 @@ func (r repo) CloneURI() string {
 
 func (r repo) DockerName() string {
 	return toDockerName(
-		strings.TrimSuffix(r.Path, ".git"),
+		r.trimPathGitSuffix(),
 	)
 }
 
@@ -78,4 +83,29 @@ func ParseRepo(name string) (repo, error) {
 	}
 
 	return r, nil
+}
+
+func (r repo) trimPathGitSuffix() string {
+	return strings.TrimSuffix(r.Path, ".git")
+}
+
+// language returns the language of a repository using github's detected language.
+// This is a best effort try and will return the empty string if something fails.
+func (r repo) language() string {
+	orgRepo := strings.SplitN(r.trimPathGitSuffix(), "/", 2)
+	if len(orgRepo) != 2 {
+		return ""
+	}
+
+	repo, resp, err := github.NewClient(nil).Repositories.Get(context.Background(), orgRepo[0], orgRepo[1])
+	if err != nil {
+		flog.Error("unable to get repo language: %v", err)
+		return ""
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return ""
+	}
+
+	return repo.GetLanguage()
 }

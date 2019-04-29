@@ -1,7 +1,7 @@
 FROM %BASE
 
 RUN apt-get update && \
-    apt-get install -y vim neovim git curl wget lsof inetutils-ping gcc sudo htop
+    apt-get install -y vim neovim git curl wget lsof inetutils-ping gcc sudo htop man
 
 RUN apt-get install -y ripgrep
 
