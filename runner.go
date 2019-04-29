@@ -104,6 +104,14 @@ code-server --host %v --port %v \
 		envs = append(envs, s)
 	}
 
+	if runtime.GOOS == "linux" {
+		// When on linux and the display variable exists we forward it so
+		// that GUI applications can run.
+		if os.Getenv("DISPLAY") != "" {
+			envs = append(envs, "DISPLAY="+os.Getenv("DISPLAY"))
+		}
+	}
+
 	containerConfig := &container.Config{
 		Hostname: r.hostname,
 		Env:      envs,
@@ -198,6 +206,16 @@ func (r *runner) mounts(mounts []mount.Mount, image string) ([]mount.Mount, erro
 		Source: "~/.vscode/extensions",
 		Target: "~/.vscode/extensions",
 	})
+	if runtime.GOOS == "linux" {
+		if os.Getenv("DISPLAY") != "" {
+			// Mount X11 socket.
+			mounts = append(mounts, mount.Mount{
+				Type:   "bind",
+				Source: os.Getenv("DISPLAY"),
+				Target: os.Getenv("DISPLAY"),
+			})
+		}
+	}
 
 	// 'SSH_AUTH_SOCK' is provided by a running ssh-agent. Passing in the
 	// socket to the container allows for using the user's existing setup for
@@ -410,7 +428,7 @@ func runnerFromContainer(name string) (*runner, error) {
 		port:            port,
 		projectLocalDir: cnt.Config.Labels[projectLocalDirLabel],
 		projectName:     cnt.Config.Labels[projectNameLabel],
-		proxyURL:     cnt.Config.Labels[proxyURLLabel],
+		proxyURL:        cnt.Config.Labels[proxyURLLabel],
 		hostUser:        cnt.Config.User,
 	}, nil
 }
