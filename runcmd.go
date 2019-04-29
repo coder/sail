@@ -18,8 +18,6 @@ import (
 type runcmd struct {
 	gf *globalFlags
 
-	repoArg string
-
 	image   string
 	hat     string
 	keep    bool
@@ -40,8 +38,6 @@ already running container and open a new editor.`,
 }
 
 func (c *runcmd) RegisterFlags(fl *flag.FlagSet) {
-	c.repoArg = fl.Arg(0)
-
 	fl.StringVar(&c.image, "image", "", "Custom docker image to use.")
 	fl.StringVar(&c.hat, "hat", "", "Custom hat to use.")
 	fl.BoolVar(&c.keep, "keep", false, "Keep container when it fails to build.")

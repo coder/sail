@@ -2,9 +2,10 @@ package main
 
 import (
 	"flag"
-	"path/filepath"
-
 	"github.com/posener/complete"
+	"os"
+	"path/filepath"
+	"strings"
 
 	"go.coder.com/cli"
 )
@@ -56,6 +57,7 @@ func (r rootCmd) Subcommands() []cli.Command {
 		&lscmd{},
 		&rmcmd{gf: &r.globalFlags},
 		&proxycmd{},
+		&chromeExtInstall{},
 	}
 }
 
@@ -63,6 +65,12 @@ func main() {
 	root := &rootCmd{}
 
 	if handleAutocomplete(root) {
+		return
+	}
+
+	if len(os.Args) >= 2 && strings.HasPrefix("chrome-extension://", os.Args[1]) ||
+		len(os.Args) >= 3 && strings.HasPrefix("chrome-extension://", os.Args[2]) {
+		runNativeMsgHost()
 		return
 	}
 
