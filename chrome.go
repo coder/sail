@@ -78,7 +78,7 @@ func handleRun(w http.ResponseWriter, r *http.Request) {
 	var req runRequest
 	err = wsjson.Read(ctx, c, &req)
 	if err != nil {
-		log.Println("failed to read request: %v", err)
+		log.Printf("failed to read request: %v\n", err)
 		c.Close(websocket.StatusInvalidFramePayloadData, "failed to read")
 		return
 	}
