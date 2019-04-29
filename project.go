@@ -263,6 +263,11 @@ func (p *project) open() error {
 		return err
 	}
 
+	if os.Getenv("DISPLAY") == "" {
+		flog.Info("please visit %v", u)
+		return nil
+	}
+
 	flog.Info("opening %v", u)
 
 	err = browserapp.Open(u)
