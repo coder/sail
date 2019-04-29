@@ -7,12 +7,12 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
-	"os"
-	"os/exec"
+	"nhooyr.io/websocket"
 	"strconv"
 	"sync"
 	"sync/atomic"
@@ -154,20 +154,30 @@ func (p *proxy) gc() {
 	}
 }
 
-func (p *proxy) reload(w http.ResponseWriter, r *http.Request) {
-	ctx, cancel := context.WithTimeout(r.Context(), time.Minute)
-	defer cancel()
+type muxMsg struct {
+	Type string      `json:"type"`
+	V    interface{} `json:"v"`
+}
 
-	sail := exec.CommandContext(ctx, os.Args[0], "edit", toSailName(p.cntName))
-	sail.Env = append(os.Environ(), "EDITOR=true")
-	b, err := sail.CombinedOutput()
+func (p *proxy) reload(w http.ResponseWriter, r *http.Request) {
+	c, err := websocket.Accept(w, r, websocket.AcceptOptions{})
 	if err != nil {
-		msg := fmt.Sprintf("failed to run %q: %v (out %q)", sail.Args, err, string(b))
-		http.Error(w, msg, http.StatusInternalServerError)
+		log.Println(err)
 		return
 	}
+	defer c.Close(websocket.StatusInternalError, "something failed")
 
+	ctx, cancel := context.WithTimeout(r.Context(), time.Minute*5)
+	defer cancel()
+
+	success := streamRun(ctx, c, "edit", toSailName(p.cntName))
+
+	// Need to refresh the port before we signal the stream was successful.
 	p.refreshPort()
+
+	if success {
+		c.Close(websocket.StatusNormalClosure, "")
+	}
 }
 
 func (p *proxy) proxy(w http.ResponseWriter, r *http.Request) {

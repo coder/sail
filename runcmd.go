@@ -18,8 +18,6 @@ import (
 type runcmd struct {
 	gf *globalFlags
 
-	repoArg string
-
 	image   string
 	hat     string
 	keep    bool
@@ -40,8 +38,6 @@ already running container and open a new editor.`,
 }
 
 func (c *runcmd) RegisterFlags(fl *flag.FlagSet) {
-	c.repoArg = fl.Arg(0)
-
 	fl.StringVar(&c.image, "image", "", "Custom docker image to use.")
 	fl.StringVar(&c.hat, "hat", "", "Custom hat to use.")
 	fl.BoolVar(&c.keep, "keep", false, "Keep container when it fails to build.")
@@ -119,8 +115,13 @@ func (c *runcmd) Run(fl *flag.FlagSet) {
 			flog.Fatal("failed to build image: %v", err)
 		}
 		if !customImageExists {
-			flog.Info("using default image %v", c.gf.config().DefaultImage)
-			image = c.gf.config().DefaultImage
+			image = proj.defaultRepoImage()
+			flog.Info("using default image %v", image)
+
+			err = proj.ensureImage(image)
+			if err != nil {
+				flog.Fatal("failed to ensure image %v: %v", image, err)
+			}
 		} else {
 			flog.Info("using repo image %v", image)
 		}
