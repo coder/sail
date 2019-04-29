@@ -56,6 +56,7 @@ func (r rootCmd) Subcommands() []cli.Command {
 		&lscmd{},
 		&rmcmd{gf: &r.globalFlags},
 		&proxycmd{},
+		&extCmd{},
 	}
 }
 
