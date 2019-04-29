@@ -6,7 +6,6 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"log"
 	"net"
@@ -14,9 +13,6 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"nhooyr.io/websocket"
-	"nhooyr.io/websocket/wsjson"
-	"os"
-	"os/exec"
 	"strconv"
 	"sync"
 	"sync/atomic"
@@ -174,60 +170,13 @@ func (p *proxy) reload(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), time.Minute*5)
 	defer cancel()
 
-	p.sailEdit(ctx, c)
+	success := streamRun(ctx, c, "edit", toSailName(p.cntName))
 
+	// Need to refresh the port before we signal the stream was successful.
 	p.refreshPort()
-}
 
-func (p *proxy) sailEdit(ctx context.Context, c *websocket.Conn) {
-	readOut, writeOut := io.Pipe()
-
-	sail := exec.CommandContext(ctx, os.Args[0], "edit", toSailName(p.cntName))
-	sail.Env = append(os.Environ(), "EDITOR=true")
-	sail.Stdout = writeOut
-	sail.Stderr = writeOut
-	err := sail.Start()
-	if err != nil {
-		wsjson.Write(ctx, c, muxMsg{
-			Type: "error",
-			V:    fmt.Sprintf("failed to start %q: %v", sail.Args, err),
-		})
-		return
-	}
-
-	go func() {
-		sail.Wait()
-		writeOut.Close()
-	}()
-
-	defer sail.Process.Kill()
-
-	for {
-		b := make([]byte, 4096)
-		n, rerr := readOut.Read(b)
-
-		if n > 0 {
-			err := wsjson.Write(ctx, c, muxMsg{
-				Type: "data",
-				V:    b[:n],
-			})
-			if err != nil {
-				return
-			}
-		}
-
-		if rerr == io.EOF {
-			c.Close(websocket.StatusNormalClosure, "output complete")
-			return
-		}
-
-		if rerr != nil {
-			wsjson.Write(ctx, c, muxMsg{
-				Type: "error",
-				V:    fmt.Sprintf("failed to read sail output: %v", rerr),
-			})
-			return
-		}
+	if success {
+		c.Close(websocket.StatusNormalClosure, "")
 	}
 }
 
