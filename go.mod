@@ -35,5 +35,3 @@ require (
 	gotest.tools v2.2.0+incompatible // indirect
 	nhooyr.io/websocket v0.2.0
 )
-
-

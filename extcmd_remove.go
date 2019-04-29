@@ -17,7 +17,7 @@ func (c *extRemoveCmd) Spec() cli.CommandSpec {
 	return cli.CommandSpec{
 		Name:   "remove",
 		Usage:  "remove <extension> <file>",
-		Desc:   "List locally installed extensions",
+		Desc:   "Remove an extension from the provided Dockerfile.",
 		Hidden: false,
 	}
 }
