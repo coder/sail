@@ -6,11 +6,15 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"io"
 	"io/ioutil"
+	"log"
 	"net"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"nhooyr.io/websocket"
+	"nhooyr.io/websocket/wsjson"
 	"os"
 	"os/exec"
 	"strconv"
@@ -154,20 +158,77 @@ func (p *proxy) gc() {
 	}
 }
 
+type muxMsg struct {
+	Type string      `json:"type"`
+	V    interface{} `json:"v"`
+}
+
 func (p *proxy) reload(w http.ResponseWriter, r *http.Request) {
-	ctx, cancel := context.WithTimeout(r.Context(), time.Minute)
+	c, err := websocket.Accept(w, r, websocket.AcceptOptions{})
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	defer c.Close(websocket.StatusInternalError, "something failed")
+
+	ctx, cancel := context.WithTimeout(r.Context(), time.Minute*5)
 	defer cancel()
+
+	p.sailEdit(ctx, c)
+
+	p.refreshPort()
+}
+
+func (p *proxy) sailEdit(ctx context.Context, c *websocket.Conn) {
+	readOut, writeOut := io.Pipe()
 
 	sail := exec.CommandContext(ctx, os.Args[0], "edit", toSailName(p.cntName))
 	sail.Env = append(os.Environ(), "EDITOR=true")
-	b, err := sail.CombinedOutput()
+	sail.Stdout = writeOut
+	sail.Stderr = writeOut
+	err := sail.Start()
 	if err != nil {
-		msg := fmt.Sprintf("failed to run %q: %v (out %q)", sail.Args, err, string(b))
-		http.Error(w, msg, http.StatusInternalServerError)
+		wsjson.Write(ctx, c, muxMsg{
+			Type: "error",
+			V:    fmt.Sprintf("failed to start %q: %v", sail.Args, err),
+		})
 		return
 	}
 
-	p.refreshPort()
+	go func() {
+		sail.Wait()
+		writeOut.Close()
+	}()
+
+	defer sail.Process.Kill()
+
+	for {
+		b := make([]byte, 4096)
+		n, rerr := readOut.Read(b)
+
+		if n > 0 {
+			err := wsjson.Write(ctx, c, muxMsg{
+				Type: "data",
+				V:    b[:n],
+			})
+			if err != nil {
+				return
+			}
+		}
+
+		if rerr == io.EOF {
+			c.Close(websocket.StatusNormalClosure, "output complete")
+			return
+		}
+
+		if rerr != nil {
+			wsjson.Write(ctx, c, muxMsg{
+				Type: "error",
+				V:    fmt.Sprintf("failed to read sail output: %v", rerr),
+			})
+			return
+		}
+	}
 }
 
 func (p *proxy) proxy(w http.ResponseWriter, r *http.Request) {
