@@ -1,12 +1,24 @@
 FROM %BASE
 
-RUN apt-get update && \
-    apt-get install -y vim neovim git curl wget lsof inetutils-ping gcc sudo htop man
+RUN apt-get update && apt-get install -y \
+    vim \
+    neovim \
+    git \
+    curl \
+    wget \
+    lsof \
+    inetutils-ping \
+    sudo \
+    htop \
+    man \
+    ripgrep \
+    net-tools \
+    locales
 
-RUN apt-get install -y ripgrep
-
-# netstat
-RUN apt-get install -y net-tools
+RUN locale-gen en_US.UTF-8
+# We unfortunately cannot use update-locale because docker will not use the env variables
+# configured in /etc/default/locale so we need to set it manually.
+ENV LC_ALL=en_US.UTF-8
 
 LABEL share.ssh="~/.ssh:~/.ssh"
 

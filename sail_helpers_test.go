@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"math/rand"
-	"os/user"
 	"path/filepath"
 	"testing"
 	"time"
@@ -95,16 +94,12 @@ func run(t *testing.T, name, repo, hatPath string, fns ...func(t *testing.T, p *
 		p.port, err = xnet.FindAvailablePort()
 		require.NoError(t, err)
 
-		u, err := user.Current()
-		require.NoError(t, err)
-
 		p.runner = &runner{
 			projectName:     p.proj.repo.BaseName(),
 			projectLocalDir: p.proj.localDir(),
 			cntName:         p.proj.cntName(),
 			hostname:        p.proj.repo.BaseName(),
 			port:            p.port,
-			hostUser:        u.Uid,
 		}
 
 		err = p.runner.runContainer(image)
