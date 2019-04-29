@@ -241,6 +241,8 @@ console.log("injected")
 		http.Serve(l, m)
 	}()
 
+	flog.Info("listening on %v", p.url)
+
 	return p.url, nil
 }
 
