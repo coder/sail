@@ -46,6 +46,6 @@ func TestDownloadURL_Extract(t *testing.T) {
 	err = tmpfi.Close()
 	require.NoError(t, err)
 
-	_, err = exec.Command(tmpfi.Name(), "-h").CombinedOutput()
+	_, err = exec.Command(tmpfi.Name(), "--help").CombinedOutput()
 	require.NoError(t, err)
 }
