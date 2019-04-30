@@ -19,6 +19,9 @@ var _ interface {
 
 type rootCmd struct {
 	globalFlags
+
+	installAutocomplete   bool
+	uninstallAutocomplete bool
 }
 
 func (r *rootCmd) Spec() cli.CommandSpec {
@@ -33,6 +36,10 @@ More info: https://github.com/codercom/sail
 }
 
 func (r *rootCmd) Run(fl *flag.FlagSet) {
+	if r.handleAutocomplete() {
+		return
+	}
+
 	// The root command doesn't do anything.
 	fl.Usage()
 }
@@ -45,8 +52,8 @@ func (r *rootCmd) RegisterFlags(fl *flag.FlagSet) {
 	)
 
 	// We don't use these directly, just added for visability on fl.Usage().
-	fl.Bool("install-autocomplete", false, "Install autocomplete")
-	fl.Bool("uninstall-autocomplete", false, "Uninstall autocomplete")
+	fl.BoolVar(&r.installAutocomplete, "install-autocomplete", false, "Install autocomplete")
+	fl.BoolVar(&r.uninstallAutocomplete, "uninstall-autocomplete", false, "Uninstall autocomplete")
 }
 
 func (r rootCmd) Subcommands() []cli.Command {
@@ -64,10 +71,6 @@ func (r rootCmd) Subcommands() []cli.Command {
 func main() {
 	root := &rootCmd{}
 
-	if handleAutocomplete(root) {
-		return
-	}
-
 	if len(os.Args) >= 2 && strings.HasPrefix("chrome-extension://", os.Args[1]) ||
 		len(os.Args) >= 3 && strings.HasPrefix("chrome-extension://", os.Args[2]) {
 		runNativeMsgHost()
@@ -77,16 +80,19 @@ func main() {
 	cli.RunRoot(root)
 }
 
-func handleAutocomplete(root interface {
-	cli.Command
-	cli.ParentCommand
-	cli.FlaggedCommand
-}) bool {
-	cmds := []cli.Command{root}
-	cmds = append(cmds, root.Subcommands()...)
+func (r *rootCmd) handleAutocomplete() bool {
+	cmds := []cli.Command{r}
+	cmds = append(cmds, cli.ParentCommand(r).Subcommands()...)
 
 	cmp := complete.New("sail", genAutocomplete(cmds))
 	cmp.InstallName = "install-autocomplete"
 	cmp.UninstallName = "uninstall-autocomplete"
-	return cmp.Run()
+
+	// only call run if we know we want to install/uninstall autocomplete
+	if r.installAutocomplete || r.uninstallAutocomplete {
+		return cmp.Run()
+	}
+
+	// otherwise just process autocomplete
+	return cmp.Complete()
 }
