@@ -39,7 +39,7 @@ sail run codercom/sail
 
 Documentation is available in markdown form at [site/content/docs.](site/content/docs)
 
-Or, you can find it at [https://sail.dev/docs](https://sail.dev/docs)
+Or, you can find it at [https://sail.dev](https://sail.dev/docs/introduction/)
 
 ## Future
 

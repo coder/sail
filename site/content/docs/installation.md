@@ -32,7 +32,7 @@ To install the latest version of `sail`, run:
 go install go.coder.com/sail
 ```
 
-_`go install` will install to `$GOPATH/bin`_
+> `go install` will install to `$GOPATH/bin`
 
 
 ### Verifying the Installation

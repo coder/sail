@@ -12,7 +12,7 @@ their project environments.
 
 ### Project Root Label
 
-As described in [projects](/docs/concepts/projects), the bind mount target of the project's root can be specified
+As described in [projects](/docs/concepts/projects/), the bind mount target of the project's root can be specified
 using the `project_root` label. By default the project root is bind mounted to `~/<repo>` inside of
 the container.
 
