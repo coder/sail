@@ -4,7 +4,6 @@ import (
 	"context"
 	"flag"
 	"os"
-	"os/user"
 
 	"net/http"
 	"time"
@@ -118,7 +117,7 @@ func (c *runcmd) Run(fl *flag.FlagSet) {
 			image = proj.defaultRepoImage()
 			flog.Info("using default image %v", image)
 
-			err = proj.ensureImage(image)
+			err = ensureImage(image)
 			if err != nil {
 				flog.Fatal("failed to ensure image %v: %v", image, err)
 			}
@@ -142,11 +141,6 @@ func (c *runcmd) Run(fl *flag.FlagSet) {
 	}
 	c.gf.debug("host home dir: %v", hostHomeDir)
 
-	u, err := user.Current()
-	if err != nil {
-		flog.Fatal("failed to get current user: %v", err)
-	}
-
 	b := &hatBuilder{
 		baseImage: image,
 		hatPath:   hatPath,
@@ -158,9 +152,8 @@ func (c *runcmd) Run(fl *flag.FlagSet) {
 		cntName:         proj.cntName(),
 		hostname:        proj.repo.BaseName(),
 		// Use `0` as the port so that the host assigns an available one.
-		port:     "0",
-		hostUser: u.Uid,
-		testCmd:  c.testCmd,
+		port:    "0",
+		testCmd: c.testCmd,
 	}
 
 	err = c.buildOpen(c.gf, proj, b, r)

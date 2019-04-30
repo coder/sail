@@ -185,7 +185,7 @@ func (p *project) defaultRepoImage() string {
 	}
 }
 
-func (p *project) ensureImage(image string) error {
+func ensureImage(image string) error {
 	flog.Info("ensuring image %v exists", image)
 
 	cmd := xexec.Fmt("docker pull %s", image)

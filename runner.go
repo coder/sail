@@ -52,10 +52,6 @@ type runner struct {
 
 	projectLocalDir string
 
-	// hostUser is the uid on the host which is mapped to
-	// the container's "user" user.
-	hostUser string
-
 	testCmd string
 
 	proxyURL string
@@ -78,38 +74,14 @@ func (r *runner) runContainer(image string) error {
 		return err
 	}
 
-	containerAddr := "localhost"
-	containerPort := r.port
-	if runtime.GOOS == "darwin" {
-		// See justification below.
-		containerPort = "8443"
-		containerAddr = "0.0.0.0"
-	}
-
-	// We want the code-server logs to be available inside the container for easy
-	// access during development, but also going to stdout so `docker logs` can be used
-	// to debug a failed code-server startup.
-	cmd := fmt.Sprintf(`set -euxo pipefail || exit 1
-cd %v
-code-server --host %v --port %v \
-	--data-dir ~/.config/Code --extensions-dir ~/.vscode/extensions --allow-http --no-auth 2>&1 | tee %v
-`, projectDir, containerAddr, containerPort, containerLogPath)
-	if r.testCmd != "" {
-		cmd = r.testCmd + "\n exit 1"
-	}
-
 	var envs []string
-	sshAuthSock, exists := os.LookupEnv("SSH_AUTH_SOCK")
-	if exists {
-		s := fmt.Sprintf("SSH_AUTH_SOCK=%s", sshAuthSock)
-		envs = append(envs, s)
-	}
+	envs = r.environment(envs)
 
 	containerConfig := &container.Config{
 		Hostname: r.hostname,
 		Env:      envs,
 		Cmd: strslice.StrSlice{
-			"bash", "-c", cmd,
+			"bash", "-c", r.constructCommand(projectDir),
 		},
 		Image: image,
 		Labels: map[string]string{
@@ -138,6 +110,52 @@ code-server --host %v --port %v \
 		return xerrors.Errorf("failed to assemble mounts: %w", err)
 	}
 
+	hostConfig, err := r.hostConfig(containerConfig, mounts)
+	if err != nil {
+		return err
+	}
+
+	_, err = cli.ContainerCreate(ctx, containerConfig, hostConfig, nil, r.cntName)
+	if err != nil {
+		return xerrors.Errorf("failed to create container: %w", err)
+	}
+
+	err = cli.ContainerStart(ctx, r.cntName, types.ContainerStartOptions{})
+	if err != nil {
+		return xerrors.Errorf("failed to start container: %w", err)
+	}
+
+	return nil
+}
+
+// constructCommand constructs the code-server command that will be used
+// as the Sail container's init process.
+func (r *runner) constructCommand(projectDir string) string {
+	containerAddr := "localhost"
+	containerPort := r.port
+	if runtime.GOOS == "darwin" {
+		// See justification in `runner.hostConfig`.
+		containerPort = "8443"
+		containerAddr = "0.0.0.0"
+	}
+
+	// We want the code-server logs to be available inside the container for easy
+	// access during development, but also going to stdout so `docker logs` can be used
+	// to debug a failed code-server startup.
+	cmd := fmt.Sprintf(`set -euxo pipefail || exit 1
+cd %v
+code-server --host %v --port %v \
+	--data-dir ~/.config/Code --extensions-dir ~/.vscode/extensions --allow-http --no-auth 2>&1 | tee %v
+`, projectDir, containerAddr, containerPort, containerLogPath)
+	if r.testCmd != "" {
+		cmd = r.testCmd + "\n exit 1"
+	}
+
+	return cmd
+}
+
+// hostConfig constructs the container.HostConfig required for starting the sail container.
+func (r *runner) hostConfig(containerConfig *container.Config, mounts []mount.Mount) (*container.HostConfig, error) {
 	hostConfig := &container.HostConfig{
 		Mounts:      mounts,
 		NetworkMode: "host",
@@ -154,23 +172,33 @@ code-server --host %v --port %v \
 		hostConfig.NetworkMode = ""
 		exposed, bindings, err := nat.ParsePortSpecs([]string{portSpec})
 		if err != nil {
-			return xerrors.Errorf("failed to parse port spec: %w", err)
+			return nil, xerrors.Errorf("failed to parse port spec: %w", err)
 		}
 		containerConfig.ExposedPorts = exposed
 		hostConfig.PortBindings = bindings
 	}
 
-	_, err = cli.ContainerCreate(ctx, containerConfig, hostConfig, nil, r.cntName)
-	if err != nil {
-		return xerrors.Errorf("failed to create container: %w", err)
+	return hostConfig, nil
+}
+
+// environment sets any environment variables that may need to be set inside
+// the container.
+func (r *runner) environment(envs []string) []string {
+	sshAuthSock, exists := os.LookupEnv("SSH_AUTH_SOCK")
+	if exists {
+		s := fmt.Sprintf("SSH_AUTH_SOCK=%s", sshAuthSock)
+		envs = append(envs, s)
 	}
 
-	err = cli.ContainerStart(ctx, r.cntName, types.ContainerStartOptions{})
-	if err != nil {
-		return xerrors.Errorf("failed to start container: %w", err)
+	if runtime.GOOS == "linux" {
+		// When on linux and the display variable exists we forward it so
+		// that GUI applications can run.
+		if os.Getenv("DISPLAY") != "" {
+			envs = append(envs, "DISPLAY="+os.Getenv("DISPLAY"))
+		}
 	}
 
-	return nil
+	return envs
 }
 
 // addHatMount mounts the hat into the user's container if they've specified one.
@@ -199,6 +227,16 @@ func (r *runner) mounts(mounts []mount.Mount, image string) ([]mount.Mount, erro
 		Source: "~/.vscode/extensions",
 		Target: "~/.vscode/extensions",
 	})
+	if runtime.GOOS == "linux" {
+		if os.Getenv("DISPLAY") != "" {
+			// Mount X11 socket.
+			mounts = append(mounts, mount.Mount{
+				Type:   "bind",
+				Source: "/tmp/.X11-unix",
+				Target: "/tmp/.X11-unix",
+			})
+		}
+	}
 
 	// 'SSH_AUTH_SOCK' is provided by a running ssh-agent. Passing in the
 	// socket to the container allows for using the user's existing setup for
@@ -412,7 +450,6 @@ func runnerFromContainer(name string) (*runner, error) {
 		projectLocalDir: cnt.Config.Labels[projectLocalDirLabel],
 		projectName:     cnt.Config.Labels[projectNameLabel],
 		proxyURL:        cnt.Config.Labels[proxyURLLabel],
-		hostUser:        cnt.Config.User,
 	}, nil
 }
 

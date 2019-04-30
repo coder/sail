@@ -5,20 +5,21 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"go.coder.com/cli"
-	"go.coder.com/flog"
-	"golang.org/x/xerrors"
 	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
-	"nhooyr.io/websocket"
-	"nhooyr.io/websocket/wsjson"
 	"os"
 	"path"
 	"runtime"
 	"time"
 	"unsafe"
+
+	"go.coder.com/cli"
+	"go.coder.com/flog"
+	"golang.org/x/xerrors"
+	"nhooyr.io/websocket"
+	"nhooyr.io/websocket/wsjson"
 )
 
 func runNativeMsgHost() {
@@ -78,7 +79,7 @@ func handleRun(w http.ResponseWriter, r *http.Request) {
 	var req runRequest
 	err = wsjson.Read(ctx, c, &req)
 	if err != nil {
-		log.Println("failed to read request: %v", err)
+		log.Printf("failed to read request: %v\n", err)
 		c.Close(websocket.StatusInvalidFramePayloadData, "failed to read")
 		return
 	}

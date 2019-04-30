@@ -84,23 +84,10 @@ func handleAutocomplete(root interface {
 	cli.FlaggedCommand
 }) bool {
 	cmds := []cli.Command{root}
-	cmds = append(cmds, expandCommands(root)...)
+	cmds = append(cmds, root.Subcommands()...)
 
 	cmp := complete.New("sail", genAutocomplete(cmds))
 	cmp.InstallName = "install-autocomplete"
 	cmp.UninstallName = "uninstall-autocomplete"
 	return cmp.Run()
-}
-
-func expandCommands(cmd cli.ParentCommand) []cli.Command {
-	cmds := []cli.Command{}
-	for _, c := range cmd.Subcommands() {
-		cmds = append(cmds, c)
-
-		if subs, ok := c.(cli.ParentCommand); ok {
-			cmds = append(cmds, expandCommands(subs)...)
-		}
-	}
-
-	return cmds
 }
