@@ -26,6 +26,12 @@ import (
 // containerLogPath is the location of the code-server log.
 const containerLogPath = "/tmp/code-server.log"
 
+// containerHome is the location of the user's home directory
+// inside of the container. This is only used in places where
+// docker won't expand the `~` path or the `$HOME` variable.
+// For example, when setting environment variables for the container.
+const containerHome = "/home/user"
+
 // Docker labels for sail state.
 const (
 	sailLabel = "com.coder.sail"
@@ -196,6 +202,10 @@ func (r *runner) environment(envs []string) []string {
 		if os.Getenv("DISPLAY") != "" {
 			envs = append(envs, "DISPLAY="+os.Getenv("DISPLAY"))
 		}
+
+		if os.Getenv("XAUTHORITY") != "" {
+			envs = append(envs, "XAUTHORITY="+filepath.Join(containerHome, ".Xauthority"))
+		}
 	}
 
 	return envs
@@ -227,16 +237,8 @@ func (r *runner) mounts(mounts []mount.Mount, image string) ([]mount.Mount, erro
 		Source: "~/.vscode/extensions",
 		Target: "~/.vscode/extensions",
 	})
-	if runtime.GOOS == "linux" {
-		if os.Getenv("DISPLAY") != "" {
-			// Mount X11 socket.
-			mounts = append(mounts, mount.Mount{
-				Type:   "bind",
-				Source: "/tmp/.X11-unix",
-				Target: "/tmp/.X11-unix",
-			})
-		}
-	}
+
+	mounts = mountGUI(mounts)
 
 	// 'SSH_AUTH_SOCK' is provided by a running ssh-agent. Passing in the
 	// socket to the container allows for using the user's existing setup for
@@ -301,6 +303,36 @@ func (r *runner) mounts(mounts []mount.Mount, image string) ([]mount.Mount, erro
 	}
 
 	return mounts, nil
+}
+
+// mountGUI mounts in any x11 sockets so that they can be used
+// inside the container.
+func mountGUI(mounts []mount.Mount) []mount.Mount {
+	if runtime.GOOS == "linux" {
+		// Only mount in the x11 socket if the DISPLAY env exists.
+		if os.Getenv("DISPLAY") == "" {
+			return mounts
+		}
+
+		const xsock = "/tmp/.X11-unix"
+		mounts = append(mounts, mount.Mount{
+			Type:   "bind",
+			Source: xsock,
+			Target: xsock,
+		})
+
+		// We also mount the xauthority file in so any xsessions can store
+		// session cookies.
+		if os.Getenv("XAUTHORITY") != "" {
+			mounts = append(mounts, mount.Mount{
+				Type:   "bind",
+				Source: os.Getenv("XAUTHORITY"),
+				Target: "~/.Xauthority",
+			})
+		}
+	}
+
+	return mounts
 }
 
 // ensureMountSources ensures that the mount's source exists. If the source
