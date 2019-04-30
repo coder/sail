@@ -45,7 +45,7 @@ func genAutocomplete(cmds []cli.Command) complete.Command {
 
 // genCommandAutocomplete generates an autocomplete entry for a command.
 // It will recursively add all subcommands.
-func genCommandAutocomplete(parent complete.Command, cmd cli.Command) complete.Command {
+func genCommandAutocomplete(parent complete.Command, cmd cli.Command) {
 	child := complete.Command{
 		Sub:   map[string]complete.Command{},
 		Flags: map[string]complete.Predictor{},
@@ -53,7 +53,7 @@ func genCommandAutocomplete(parent complete.Command, cmd cli.Command) complete.C
 
 	if f, ok := cmd.(cli.FlaggedCommand); ok {
 		registerFlags(f, func(f *flag.Flag) {
-			// TODO: we can probably write a wrapper around *flag.FlatSet
+			// TODO: we can probably write a wrapper around *flag.FlagSet
 			// that is smarter about predictions
 			child.Flags[fmtFlag(f.Name)] = complete.PredictAnything
 		})
@@ -64,17 +64,13 @@ func genCommandAutocomplete(parent complete.Command, cmd cli.Command) complete.C
 	}
 
 	parent.Sub[cmd.Spec().Name] = child
-	return child
+	return
 }
 
 // genSubcommands recursively walks up a command tree, adding child commands to their parent.
 func genSubcommandAutocomplete(parent complete.Command, cmds []cli.Command) {
 	for _, e := range cmds {
-		child := genCommandAutocomplete(parent, e)
-
-		if pc, ok := e.(cli.ParentCommand); ok {
-			genSubcommandAutocomplete(child, pc.Subcommands())
-		}
+		genCommandAutocomplete(parent, e)
 	}
 }
 
