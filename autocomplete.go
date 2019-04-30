@@ -20,7 +20,7 @@ func genAutocomplete(cmds []cli.Command) complete.Command {
 
 	// add all commands + flags
 	for _, e := range cmds {
-		// root is always first, handle these as global flags
+		// the root command is handled separately and its flags are added as global flags.
 		if e.Spec().Name == "sail" {
 			registerFlags(e.(cli.FlaggedCommand), func(f *flag.Flag) {
 				n := fmtFlag(f.Name)
