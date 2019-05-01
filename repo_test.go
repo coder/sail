@@ -12,19 +12,19 @@ func TestParseRepo(t *testing.T) {
 		repo repo
 		err  error
 	)
-	repo, err = ParseRepo("codercom/sail")
+	repo, err = ParseRepo("cdr/sail")
 	require.NoError(t, err)
 
-	assert.Equal(t, "codercom/sail.git", repo.Path)
+	assert.Equal(t, "cdr/sail.git", repo.Path)
 	assert.Equal(t, "github.com", repo.Host)
 	assert.Equal(t, "git", repo.User)
 
-	repo, err = ParseRepo("git@github.com:codercom/sail.git")
+	repo, err = ParseRepo("git@github.com:cdr/sail.git")
 	require.NoError(t, err)
 
-	assert.Equal(t, "codercom/sail.git", repo.Path)
+	assert.Equal(t, "cdr/sail.git", repo.Path)
 	assert.Equal(t, "github.com", repo.Host)
 	assert.Equal(t, "git", repo.User)
 
-	assert.Equal(t, "git@github.com:codercom/sail.git", repo.CloneURI())
+	assert.Equal(t, "git@github.com:cdr/sail.git", repo.CloneURI())
 }

@@ -15,14 +15,14 @@ Before using Sail, there are several dependencies that must be installed on the 
 
 - [Docker](https://docs.docker.com/install/)
 - [Git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
-- [Chrome](https://www.google.com/chrome/) or [Chromium](https://www.chromium.org/getting-involved/download-chromium) - not required, but strongly recommended for best [code-server](https://github.com/codercom/code-server) support.
+- [Chrome](https://www.google.com/chrome/) or [Chromium](https://www.chromium.org/getting-involved/download-chromium) - not required, but strongly recommended for best [code-server](https://github.com/cdr/code-server) support.
 
 
 ## Installation
 
 ### Stable Releases
 
-Binary releases can be downloaded from our [GitHub.](https://github.com/codercom/sail/releases)
+Binary releases can be downloaded from our [GitHub.](https://github.com/cdr/sail/releases)
 
 ### From Source
 

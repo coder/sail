@@ -5,13 +5,10 @@ browser_title="Sail - Docs - Projects"
 section_order=0
 +++
 
-One of Sail's core concepts is the project. A project can be thought of as a source code
-repository that is contained in an environment with all of its dependencies and required
-configuration.
-
-Sail projects are like having a machine that has only the required dependencies and 
-configurations included to work on a project. Each Sail project environment is explicitly
-configured by the project's engineers, so you can start contributing even quicker.
+One of Sail's core concepts is the project. Sail projects are like having a machine that 
+has only the required dependencies and configurations included to work on a project. Each 
+Sail project environment is explicitly configured by the project's engineers, so you can 
+start contributing even quicker.
 
 Imagine the core developers of a source code repo setting up a brand new Linux machine 
 for you. They install the project's programming language and dependencies. Any 
@@ -55,9 +52,9 @@ $project_root/<org>/<repo>
 
 For example, if you were to start a new sail environment to work on sail:
 ```bash
-sail run codercom/sail
+sail run cdr/sail
 ```
-It would be cloned to `$project_root/codercom/sail`.
+It would be cloned to `$project_root/cdr/sail`.
 
 ### Container View of the Project
 

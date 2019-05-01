@@ -11,7 +11,7 @@ This site covers Sail's usage and concepts.
 ## What is Sail?
 
 Sail is a CLI utility to manage Dockerized development environments. 
-It uses the [docker](https://www.docker.com/) toolchain and [code-server](https://github.com/codercom/code-server) to create
+It uses the [docker](https://www.docker.com/) toolchain and [code-server](https://github.com/cdr/code-server) to create
 reproducible, preconfigured, source controlled, and customizable development environments. 
 
 ## Why use Sail?

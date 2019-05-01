@@ -34,7 +34,7 @@ When building the project's image, the build will be rooted in the project's roo
 essentially calling this docker build command:
 
 ```bash
- docker build --network=host -f $project_root/<org>/<repo>/.sail/Dockerfile $project_root/<org>/<repo>
+ docker build -f $project_root/<org>/<repo>/.sail/Dockerfile $project_root/<org>/<repo>
 ```
 
 ## Container Permissions

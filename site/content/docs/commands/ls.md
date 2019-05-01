@@ -24,10 +24,10 @@ The `ls` command lists all containers with Sail Docker labels.
 Example output:
 
 ```
-name                      hat   url                     status
-codercom/sail                   http://127.0.0.1:8828
-codercom/sshcode                http://127.0.0.1:8130
-codercom/m                      http://127.0.0.1:8754
-codercom/code-server            http://127.0.0.1:8828
-codercom/sail-tmp-kEG58         http://127.0.0.1:8130
+name                 hat   url                     status
+cdr/sail                   http://127.0.0.1:8828
+cdr/sshcode                http://127.0.0.1:8130
+cdr/m                      http://127.0.0.1:8754
+cdr/code-server            http://127.0.0.1:8828
+cdr/sail-tmp-kEG58         http://127.0.0.1:8130
 ```
