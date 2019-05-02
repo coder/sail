@@ -196,6 +196,8 @@ func (r *runner) environment(envs []string) []string {
 		envs = append(envs, s)
 	}
 
+	envs = append(envs, fmt.Sprintf("OUTER_ROOT=%s", r.projectLocalDir))
+
 	if runtime.GOOS == "linux" {
 		// When on linux and the display variable exists we forward it so
 		// that GUI applications can run.
