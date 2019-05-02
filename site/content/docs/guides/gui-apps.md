@@ -22,3 +22,18 @@ $ sudo apt-get install -y firefox
 # This should open up firefox in a new window.
 $ /usr/bin/firefox
 ```
+
+If you run into an error like the following:
+```
+No protocol specified
+Unable to init server: Could not connect: Connection refused
+Error: cannot open display: :0
+```
+when trying to start a GUI application, ensure that your local user has authority to access
+the Xserver.
+
+You can allow your local user to connect to the Xserver by running `xhost si:localuser:${USER}`
+on the host outside of your sail environment.
+
+Note that this command is temporary until the Xserver restarts, so you may need to rerun it if you
+reboot the system or restart Xserver.
