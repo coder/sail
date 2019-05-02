@@ -15,7 +15,7 @@ import (
 // DownloadURL gets a URL for the latest version of code-server.
 func DownloadURL(ctx context.Context) (string, error) {
 	client := github.NewClient(nil)
-	rel, _, err := client.Repositories.GetLatestRelease(ctx, "codercom", "code-server")
+	rel, _, err := client.Repositories.GetLatestRelease(ctx, "cdr", "code-server")
 	if err != nil {
 		return "", xerrors.Errorf("failed to get latest code-server release: %w", err)
 	}

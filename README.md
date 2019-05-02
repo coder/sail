@@ -1,6 +1,6 @@
 # sail
 
-`sail` is a CLI to efficiently manage Dockerized [`code-server`](https://github.com/codercom/code-server) development environments.
+`sail` is a CLI to efficiently manage Dockerized [`code-server`](https://github.com/cdr/code-server) development environments.
 .
 
 ## Features
@@ -25,13 +25,13 @@ sail --install-autocomplete
 
 ## Basic usage
 
-Spin up a secure editor for `codercom/sail`.
+Spin up a secure editor for `cdr/sail`.
 
 Or:
 
 ```bash
-sail run codercom/sail
-# Creates a Docker container called `codercom-sail`,
+sail run cdr/sail
+# Creates a Docker container called `cdr_sail`,
 # installs code-server in it, and creates a browser.
 ```
 
@@ -39,7 +39,7 @@ sail run codercom/sail
 
 Documentation is available in markdown form at [site/content/docs.](site/content/docs)
 
-Or, you can find it at [https://sail.dev/docs](https://sail.dev/docs)
+Or, you can find it at [https://sail.dev](https://sail.dev/docs/introduction/)
 
 ## Future
 
