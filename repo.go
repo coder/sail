@@ -36,9 +36,10 @@ func (r repo) BaseName() string {
 }
 
 // parseRepo parses a reponame into a repo.
-// The default user is Git.
-// The default Host is github.com.
-// If the host is github.com, `.git` is always at the end of Path.
+// It can be a full url like https://github.com/cdr/sail or ssh://git@github.com/cdr/sail,
+// or just the path like cdr/sail and the host + schema will be inferred.
+// By default the host will always be inferred as github.com and the schema
+// will be the provided defaultSchema.
 func parseRepo(defaultSchema, name string) (repo, error) {
 	u, err := url.Parse(name)
 	if err != nil {
