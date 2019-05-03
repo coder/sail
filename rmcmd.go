@@ -7,9 +7,8 @@ import (
 	"time"
 
 	"go.coder.com/cli"
-	"go.coder.com/sail/internal/dockutil"
-
 	"go.coder.com/flog"
+	"go.coder.com/sail/internal/dockutil"
 )
 
 type rmcmd struct {

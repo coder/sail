@@ -29,7 +29,7 @@ const (
 // project represents a sail project.
 type project struct {
 	conf config
-	repo repo
+	repo Repo
 }
 
 func (p *project) pathName() string {
@@ -54,7 +54,7 @@ func (p *project) dockerfilePath() string {
 }
 
 // clone clones a git repository to dir.
-func clone(repo repo, dir string) error {
+func clone(repo Repo, dir string) error {
 	uri := repo.CloneURI()
 	cmd := xexec.Fmt("git clone %v %v", uri, dir)
 	xexec.Attach(cmd)
