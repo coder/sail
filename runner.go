@@ -13,14 +13,14 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/docker/go-connections/nat"
-	"go.coder.com/flog"
-
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/api/types/strslice"
+	"github.com/docker/go-connections/nat"
 	"golang.org/x/xerrors"
+
+	"go.coder.com/flog"
 )
 
 // containerLogPath is the location of the code-server log.

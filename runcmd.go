@@ -3,15 +3,15 @@ package main
 import (
 	"context"
 	"flag"
-	"os"
-
 	"net/http"
+	"os"
 	"time"
+
+	"golang.org/x/xerrors"
 
 	"go.coder.com/cli"
 	"go.coder.com/flog"
 	"go.coder.com/sail/internal/dockutil"
-	"golang.org/x/xerrors"
 )
 
 type runcmd struct {

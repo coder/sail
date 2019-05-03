@@ -2,97 +2,107 @@ package main
 
 import (
 	"context"
-	"errors"
-	"fmt"
 	"net/http"
+	"net/url"
 	"path"
-	"regexp"
 	"strings"
 
 	"github.com/google/go-github/v24/github"
+	"golang.org/x/xerrors"
+
 	"go.coder.com/flog"
 )
 
-var repoRegex = regexp.MustCompile(`^(?P<user>\w+@)?(?P<host>\S+:)?(?P<path>\S+)$`)
-
-// subexpMap returns a map with keys of form subexpName -> value.
-func subexpMap(r *regexp.Regexp, target string) map[string]string {
-	matches := r.FindStringSubmatch(target)
-	m := make(map[string]string, len(r.SubexpNames()))
-	for i, name := range r.SubexpNames() {
-		if i > len(matches) { // no more matches
-			return m
-		}
-		if i == 0 { // first subexp is the target
-			continue
-		}
-		m[name] = matches[i]
-	}
-	return m
-}
-
 type repo struct {
-	User, Host, Path string
+	*url.URL
 }
 
 func (r repo) CloneURI() string {
-	return fmt.Sprintf("%v@%v:%v", r.User, r.Host, r.Path)
+	return r.String()
 }
 
 func (r repo) DockerName() string {
 	return toDockerName(
-		r.trimPathGitSuffix(),
+		r.trimPath(),
 	)
+}
+
+func (r repo) trimPath() string {
+	return strings.TrimPrefix(r.Path, "/")
 }
 
 func (r repo) BaseName() string {
 	return strings.TrimSuffix(path.Base(r.Path), ".git")
 }
 
-// ParseRepo parses a reponame into a repo.
-// The default user is Git.
-// The default Host is github.com.
-// If the host is github.com, `.git` is always at the end of Path.
-func ParseRepo(name string) (repo, error) {
-	m := subexpMap(repoRegex, name)
-
-	r := repo{
-		User: strings.TrimSuffix(m["user"], "@"),
-		Host: strings.TrimSuffix(m["host"], ":"),
-		Path: m["path"],
+// parseRepo parses a reponame into a repo.
+// It can be a full url like https://github.com/cdr/sail or ssh://git@github.com/cdr/sail,
+// or just the path like cdr/sail and the host + schema will be inferred.
+// By default the host will always be inferred as github.com and the schema
+// will be the provided defaultSchema.
+func parseRepo(defaultSchema, name string) (repo, error) {
+	u, err := url.Parse(name)
+	if err != nil {
+		return repo{}, xerrors.Errorf("failed to parse repo path: %w", err)
 	}
 
-	if r.User == "" {
-		r.User = "git"
+	r := repo{u}
+
+	if r.Scheme == "" {
+		r.Scheme = defaultSchema
 	}
 
+	// this probably means the host is part of the path
 	if r.Host == "" {
-		r.Host = "github.com"
+		parts := strings.Split(r.trimPath(), "/")
+		// we would expect there to be 3 parts if the host is part of the path
+		if len(parts) == 3 {
+			r.Host = parts[0]
+			r.Path = strings.Join(parts[1:], "/")
+		} else {
+			// as a default case we assume github
+			r.Host = "github.com"
+		}
 	}
 
-	if r.Path == "" {
-		return repo{}, errors.New("no path provided")
+	// make sure path doesn't have a leading forward slash
+	r.Path = strings.TrimPrefix(r.Path, "/")
+
+	// non-existent or invalid path
+	if r.Path == "" || len(strings.Split(r.Path, "/")) != 2 {
+		return repo{}, xerrors.Errorf("invalid repo: %s", r.Path)
 	}
 
-	if r.Host == "github.com" && !strings.HasSuffix(r.Path, ".git") {
-		r.Path += ".git"
+	// if host contains a username, e.g. git@github.com
+	// url.Parse accidentally leaves this in the host if there isnt a schema in front of it
+	if sp := strings.Split(r.Host, "@"); len(sp) > 1 {
+		// split username/password if exists
+		usp := strings.Split(sp[0], ":")
+		switch len(usp) {
+		case 1:
+			r.User = url.User(usp[0])
+		case 2:
+			r.User = url.UserPassword(usp[0], usp[1])
+		default:
+			return repo{}, xerrors.Errorf("invalid user: %s", sp[0])
+		}
+
+		// remove username from host
+		r.Host = strings.Join(sp[1:], "@")
 	}
 
-	if r.Host == "github.com" && !strings.Contains(r.Path, "/") {
-		return repo{}, errors.New("GitHub repo path must have /")
+	// don't set git as username for http urls
+	if r.User.Username() == "" && r.Scheme == "ssh" {
+		r.User = url.User("git")
 	}
 
 	return r, nil
 }
 
-func (r repo) trimPathGitSuffix() string {
-	return strings.TrimSuffix(r.Path, ".git")
-}
-
 // language returns the language of a repository using github's detected language.
 // This is a best effort try and will return the empty string if something fails.
 func (r repo) language() string {
-	orgRepo := strings.SplitN(r.trimPathGitSuffix(), "/", 2)
+	orgRepo := strings.SplitN(r.trimPath(), "/", 2)
 	if len(orgRepo) != 2 {
 		return ""
 	}
@@ -108,4 +118,10 @@ func (r repo) language() string {
 	}
 
 	return repo.GetLanguage()
+}
+
+func isAllowedSchema(s string) bool {
+	return s == "http" ||
+		s == "https" ||
+		s == "ssh"
 }

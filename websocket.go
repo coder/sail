@@ -5,10 +5,11 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"nhooyr.io/websocket"
-	"nhooyr.io/websocket/wsjson"
 	"os"
 	"os/exec"
+
+	"nhooyr.io/websocket"
+	"nhooyr.io/websocket/wsjson"
 )
 
 func streamRun(ctx context.Context, c *websocket.Conn, args ...string) bool {

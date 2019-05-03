@@ -18,6 +18,7 @@ func Test_project(t *testing.T) {
 	conf := mustReadConfig(filepath.Join(metaRoot(), ".sail.toml"))
 
 	var tests = []struct {
+		schema          string
 		name            string
 		repo            string
 		expCntName      string
@@ -25,6 +26,7 @@ func Test_project(t *testing.T) {
 		expCustomBldImg bool
 	}{
 		{
+			"ssh",
 			"OK",
 			"codercom/bigdur",
 			"codercom_bigdur",
@@ -32,6 +34,7 @@ func Test_project(t *testing.T) {
 			true,
 		},
 		{
+			"ssh",
 			"RepoNotExist",
 			"codercom/do-not-exist",
 			"codercom_do-not-exist",
@@ -48,7 +51,7 @@ func Test_project(t *testing.T) {
 			rb := newRollback()
 			defer rb.run()
 
-			repo, err := ParseRepo(test.repo)
+			repo, err := parseRepo(test.schema, test.repo)
 			require.NoError(t, err)
 
 			p := &project{

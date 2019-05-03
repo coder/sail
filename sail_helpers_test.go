@@ -7,11 +7,11 @@ import (
 	"testing"
 	"time"
 
-	"go.coder.com/sail/internal/dockutil"
-
 	"github.com/docker/docker/api/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"go.coder.com/sail/internal/dockutil"
 	"go.coder.com/sail/internal/xnet"
 )
 
@@ -43,7 +43,7 @@ func run(t *testing.T, name, repo, hatPath string, fns ...func(t *testing.T, p *
 
 		conf := mustReadConfig(filepath.Join(metaRoot(), ".sail.toml"))
 
-		repo, err := ParseRepo(repo)
+		repo, err := parseRepo("ssh", repo)
 		require.NoError(t, err)
 
 		p.proj = &project{
