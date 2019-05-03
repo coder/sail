@@ -2,10 +2,11 @@ package main
 
 import (
 	"flag"
-	"github.com/posener/complete"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/posener/complete"
 
 	"go.coder.com/cli"
 )
@@ -29,7 +30,7 @@ func (r *rootCmd) Spec() cli.CommandSpec {
 		Name:  "sail",
 		Usage: "[GLOBAL FLAGS] COMMAND [COMMAND FLAGS] [ARGS....]",
 		Desc: `A utility for managing Docker-based code-server environments.
-More info: https://github.com/codercom/sail
+More info: https://github.com/cdr/sail
 
 [project] can be of form <org>/<repo> for GitHub repos, or the full git clone address.`,
 	}

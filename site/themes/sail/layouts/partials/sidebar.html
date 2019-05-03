@@ -5,7 +5,7 @@
 
         {{ $docPages := where ( where $.Site.Pages "Type" "docs") "Kind" "page" }}
 
-        {{ $sections := slice "Getting Started" "Concepts" "Commands" "Workflow" }}
+        {{ $sections := slice "Getting Started" "Concepts" "Guides" "Commands" "Workflow" }}
 
         {{ range $sections }}
             {{ $section := . }}
