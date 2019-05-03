@@ -81,7 +81,7 @@ func TestParseRepo(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		repo, err := ParseRepo(test.defSchema, test.fullPath)
+		repo, err := parseRepo(test.defSchema, test.fullPath)
 		require.NoError(t, err)
 
 		assert.Equal(t, test.expPath, repo.Path, "expected path to be the same")

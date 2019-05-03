@@ -37,13 +37,13 @@ func (gf *globalFlags) ensureDockerDaemon() {
 	gf.debug("verified Docker is running")
 }
 
-func requireRepo(fl *flag.FlagSet) Repo {
+func requireRepo(fl *flag.FlagSet) repo {
 	repoURI := fl.Arg(0)
 	if repoURI == "" {
 		flog.Fatal("Argument <repo> must be provided.")
 	}
 
-	r, err := ParseRepo("ssh", repoURI)
+	r, err := parseRepo("ssh", repoURI)
 	if err != nil {
 		flog.Fatal("failed to parse repo %q: %v", repoURI, err)
 	}

@@ -13,39 +13,39 @@ import (
 	"go.coder.com/flog"
 )
 
-type Repo struct {
+type repo struct {
 	*url.URL
 }
 
-func (r Repo) CloneURI() string {
+func (r repo) CloneURI() string {
 	return r.String()
 }
 
-func (r Repo) DockerName() string {
+func (r repo) DockerName() string {
 	return toDockerName(
 		r.trimPath(),
 	)
 }
 
-func (r Repo) trimPath() string {
+func (r repo) trimPath() string {
 	return strings.TrimPrefix(r.Path, "/")
 }
 
-func (r Repo) BaseName() string {
+func (r repo) BaseName() string {
 	return strings.TrimSuffix(path.Base(r.Path), ".git")
 }
 
-// ParseRepo parses a reponame into a repo.
+// parseRepo parses a reponame into a repo.
 // The default user is Git.
 // The default Host is github.com.
 // If the host is github.com, `.git` is always at the end of Path.
-func ParseRepo(defaultSchema, name string) (Repo, error) {
+func parseRepo(defaultSchema, name string) (repo, error) {
 	u, err := url.Parse(name)
 	if err != nil {
-		return Repo{}, xerrors.Errorf("failed to parse repo path: %w", err)
+		return repo{}, xerrors.Errorf("failed to parse repo path: %w", err)
 	}
 
-	r := Repo{u}
+	r := repo{u}
 
 	if r.Scheme == "" {
 		r.Scheme = defaultSchema
@@ -69,7 +69,7 @@ func ParseRepo(defaultSchema, name string) (Repo, error) {
 
 	// non-existent or invalid path
 	if r.Path == "" || len(strings.Split(r.Path, "/")) != 2 {
-		return Repo{}, xerrors.Errorf("invalid repo: %s", r.Path)
+		return repo{}, xerrors.Errorf("invalid repo: %s", r.Path)
 	}
 
 	// if host contains a username, e.g. git@github.com
@@ -83,7 +83,7 @@ func ParseRepo(defaultSchema, name string) (Repo, error) {
 		case 2:
 			r.User = url.UserPassword(usp[0], usp[1])
 		default:
-			return Repo{}, xerrors.Errorf("invalid user: %s", sp[0])
+			return repo{}, xerrors.Errorf("invalid user: %s", sp[0])
 		}
 
 		// remove username from host
@@ -100,7 +100,7 @@ func ParseRepo(defaultSchema, name string) (Repo, error) {
 
 // language returns the language of a repository using github's detected language.
 // This is a best effort try and will return the empty string if something fails.
-func (r Repo) language() string {
+func (r repo) language() string {
 	orgRepo := strings.SplitN(r.trimPath(), "/", 2)
 	if len(orgRepo) != 2 {
 		return ""
