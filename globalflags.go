@@ -37,23 +37,39 @@ func (gf *globalFlags) ensureDockerDaemon() {
 	gf.debug("verified Docker is running")
 }
 
-func requireRepo(fl *flag.FlagSet) repo {
+func requireRepo(conf config, prefs schemaPrefs, fl *flag.FlagSet) repo {
 	repoURI := fl.Arg(0)
 	if repoURI == "" {
 		flog.Fatal("Argument <repo> must be provided.")
 	}
 
-	r, err := parseRepo("ssh", repoURI)
+	r, err := parseRepo(defaultSchema(conf, prefs), repoURI)
 	if err != nil {
 		flog.Fatal("failed to parse repo %q: %v", repoURI, err)
 	}
 	return r
 }
 
+func defaultSchema(conf config, prefs schemaPrefs) string {
+	switch {
+	case prefs.ssh:
+		return "ssh"
+	case prefs.https:
+		return "https"
+	case prefs.http:
+		return "http"
+	case conf.DefaultSchema != "":
+		return conf.DefaultSchema
+	default:
+		return "ssh"
+	}
+}
+
 // project reads the project as the first parameter.
-func (gf *globalFlags) project(fl *flag.FlagSet) *project {
+func (gf *globalFlags) project(prefs schemaPrefs, fl *flag.FlagSet) *project {
+	conf := gf.config()
 	return &project{
-		conf: gf.config(),
-		repo: requireRepo(fl),
+		conf: conf,
+		repo: requireRepo(conf, prefs, fl),
 	}
 }

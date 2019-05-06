@@ -32,9 +32,11 @@ func resolvePath(homedir string, path string) string {
 // config describes the config.toml.
 // Changes to this should be accompanied by changes to DefaultConfig.
 type config struct {
-	DefaultImage string `toml:"default_image"`
-	ProjectRoot  string `toml:"project_root"`
-	DefaultHat   string `toml:"default_hat"`
+	DefaultImage  string `toml:"default_image"`
+	ProjectRoot   string `toml:"project_root"`
+	DefaultHat    string `toml:"default_hat"`
+	DefaultSchema string `toml:"default_schema"`
+	DefaultHost   string `toml:"default_host"`
 }
 
 const DefaultConfig = `# sail configuration.
@@ -47,6 +49,12 @@ project_root = "~/Projects"
 
 # default hat lets you configure a hat that's applied automatically by default.
 # default_hat = ""
+
+# default schema used to clone repo in sail run if none given
+default_schema = "ssh"
+
+# default host used to clone repo in sail run if none given
+default_host = "github.com"
 `
 
 // metaRoot returns the root path of all metadata stored on the host.
