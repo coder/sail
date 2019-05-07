@@ -43,7 +43,7 @@ func (c *editcmd) Spec() cli.CommandSpec {
 }
 
 func (c *editcmd) Run(fl *flag.FlagSet) {
-	proj := c.gf.project(fl)
+	proj := c.gf.project(schemaPrefs{}, fl)
 
 	c.gf.ensureDockerDaemon()
 

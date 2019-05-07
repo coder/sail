@@ -21,6 +21,14 @@ type runcmd struct {
 	hat     string
 	keep    bool
 	testCmd string
+
+	schemaPrefs
+}
+
+type schemaPrefs struct {
+	ssh   bool
+	http  bool
+	https bool
 }
 
 func (c *runcmd) Spec() cli.CommandSpec {
@@ -32,7 +40,41 @@ If a project is not yet created or running with the name,
 one will be created and a new editor will be opened.
 If a project is already up and running, this won't
 start a new container, but instead will reuse the
-already running container and open a new editor.`,
+already running container and open a new editor.
+
+If a schema and host are not provided, sail will use github over SSH.
+There are multiple ways to modify this behavior.
+
+1. Specify a host. See examples section
+2. Specify a schema and host. See examples section
+3. Edit the config to provide your preferred defaults.
+
+Examples:
+	Use default host and schema (github.com over SSH, editable in config)
+	- sail run cdr/code-server
+
+	Force SSH on a Github repo (user git is assumed by default)
+	- sail run ssh://github.com/cdr/sshcode
+	- sail run --ssh github.com/cdr/sshcode
+
+	Specify a custom SSH user
+	- sail run ssh://colin@git.colin.com/super/secret-repo
+	- sail run --ssh colin@git.colin.com/super/secret-repo
+
+	Force HTTPS on a Gitlab repo
+	- sail run https://gitlab.com/inkscape/inkscape
+	- sail run --https gitlab.com/inkscape/inkscape
+	
+Note:
+If you use ssh://, http://, or https://, you must specify a host. 
+
+This won't work:
+	- sail run ssh://cdr/code-server
+
+Instead, use flags to avoid providing a host.
+
+This will work:
+	- sail run --ssh cdr/code-server`,
 	}
 }
 
@@ -41,17 +83,18 @@ func (c *runcmd) RegisterFlags(fl *flag.FlagSet) {
 	fl.StringVar(&c.hat, "hat", "", "Custom hat to use.")
 	fl.BoolVar(&c.keep, "keep", false, "Keep container when it fails to build.")
 	fl.StringVar(&c.testCmd, "test-cmd", "", "A command to use in-place of starting code-server for testing purposes.")
+
+	fl.BoolVar(&c.ssh, "ssh", false, "Clone repo over SSH")
+	fl.BoolVar(&c.http, "http", false, "Clone repo over HTTP")
+	fl.BoolVar(&c.https, "https", false, "Clone repo over HTTPS")
 }
 
 const guestHomeDir = "/home/user"
 
 func (c *runcmd) Run(fl *flag.FlagSet) {
-	var (
-		err error
-	)
 	c.gf.ensureDockerDaemon()
 
-	proj := c.gf.project(fl)
+	proj := c.gf.project(c.schemaPrefs, fl)
 
 	// Abort if container already exists.
 	exists, err := proj.cntExists()

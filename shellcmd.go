@@ -24,7 +24,7 @@ func (c *shellcmd) Spec() cli.CommandSpec {
 }
 
 func (c *shellcmd) Run(fl *flag.FlagSet) {
-	proj := c.gf.project(fl)
+	proj := c.gf.project(schemaPrefs{}, fl)
 	c.gf.ensureDockerDaemon()
 
 	out, err := dockutil.FmtExec(proj.cntName(), "grep ^.*:.*:$(id -u): /etc/passwd | cut -d : -f 7-").CombinedOutput()
