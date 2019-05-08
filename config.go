@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bytes"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -30,7 +32,7 @@ func resolvePath(homedir string, path string) string {
 }
 
 // config describes the config.toml.
-// Changes to this should be accompanied by changes to DefaultConfig.
+// Changes to this should be accompanied by changes to DefaultConfigEntries.
 type config struct {
 	DefaultImage  string `toml:"default_image"`
 	ProjectRoot   string `toml:"project_root"`
@@ -39,23 +41,66 @@ type config struct {
 	DefaultHost   string `toml:"default_host"`
 }
 
-const DefaultConfig = `# sail configuration.
-# default_image is the default Docker image to use if the repository provides none.
-default_image = "codercom/ubuntu-dev"
+type confEntry struct {
+	comment string
+	name    string
+	value   string
+}
 
-# project_root is the base from which projects are mounted.
-# projects are stored in directories with form "<root>/<org>/<repo>"
-project_root = "~/Projects"
+type confEntries []confEntry
 
-# default hat lets you configure a hat that's applied automatically by default.
-# default_hat = ""
+func (c confEntries) String() string {
+	b := new(bytes.Buffer)
+	b.WriteString("# sail configuration\n\n")
 
-# default schema used to clone repo in sail run if none given
-default_schema = "ssh"
+	for i, e := range c {
+		// handle multiline comments
+		e.comment = strings.ReplaceAll(e.comment, "\n", "\n# ")
 
-# default host used to clone repo in sail run if none given
-default_host = "github.com"
-`
+		fmt.Fprintf(b, "# %s\n", e.comment)
+		fmt.Fprintf(b, "%s = %q\n", e.name, e.value)
+
+		// only double newline if we're not the last line
+		if len(c)-1 != i {
+			b.Write([]byte("\n"))
+		}
+	}
+
+	return b.String()
+}
+
+var (
+	DefaultConfigEntries = confEntries{
+		{
+			"default_image is the default Docker image to use if the repository provides none.",
+			"default_image",
+			"codercom/ubuntu-dev",
+		},
+		{
+			"project_root is the base from which projects are mounted.\n" +
+				"projects are stored in directories with form \"<root>/<org>/<repo>\"",
+			"project_root",
+			"~/Projects",
+		},
+		{
+			"default hat lets you configure a hat that's applied automatically by default.",
+			"# default_hat", // commented out
+			"",
+		},
+		{
+			"default schema used to clone repo in sail run if none given",
+			"default_schema",
+			"ssh",
+		},
+		{
+			"default host used to clone repo in sail run if none given",
+			"default_host",
+			"github.com",
+		},
+	}
+
+	DefaultConfig = DefaultConfigEntries.String()
+)
 
 // metaRoot returns the root path of all metadata stored on the host.
 func metaRoot() string {

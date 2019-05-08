@@ -15,11 +15,12 @@ import (
 	"time"
 	"unsafe"
 
-	"go.coder.com/cli"
-	"go.coder.com/flog"
 	"golang.org/x/xerrors"
 	"nhooyr.io/websocket"
 	"nhooyr.io/websocket/wsjson"
+
+	"go.coder.com/cli"
+	"go.coder.com/flog"
 )
 
 func runNativeMsgHost() {
