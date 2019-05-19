@@ -118,7 +118,9 @@ func run(t *testing.T, name, repo, hatPath string, fns ...func(t *testing.T, p *
 func requireNoRunningSailContainers(t *testing.T) {
 	cnts, err := listContainers()
 	require.NoError(t, err)
-	require.Empty(t, cnts, "Unable to run tests, Sail containers currently running")
+	if len(cnts) > 0 {
+		t.Fatal("Unable to run tests, Sail containers currently running")
+	}
 }
 
 func requireGetImageLabels(t *testing.T, image string) map[string]string {
