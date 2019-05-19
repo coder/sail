@@ -2,5 +2,5 @@
 
 set -euxo pipefail
 
-hugo
+hugo --minify
 gsutil -m cp -R ./public/* "gs://sail.dev"
