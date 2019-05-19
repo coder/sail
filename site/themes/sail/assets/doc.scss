@@ -1,52 +1,180 @@
-// This file supercedes main.scss with documentation-specific styling.
-
-@import "vars.scss";
-
+@font-face {
+  font-family: aktiv grotesk;
+  src: url(/font/AktivGroteskRegular.ttf);
+  font-weight: 400;
+}
+@font-face {
+  font-family: aktiv grotesk;
+  src: url(/font/AktivGroteskMedium.ttf);
+  font-weight: 500;
+}
+@font-face {
+  font-family: aktiv grotesk;
+  src: url(/font/AktivGroteskBold.ttf);
+  font-weight: 700;
+}
 body {
-    max-width: 100em;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
+@media (max-width: 450px) {
+  body {
+    width: 190vw;
+  }
 
-.sidebar {
-    border-right: 2px solid lightgray;
+  .docs .body > * {
+    margin-left: 20px !important;
+  }
+
+  .sidebar {
+    min-width: 90vw !important;
+  }
 }
+#content {
+  flex: 1;
+  display: flex;
 
-.container-fluid {
-    width: 75%;
+  .docs {
+    flex: 1;
+  }
 }
-
-.content-box {
-    padding-inline-start: 3em;
+.docs {
+  display: flex;
+  flex-direction: row;
 }
-
-// Hugo Table of Contents
-// ul {
-//     list-style-type: none;
-//     padding-inline-start: 0;
-// }
-
-nav > ul, nav > ul > li > ul {
-    list-style-type: none;
-    padding-inline-start: 0;
+.docs .sidebar {
+  position: relative;
+  color: #03193f;
+  min-width: 250px;
+  padding-top: 30px;
 }
-
-#TableOfContents > li {
-    padding-inline-start: 25px;
+.docs .sidebar .background {
+  background-color: #f4f7fc;
+  position: absolute;
+  top: -1000%;
+  right: 0;
+  bottom: 0;
+  left: -100000%;
+  z-index: -1;
 }
-
-aside > dl > ul {
-    list-style-type: none;
-    padding-inline-start: 0;
+.docs .sidebar dt {
+  letter-spacing: 0.36px;
+  line-height: 18px;
+  font-size: 18px;
+  font-weight: 700;
 }
-
-.active {
-    background-color: darken($background-color, 20%);
+.docs .sidebar ul {
+  list-style: none;
+  padding-left: 20px;
 }
-
-.content-box > .content {
-    min-height: 30em;
+.docs .sidebar ul li {
+  color: #677189;
+  position: relative;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 30px;
+  border-radius: 100px 0 0 100px;
 }
+.docs .sidebar ul li.active {
+  color: #4D72F0;
+  background-color: rgba(77, 114, 240, 0.12);
+}
+.docs .sidebar ul li.active:after {
+  content: " ";
+  background-color: #4D72F0;
+  width: 3px;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  position: absolute;
+}
+.docs .sidebar ul li a {
+  color: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.28px;
+  line-height: 17px;
+  text-decoration: none;
+}
+.docs .body {
+  padding-top: 30px;
+  color: #03193f;
+  position: relative;
+}
+.docs .body > * {
+  margin-left: 52px;
+}
+.docs .body h1 {
+  margin-top: 0;
+  margin-bottom: 36px;
+  font-size: 36px;
+  font-weight: 500;
+  letter-spacing: 0.72px;
+  line-height: 24px;
+}
+.docs .body h2 {
+  font-size: 28px;
+  font-weight: 500;
+  letter-spacing: 0.15px;
+  line-height: 24px;
+  margin-top: 0;
+  margin-bottom: 18.5px;
+}
+.docs .body h3 {
+  font-size: 18px;
+  font-weight: 500;
+  letter-spacing: 0.36px;
+  line-height: 23px;
+  margin-top: 0;
+  margin-bottom: 8px;
+}
+.docs .body p {
+  font-size: 18px;
+  color: #677189;
+  letter-spacing: 0.36px;
+  line-height: 28px;
+  margin-top: 0;
+  margin-bottom: 28px;
+}
+.docs .body hr {
+  left: 0;
+  right: 0;
+  height: 1px;
+  border: 0;
+  border-top: 1px solid #e9ecf5;
+  margin-top: 50px;
+  margin-bottom: 50px;
+}
+.docs .body code {
+  color: #677189;
+  background-color: #f8fafd;
+  border: 1px solid #e9ecf5;
+  font-size: 16px;
+  padding: 3px;
+}
+.docs .body > pre {
+	color: #677189;
+	padding: 3px;
+	font-size: 16px;
+	background-color: #f8fafd;
+	border: 1px solid #e9ecf5;
+	padding-left: 10px;
+	padding-right: 10px;
+	border-radius: 2px;
 
-// Pagination stuff
-.pagination > .next {
-    margin-left: auto;
+	code {
+		border: 0px;
+	}
+}
+.docs .body ol li {
+  line-height: 26px;
+  font-size: 16px;
+}
+.docs .body ol li:not(:last-child) {
+  margin-bottom: 20px;
+}
+.docs .body a {
+  color: #4D72F0;
+  text-decoration: none;
 }

@@ -1,0 +1,11 @@
+<svg width="24px" height="24px" viewBox="0 0 24 24" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 53.2 (72643) - https://sketchapp.com -->
+    <title>docs</title>
+    <desc>Created with Sketch.</desc>
+    <g id="docs" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="single-folded-copy-3" transform="translate(1.000000, 0.000000)" fill="#486CFF" fill-rule="nonzero">
+            <path d="M14,7 C14,7.552 14.448,8 15,8 L22,8 L22,23 C22,23.552 21.552,24 21,24 L1,24 C0.448,24 0,23.552 0,23 L0,1 C0,0.448 0.448,0 1,0 L14,0 L14,7 Z" id="Path"></path>
+            <polygon id="Path" points="21.414 6 16 6 16 0.586"></polygon>
+        </g>
+    </g>
+</svg>
