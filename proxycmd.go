@@ -239,9 +239,7 @@ func (c *proxycmd) proxy(cntName string) (addr string, err error) {
 	go func() {
 		m := http.NewServeMux()
 		m.HandleFunc("/sail.js", func(w http.ResponseWriter, r *http.Request) {
-			w.Write([]byte(`
-console.log("injected")
-`))
+			w.Write([]byte(sailJS))
 		})
 		m.HandleFunc("/sail/api/v1/healthz", func(w http.ResponseWriter, r *http.Request) {
 			w.Write([]byte("ok\n"))
