@@ -2,39 +2,37 @@
 
 {{ $style := resources.Get "doc.scss" | resources.ToCSS | resources.Minify | resources.Fingerprint }}
 <link rel="stylesheet" href="{{ $style.Permalink }}">
+		
+	<div class="docs content">
+		<div class="sidebar">
+			<div class="background"></div>
+			{{ $currentPage := . }}
 
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-lg">
-            <h1>Sail Documentation</h1>
-        </div>
-    </div>
-    <hr />
-    <div class="row">
-        <div class="col-lg-2 d-xs-none">
-            {{ partial "sidebar.html" . }}
-        </div>
+        {{ $docPages := where ( where $.Site.Pages "Type" "docs") "Kind" "page" }}
 
-        <div class="col-lg content-box">
-            <div class="content">
-                <h1> {{ .Title }} </h1>
-                {{ .Content }}
+        {{ $sections := slice "Getting Started" "Concepts" "Guides" "Commands" "Workflow" }}
 
-            </div>
-            <hr />
-            <!-- <div class="row pagination">
-                {{if .PrevInSection }}
-                    <a href="{{ .PrevInSection.Permalink }}" class="last btn btn-outline-primary btn-lg">Last Page: {{ .PrevInSection.Title }}</a>
-                {{end}}
-                {{if .NextInSection }}
-                    <a href="{{ .NextInSection.Permalink }}" class="next btn btn-outline-primary btn-lg">Next Page: {{ .NextInSection.Title }}</a>
-                {{end}}
-            </div> -->
-        </div>
-        <!-- <div class="col-lg-3 d-xs-none">
-            <span class="text-muted"><strong> In This Page </strong></span>
-            {{ .TableOfContents }}
-        </div> -->
-    </div>
+        {{ range $sections }}
+            {{ $section := . }}
+            {{ $sectionPages := where $docPages "Parent.Title" $section}}
+
+            <dt> {{ $section }}</dt>
+            <ul>
+                {{ range sort $sectionPages ".Params.section_order"  }}
+                    <!-- Match "{{ $section }}" -> {{ .Kind}}<>{{ .Type }}<>{{ .Parent.Title }}<>"{{ .Title }}" -->
+                    <li class="{{ if eq $currentPage.Permalink .Permalink }}active{{ end}}">
+                        <a href="{{ .Permalink }}">{{ .Title }}</a>
+                    </li>
+                {{ end }}
+            </ul>
+        {{ end }}
+		</div>
+		<div class="body">
+			<h1>
+				{{ .Title }}
+			</h1>
+				{{ .Content }}
+		</div>
+	</div>
 </div>
 {{ end }}
