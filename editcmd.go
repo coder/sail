@@ -38,7 +38,10 @@ func (c *editcmd) Spec() cli.CommandSpec {
 
 	If no flags are set, this will open your project's Dockerfile. If the -hat flag is set, this
 	will open the hat Dockerfile associated with your running project in the editor. If the -new-hat
-	flag is set, the project will be adjusted to use the new hat.`,
+	flag is set, the project will be adjusted to use the new hat.
+
+	VS Code users can edit their environment by editing their .sail/Dockerfile within the editor. VS Code
+	will rebuild the container on save.`,
 	}
 }
 
