@@ -10,9 +10,6 @@ Accessing docker from within Sail can be done by installing the docker toolchain
 and bind mounting the host's docker socket into the Sail environment using a Sail
 share.
 
-Sail provides an extra environment variable `$OUTER_ROOT` which is the path to 
-the current Sail environment's project root on the host.
-
 In order to setup a project with docker support, your project's `.sail/Dockerfile`
 should look similar to this:
 
