@@ -60,8 +60,10 @@ func listProjects() ([]projectInfo, error) {
 
 		url, err := proxyURL(dockerName)
 		if err != nil {
-			return nil, xerrors.Errorf("failed to find container %s port: %w", info.name, err)
+			flog.Error("container %v doesn't have a proxy URL.", info.name)
+			continue
 		}
+
 		info.url = url
 		info.hat = cnt.Labels[hatLabel]
 		info.status = cnt.Status

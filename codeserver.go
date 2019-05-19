@@ -64,7 +64,6 @@ func loadCodeServer(ctx context.Context) (string, error) {
 	if err != nil {
 		if !os.IsNotExist(err) {
 			return "", xerrors.Errorf("failed to get download URL: %w", err)
-		
 		}
 
 		lastDownloadURL = []byte("")
