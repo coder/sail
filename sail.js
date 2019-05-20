@@ -5,8 +5,12 @@
         div.style.opacity = 1
         div.style.textAlign = "center"
         div.innerHTML = `<div class="msgbox">
-    <div class="msg">Reloading container</div>
+    <div class="msg">Rebuilding container</div>
     </div>`
+        // Prevent keypresses.
+        document.body.onkeydown = ev => {
+            ev.stopPropagation()
+        }
         document.querySelector(".monaco-workbench").appendChild(div)
     }
 
@@ -22,7 +26,13 @@
     }
 
     let tty
+    let rebuilding
     function rebuild() {
+        if (rebuilding) {
+            return
+        }
+        rebuilding = true
+
         const tsrv = window.ide.workbench.terminalService
 
         if (tty == null) {
@@ -53,6 +63,7 @@
                 alert("reload failed; please see logs in sail terminal")
             }
             stopReloadUI()
+            rebuilding = false
         }
     }
 
@@ -63,14 +74,14 @@
             }
         }
 
-        window.ide.workbench.actionsRegistry.registerWorkbenchAction(new window.ide.workbench.syncActionDescriptor(rebuildAction, "sail.rebuild", "Rebuild sail container", {
+        window.ide.workbench.actionsRegistry.registerWorkbenchAction(new window.ide.workbench.syncActionDescriptor(rebuildAction, "sail.rebuild", "Rebuild container", {
             primary: ((1 << 11) >>> 0) | 48 // That's cmd + R. See vscode source for the magic numbers.
-        }), "sail: Rebuild", "sail");
+        }), "sail: Rebuild container", "sail");
 
         const statusBarService = window.ide.workbench.statusbarService
         statusBarService.addEntry({
             text: "rebuild",
-            tooltip: "press super+r to rebuild",
+            tooltip: "Rebuild sail container",
             command: "sail.rebuild"
         }, 0)
     })
