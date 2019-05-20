@@ -27,4 +27,4 @@ RUN wget -O /usr/bin/code-server https://codesrv-ci.cdr.sh/latest-linux && \
     chmod +x /usr/bin/code-server
 
 
-ADD install_ext /usr/bin/install_ext
+ADD installext /usr/bin/installext

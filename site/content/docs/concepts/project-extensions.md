@@ -7,17 +7,17 @@ section_order=2
 
 Installing VS Code extensions through your Sail Dockerfile is dead-simple.
 
-In your Dockerfile, call `install_ext <extension ID>`.
+In your Dockerfile, call `installext <extension ID>`.
 
 For example:
 
 ```Dockerfile
 FROM ubuntu-dev
-RUN install_ext vscodevim.vim
+RUN installext vscodevim.vim
 ```
 
 
-**`ubuntu-dev` or `ubuntu-dev-*` must be your image's base for `install_ext` to be available.**
+**`ubuntu-dev` or `ubuntu-dev-*` must be your image's base for `installext` to be available.**
 
 ---
 

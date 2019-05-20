@@ -1,6 +1,6 @@
 FROM %BASE
 
 # This technically has no effect until #35 is resolved.
-RUN code-server --install-extension redhat.java
-RUN code-server --install-extension vscjava.vscode-java-debug
+RUN installext redhat.java
+RUN installext vscjava.vscode-java-debug
 

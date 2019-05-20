@@ -16,6 +16,6 @@ RUN npm install -g typescript
 LABEL share.go_mod "~/.cache/yarn/v4:~/.cache/yarn/v4"
 
 # This technically has no effect until #35 is resolved.
-RUN code-server --install-extension dbaeumer.vscode-eslint
-RUN code-server --install-extension ms-vscode.vscode-typescript-tslint-plugin
+RUN installext dbaeumer.vscode-eslint
+RUN installext ms-vscode.vscode-typescript-tslint-plugin
 
