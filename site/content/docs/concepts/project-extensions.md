@@ -2,11 +2,10 @@
 type="docs"
 title="Project Extensions"
 browser_title="Sail - Docs - Project Extensions"
-section_order=5
+section_order=2
 +++
 
-Installing VS Code extensions through your Sail Dockerfile is dead-simple if
-you're image is based from `ubuntu-dev`.
+Installing VS Code extensions through your Sail Dockerfile is dead-simple.
 
 In your Dockerfile, call `install_ext <extension ID>`.
 
@@ -17,9 +16,15 @@ FROM ubuntu-dev
 RUN install_ext vscodevim.vim
 ```
 
-_Tip: You can find the extension ID at the extension's page._
+
+**`ubuntu-dev` or `ubuntu-dev-*` must be your image's base for `install_ext` to be available.**
+
+---
+
+_Tip: Find an extension's ID at it's marketplace page:_
 
 ![Extension ID in VS Code](/extension-id.png)
+
 
 ## Under The Hood
 

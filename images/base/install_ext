@@ -1,4 +1,4 @@
 #!/bin/bash
 set -e
 
-code-server --install-extension $1
+code-server --extensions-dir ~/.vscode/extensions --install-extension $1
