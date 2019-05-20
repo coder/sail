@@ -1,7 +1,7 @@
 +++
 type="docs"
-title="Project Extensions"
-browser_title="Sail - Docs - Project Extensions"
+title="Project-defined Extensions"
+browser_title="Sail - Docs - Project-defined Extensions"
 section_order=2
 +++
 
