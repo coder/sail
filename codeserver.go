@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"io"
+	"io/ioutil"
 	"net"
 	"net/http"
 	"os"
@@ -24,6 +25,10 @@ func loadCodeServer(ctx context.Context) (string, error) {
 
 	const cachePath = "/tmp/sail-code-server-cache/code-server"
 
+	// downloadURLPath stores the download URL, so we know whether we should update
+	// the binary.
+	downloadURLPath := cachePath + ".download_url"
+
 	// Only check for a new codeserver if it's over an hour old.
 	info, err := os.Stat(cachePath)
 	if err == nil {
@@ -32,42 +37,70 @@ func loadCodeServer(ctx context.Context) (string, error) {
 		}
 	}
 
-	u, err := codeserver.DownloadURL(ctx)
-	if err != nil {
-		return "", err
-	}
-
 	err = os.MkdirAll(filepath.Dir(cachePath), 0750)
 	if err != nil {
 		return "", err
 	}
 
-	fi, err := os.OpenFile(cachePath, os.O_CREATE|os.O_EXCL|os.O_RDWR, 0750)
+	_, err = os.Stat(cachePath)
+	if err != nil && !os.IsNotExist(err) {
+		return "", xerrors.Errorf("failed to stat %v: %v", cachePath, err)
+	}
+
+	cachedBinExists := err == nil
+
+	fi, err := os.OpenFile(cachePath, os.O_CREATE|os.O_RDWR, 0750)
 	if err != nil {
-		if os.IsExist(err) {
-			return cachePath, nil
-		}
 		return "", err
 	}
 	defer fi.Close()
 
-	tarFi, err := http.Get(u)
+	downloadURL, err := codeserver.DownloadURL(ctx)
 	if err != nil {
-		os.Remove(cachePath)
-		return "", xerrors.Errorf("failed to get %v: %w", u, err)
+		return "", err
+	}
+
+	lastDownloadURL, err := ioutil.ReadFile(downloadURLPath)
+	if err != nil {
+		if !os.IsNotExist(err) {
+			return "", xerrors.Errorf("failed to get download URL: %w", err)
+		}
+
+		lastDownloadURL = []byte("")
+	}
+
+	// The binary is already up to date.
+	if string(lastDownloadURL) == downloadURL && cachedBinExists {
+		return cachePath, nil
+	}
+
+	tarFi, err := http.Get(downloadURL)
+	if err != nil {
+		_ = os.Remove(cachePath)
+		return "", xerrors.Errorf("failed to get %v: %w", downloadURL, err)
 	}
 	defer tarFi.Body.Close()
 
 	binRd, err := codeserver.Extract(ctx, tarFi.Body)
 	if err != nil {
-		os.Remove(cachePath)
-		return "", xerrors.Errorf("failed to untar %v: %w", u, err)
+		_ = os.Remove(cachePath)
+		return "", xerrors.Errorf("failed to untar %v: %w", downloadURL, err)
 	}
 
 	_, err = io.Copy(fi, binRd)
 	if err != nil {
-		os.Remove(cachePath)
+		_ = os.Remove(cachePath)
 		return "", xerrors.Errorf("failed to copy binary into %v: %w", cachePath, err)
+	}
+
+	err = fi.Close()
+	if err != nil {
+		return "", xerrors.Errorf("failed to close %v: %v", fi.Name(), err)
+	}
+
+	err = ioutil.WriteFile(downloadURLPath, []byte(downloadURL), 0640)
+	if err != nil {
+		return "", err
 	}
 
 	flog.Info("loaded code-server in %v", time.Since(start))

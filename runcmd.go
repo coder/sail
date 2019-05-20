@@ -23,6 +23,9 @@ type runcmd struct {
 	testCmd string
 
 	schemaPrefs
+
+	rm     bool
+	noOpen bool
 }
 
 type schemaPrefs struct {
@@ -87,6 +90,8 @@ func (c *runcmd) RegisterFlags(fl *flag.FlagSet) {
 	fl.BoolVar(&c.ssh, "ssh", false, "Clone repo over SSH")
 	fl.BoolVar(&c.http, "http", false, "Clone repo over HTTP")
 	fl.BoolVar(&c.https, "https", false, "Clone repo over HTTPS")
+	fl.BoolVar(&c.rm, "rm", false, "Delete existing container")
+	fl.BoolVar(&c.noOpen, "no-open", false, "Don't open an editor session")
 }
 
 const guestHomeDir = "/home/user"
@@ -101,6 +106,15 @@ func (c *runcmd) Run(fl *flag.FlagSet) {
 	if err != nil {
 		flog.Fatal("%v", err)
 	}
+
+	if exists && c.rm {
+		err = proj.delete()
+		if err != nil {
+			flog.Fatal("failed to delete existing container: %v", err)
+		}
+		exists = false
+	}
+
 	if exists {
 		c.gf.debug("opening existing project")
 
@@ -199,7 +213,7 @@ func (c *runcmd) Run(fl *flag.FlagSet) {
 		testCmd: c.testCmd,
 	}
 
-	err = c.buildOpen(c.gf, proj, b, r)
+	err = c.build(c.gf, proj, b, r)
 	if err != nil {
 		flog.Error("build run failed: %v", err)
 		if !c.keep {
@@ -213,10 +227,20 @@ func (c *runcmd) Run(fl *flag.FlagSet) {
 		}
 		os.Exit(1)
 	}
+
+	if c.noOpen {
+		os.Exit(0)
+	}
+
+	err = proj.open()
+	if err != nil {
+		flog.Fatal("failed to open project: %w", err)
+	}
+
 	os.Exit(0)
 }
 
-func (c *runcmd) buildOpen(gf *globalFlags, proj *project, b *hatBuilder, r *runner) error {
+func (c *runcmd) build(gf *globalFlags, proj *project, b *hatBuilder, r *runner) error {
 	var err error
 	image := b.baseImage
 	if b.hatPath != "" {
@@ -250,10 +274,5 @@ func (c *runcmd) buildOpen(gf *globalFlags, proj *project, b *hatBuilder, r *run
 	}
 
 	gf.debug("code-server online")
-
-	err = proj.open()
-	if err != nil {
-		return xerrors.Errorf("failed to open project: %w", err)
-	}
 	return nil
 }
