@@ -3,6 +3,9 @@ type="docs"
 title="Introduction"
 browser_title="Sail - Docs  - Introduction"
 section_order=0
+aliases = [
+    "/docs",
+]
 +++
 
 
