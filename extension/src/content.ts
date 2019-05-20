@@ -60,10 +60,11 @@ const ensureButton = (): void | HTMLElement => {
 	}
 
 	if (button) {
+		button.id = buttonId;
 		button.innerText = "Open in Sail";
 		button.title = "Open in Sail";
 		button.classList.add("disabled");
-		button.setAttribute("aria-label", "Open repository with Sail");
+		// button.setAttribute("aria-label", "Open repository with Sail");
 
 		button.addEventListener("click", (event) => {
 			event.preventDefault();

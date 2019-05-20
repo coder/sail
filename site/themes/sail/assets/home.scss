@@ -1,15 +1,18 @@
 @font-face {
   font-family: aktiv grotesk;
+  font-display: auto;
   src: url(/font/AktivGroteskRegular.ttf);
   font-weight: 400;
 }
 @font-face {
   font-family: aktiv grotesk;
+  font-display: auto;
   src: url(/font/AktivGroteskMedium.ttf);
   font-weight: 500;
 }
 @font-face {
   font-family: aktiv grotesk;
+  font-display: auto;
   src: url(/font/AktivGroteskBold.ttf);
   font-weight: 700;
 }
@@ -29,14 +32,14 @@
   bottom: 0;
 
   &.languages {
-	  bottom: -2vw;
-	  max-width: 1800px;
-	  margin: 0 auto;
-  
-		@media (max-width: 1200px) {
-			display: none;
-		}
-	}
+    bottom: -2vw;
+    max-width: 1800px;
+    margin: 0 auto;
+
+    @media (max-width: 1200px) {
+      display: none;
+    }
+  }
 }
 @media (max-width: 900px) {
   .main {
@@ -47,11 +50,11 @@
 @media (max-width: 450px) {
   .main {
     padding-top: 20px;
-	padding-bottom: 20px;
-	
-	.version {
-		margin-bottom: 10px !important;
-	}
+    padding-bottom: 20px;
+
+    .version {
+      margin-bottom: 10px !important;
+    }
   }
 }
 @media (max-height: 400px) {
@@ -107,6 +110,7 @@
   .version {
     background-color: #c4d5ff;
     border-radius: 2px;
+    width: -moz-fit-content;
     width: fit-content;
     color: #486cff;
     font-size: 14px;
@@ -167,9 +171,8 @@
   border-radius: 4px;
   background-color: #000a44;
   max-width: 598px;
-  max-height: 445px;
   width: 100%;
-  height: -webkit-fill-available;
+  height: 445px;
   flex: 1;
   box-shadow: inset 0 -1px 3px 0 rgba(177, 173, 255, 0.7),
     inset 0 2px 3px 0 #4675dd, inset 0 -4px 5px 0 #0e2b94,
@@ -316,32 +319,36 @@
   max-width: 400px;
   border: 1px solid #e9ecf5;
   border-radius: 4px;
-  background: linear-gradient(180deg, #ffffff 0%, #f4f5f9 100%);
-  box-shadow: inset 0 -3px 8px 0 rgba(148, 166, 207, 0.15),
-    0 4px 32px 8px rgba(29, 64, 126, 0.08);
+  background: #f4f5f9;
+  box-shadow: 0 4px 32px 8px rgba(29, 64, 126, 0.08);
   padding: 30px;
   color: #03193f;
   min-height: 300px;
   display: flex;
   flex-direction: column;
   position: relative;
+  transition: 150ms background ease, 150ms color ease, 150ms box-shadow ease;
 
-  a {
-	  text-decoration: none;
+  a,
+  p {
+    text-decoration: none;
+    transition: 150ms color ease;
   }
 
-  &.about {
-	background: linear-gradient(180deg, #5883FF 0%, #344FD4 100%);
-	color: white;
+  &:hover {
+    background: #486cff;
+    color: white;
+    box-shadow: inset 0 -3px 8px 0 rgba(148, 166, 207, 0.15),
+      0 4px 32px 8px rgba(29, 64, 126, 0.08);
 
-	p {
-		color: white;
-	}
+    p {
+      color: white;
+    }
 
-	a {
-		color: white;
-	}
-}
+    a {
+      color: white;
+    }
+  }
 
   &:after {
     position: absolute;
@@ -350,7 +357,7 @@
     height: 1px;
     left: 0px;
     right: 0px;
-    bottom: 60px;
+    bottom: 67px;
   }
 }
 .cards .card .icon {
@@ -375,17 +382,17 @@
 .cards .card p {
   font-size: 18px;
   line-height: 28px;
-  margin-bottom: 20px;
+  margin-bottom: 40px;
 }
 .cards .card:not(:last-child) {
   margin-right: 20px;
 }
 @media (max-width: 900px) {
-	.cards .card {
-		margin-left: auto;
-		margin-right: auto !important;
-		margin-bottom: 20px;
-	}
+  .cards .card {
+    margin-left: auto;
+    margin-right: auto !important;
+    margin-bottom: 20px;
+  }
 }
 .cards .card a {
   margin-top: auto;
@@ -488,6 +495,7 @@
   color: #fff;
   font-size: 12px;
   align-items: center;
+  width: -moz-fit-content;
   width: fit-content;
 }
 .code .wrapper .titlebar .tab .icon {

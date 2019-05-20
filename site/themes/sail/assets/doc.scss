@@ -1,15 +1,18 @@
 @font-face {
   font-family: aktiv grotesk;
+  font-display: auto;
   src: url(/font/AktivGroteskRegular.ttf);
   font-weight: 400;
 }
 @font-face {
   font-family: aktiv grotesk;
+  font-display: auto;
   src: url(/font/AktivGroteskMedium.ttf);
   font-weight: 500;
 }
 @font-face {
   font-family: aktiv grotesk;
+  font-display: auto;
   src: url(/font/AktivGroteskBold.ttf);
   font-weight: 700;
 }
@@ -46,7 +49,7 @@ body {
 .docs .sidebar {
   position: relative;
   color: #03193f;
-  min-width: 250px;
+  min-width: 275px;
   padding-top: 30px;
 }
 .docs .sidebar .background {
@@ -177,4 +180,8 @@ body {
 .docs .body a {
   color: #4D72F0;
   text-decoration: none;
+
+  &:hover {
+	  text-decoration: underline;
+  }
 }
