@@ -1,5 +1,5 @@
 FROM %BASE
 
 # This technically has no effect until #35 is resolved.
-RUN code-server --install-extension ms-python.python
+RUN installext ms-python.python
 

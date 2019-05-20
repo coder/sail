@@ -13,7 +13,12 @@ LANG_IMAGES=(
     ubuntu-dev-openjdk12
 )
 
-# Build our base image for non language specific environments.
+# Build the base for all images.
+pushd base
+    docker build -t sail-base --label com.coder.sail.base_image=sail-base .
+popd
+
+# Build our base ubuntu-dev image for non language specific environments.
 pushd $BASE_IMAGE
     ./buildpush.sh
 popd
