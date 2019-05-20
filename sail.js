@@ -57,23 +57,21 @@
     }
 
     window.addEventListener("ide-ready", () => {
+        class rebuildAction extends window.ide.workbench.action {
+            run() {
+                rebuild()
+            }
+        }
+
+        window.ide.workbench.actionsRegistry.registerWorkbenchAction(new window.ide.workbench.syncActionDescriptor(rebuildAction, "sail.rebuild", "Rebuild sail container", {
+            primary: ((1 << 11) >>> 0) | 48 // That's cmd + R. See vscode source for the magic numbers.
+        }), "sail: Rebuild", "sail");
+
         const statusBarService = window.ide.workbench.statusbarService
         statusBarService.addEntry({
             text: "rebuild",
-            tooltip: "press super+alt+r to rebuild",
-            command: "rebuild-sail-container"
+            tooltip: "press super+r to rebuild",
+            command: "sail.rebuild"
         }, 0)
-
-        const commandRegistry = window.ide.workbench.commandRegistry
-        commandRegistry.registerCommand({
-            id: "rebuild-sail-container",
-            handler: (accessor, args) => {
-                rebuild()
-            },
-            description: {
-                description: "Rebuild sail container",
-                args: []
-            }
-        })
     })
 }())
