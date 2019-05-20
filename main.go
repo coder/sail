@@ -72,8 +72,8 @@ func (r rootCmd) Subcommands() []cli.Command {
 func main() {
 	root := &rootCmd{}
 
-	if len(os.Args) >= 2 && strings.HasPrefix("chrome-extension://", os.Args[1]) ||
-		len(os.Args) >= 3 && strings.HasPrefix("chrome-extension://", os.Args[2]) {
+	if (len(os.Args) >= 2 && strings.HasPrefix(os.Args[1], "chrome-extension://")) ||
+		(len(os.Args) >= 3 && strings.HasPrefix(os.Args[2], "chrome-extension://")) {
 		runNativeMsgHost()
 		return
 	}

@@ -1,0 +1,32 @@
+{
+	"manifest_version": 2,
+
+	"name": "Sail",
+	"version": "1.0.0",
+	"author": "Coder",
+	"description": "Work in immutable, pre-configured development environments.",
+
+	"background": {
+		"scripts": [
+			"out/background.js"
+		],
+		"persistent": false
+	},
+	"content_scripts": [
+		{
+			"matches": [
+				"https://*/*"
+			],
+			"js": [
+				"out/content.js"
+			]
+		}
+	],
+	"permissions": [
+		"nativeMessaging"
+	],
+	"browser_action": {
+		"default_title": "Sail",
+		"default_popup": "out/popup.html"
+	}
+}

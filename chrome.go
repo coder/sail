@@ -66,7 +66,9 @@ type runRequest struct {
 }
 
 func handleRun(w http.ResponseWriter, r *http.Request) {
-	c, err := websocket.Accept(w, r, websocket.AcceptOptions{})
+	c, err := websocket.Accept(w, r, websocket.AcceptOptions{
+		InsecureSkipVerify: true,
+	})
 	if err != nil {
 		log.Println(err)
 		return
@@ -118,15 +120,20 @@ func (c *chromeExtInstall) Run(fl *flag.FlagSet) {
 }
 
 func writeNativeHostManifest(dir string) error {
+	binPath, err := os.Executable()
+	if err != nil {
+		return err
+	}
+
 	manifest := fmt.Sprintf(`{
 		"name": "com.coder.sail",
 		"description": "sail message host",
 		"path": "%v",
 		"type": "stdio",
 		"allowed_origins": [
-			"chrome-extension://emhbehmeaolbmnbafkmdmiedpfhaabjg/"
+			"chrome-extension://deeepphleikpinikcbjplcgojfhkcmna/"
 		]
-	}`, os.Args[0])
+	}`, binPath)
 
 	dst := path.Join(dir, "com.coder.sail.json")
 	return ioutil.WriteFile(dst, []byte(manifest), 0644)
