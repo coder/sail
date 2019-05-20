@@ -20,43 +20,61 @@ function stopReloadUI() {
     removeElementsByClass("msgbox-overlay")
 }
 
+function rebuild() {
+    const tsrv = window.ide.workbench.terminalService
+
+    if (tty == null) {
+        tty = tsrv.createTerminal({
+            name: "sail",
+            isRendererOnly: true,
+        }, false)
+    } else {
+        tty.clear()
+    }
+    let oldTTY = tsrv.getActiveInstance()
+    tsrv.setActiveInstance(tty)
+    // Show the panel and focus it to prevent the user from editing the Dockerfile.
+    tsrv.showPanel(true)
+
+    startReloadUI()
+
+    const ws = new WebSocket("ws://" + location.host + "/sail/api/v1/reload")
+    ws.onmessage = (ev) => {
+        const msg = JSON.parse(ev.data)
+        const out = atob(msg.v).replace(/\n/g, "\n\r")
+        tty.write(out)
+    }
+    ws.onclose = (ev) => {
+        if (ev.code === 1000) {
+            tsrv.setActiveInstance(oldTTY)
+        } else {
+            alert("reload failed; please see logs in sail terminal")
+        }
+        stopReloadUI()
+    }
+}
+
 let tty
 window.addEventListener("ide-ready", () => {
-    window.ide.workbench.onFileSaved((ev) => {
-        if (!ev.endsWith(".sail/Dockerfile")) {
-            return
-        }
+    const statusBarService = window.ide.workbench.statusbarService
+    statusBarService.addEntry({
+        text: "rebuild",
+        tooltip: "press super+alt+r to rebuild",
+        command: "rebuild-sail-container"
+        // showBeak: true <- what does this do?
+    }, 0)
 
-        const srv = window.ide.workbench.terminalService
-
-        if (tty == null) {
-            tty = srv.createTerminal({
-                name: "sail",
-                isRendererOnly: true,
-            }, false)
-        } else {
-            tty.clear()
-        }
-        let oldTTY = srv.getActiveInstance()
-        srv.setActiveInstance(tty)
-        // Show the panel and focus it to prevent the user from editing the Dockerfile.
-        srv.showPanel(true)
-
-        startReloadUI()
-
-        const ws = new WebSocket("ws://" + location.host + "/sail/api/v1/reload")
-        ws.onmessage = (ev) => {
-            const msg = JSON.parse(ev.data)
-            const out = atob(msg.v).replace(/\n/g, "\n\r")
-            tty.write(out)
-        }
-        ws.onclose = (ev) => {
-            if (ev.code === 1000) {
-                srv.setActiveInstance(oldTTY)
-            } else {
-                alert("reload failed; please see logs in sail terminal")
-            }
-            stopReloadUI()
+    const commandRegistry = window.ide.workbench.commandRegistry
+    commandRegistry.registerCommand({
+        id: "rebuild-sail-container",
+        handler: (accessor, args) => {
+            rebuild()
+        },
+        description: {
+            description: "Rebuild sail container",
+            args: []
         }
     })
+
+    const 
 })
