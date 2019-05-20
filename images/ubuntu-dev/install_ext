@@ -1,0 +1,4 @@
+#!/bin/bash
+set -e
+
+code-server --install-extension $1
