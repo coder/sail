@@ -235,7 +235,7 @@ func (r *runner) mounts(mounts []mount.Mount, image string) ([]mount.Mount, erro
 	mounts = append(mounts, mount.Mount{
 		Type:   "bind",
 		Source: "~/.vscode/extensions",
-		Target: "~/.vscode/extensions",
+		Target: "~/.vscode/host-extensions",
 	})
 
 	mounts = mountGUI(mounts)
