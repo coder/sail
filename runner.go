@@ -148,11 +148,13 @@ func (r *runner) constructCommand(projectDir string) string {
 	// We want the code-server logs to be available inside the container for easy
 	// access during development, but also going to stdout so `docker logs` can be used
 	// to debug a failed code-server startup.
+	//
+	// We start code-server such that extensions installed through the UI are placed in the host's extension dir.
 	cmd := fmt.Sprintf(`set -euxo pipefail || exit 1
 cd %v
 code-server --host %v --port %v \
-	--data-dir ~/.config/Code --extensions-dir ~/.vscode/extensions --allow-http --no-auth 2>&1 | tee %v
-`, projectDir, containerAddr, containerPort, containerLogPath)
+	--data-dir ~/.config/Code --extensions-dir %v --extra-extensions-dir ~/.vscode/extensions --allow-http --no-auth 2>&1 | tee %v
+`, projectDir, containerAddr, containerPort, hostExtensionsDir, containerLogPath)
 	if r.testCmd != "" {
 		cmd = r.testCmd + "\n exit 1"
 	}
@@ -225,6 +227,8 @@ func (r *runner) addHatMount(mounts []mount.Mount, labels map[string]string) []m
 	})
 }
 
+const hostExtensionsDir = "~/.vscode/host-extensions"
+
 func (r *runner) mounts(mounts []mount.Mount, image string) ([]mount.Mount, error) {
 	// Mount in VS Code configs.
 	mounts = append(mounts, mount.Mount{
@@ -235,7 +239,7 @@ func (r *runner) mounts(mounts []mount.Mount, image string) ([]mount.Mount, erro
 	mounts = append(mounts, mount.Mount{
 		Type:   "bind",
 		Source: "~/.vscode/extensions",
-		Target: "~/.vscode/extensions",
+		Target: hostExtensionsDir,
 	})
 
 	mounts = mountGUI(mounts)

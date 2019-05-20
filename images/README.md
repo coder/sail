@@ -9,6 +9,11 @@ In order for the Sail images to have lower maintenance and minimal language
 specific knowledge, each language image is based on the open source community image
 and expanded upon to add any Sail dependencies.
 
+## Base Image
+
+The `base` directory is where the initial base image is created. Any dependencies or configuration
+that needs to be used in every image should be added to this image.
+
 ## Extending Community Images
 
 Most community language images have an image based on buildpack-deps:stretch. Since we

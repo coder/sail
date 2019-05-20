@@ -4,7 +4,7 @@ set -eu
 LANG_IMG_NAME=$1
 
 COMM_DOCKERFILE=./Dockerfile.comm
-COMM_FROM=buildpack-deps:cosmic
+COMM_FROM=sail-base
 COMM_IMG_NAME=$LANG_IMG_NAME-comm
 
 # Build our community base image.
@@ -13,7 +13,7 @@ COMM_IMG_NAME=$LANG_IMG_NAME-comm
 # location, so we need to backout to access buildfrom.sh.
 ../buildfrom.sh $COMM_DOCKERFILE $COMM_FROM $COMM_IMG_NAME
 
-BASE_DOCKERFILE=../Dockerfile
+BASE_DOCKERFILE=../ubuntu-dev/Dockerfile
 BASE_IMG_NAME=$LANG_IMG_NAME-base
 
 # Add the ubuntu-dev base on top.

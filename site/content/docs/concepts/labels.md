@@ -2,7 +2,7 @@
 type="docs"
 title="Labels"
 browser_title="Sail - Docs - Labels"
-section_order=1
+section_order=3
 +++
 
 Sail makes extensive use of Docker labels to maintain state and to allow users to fully configure
