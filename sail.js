@@ -1,4 +1,5 @@
 (function() {
+    let oldonkeydown
     function startReloadUI() {
         const div = document.createElement("div")
         div.className = "msgbox-overlay"
@@ -8,6 +9,7 @@
     <div class="msg">Rebuilding container</div>
     </div>`
         // Prevent keypresses.
+        let oldonkeydown = document.body.onkeydown
         document.body.onkeydown = ev => {
             ev.stopPropagation()
         }
@@ -22,6 +24,7 @@
     }
 
     function stopReloadUI() {
+        document.body.onkeydown = oldonkeydown
         removeElementsByClass("msgbox-overlay")
     }
 
@@ -45,7 +48,6 @@
         }
         let oldTTY = tsrv.getActiveInstance()
         tsrv.setActiveInstance(tty)
-        // Show the panel and focus it to prevent the user from editing the Dockerfile.
         tsrv.showPanel(true)
 
         startReloadUI()
