@@ -1,4 +1,5 @@
-FROM codercom/ubuntu-dev-go
+FROM codercom/ubuntu-dev-go:latest
+
 RUN sudo apt-get install -y htop
 LABEL project_root "~/go/src/go.coder.com"
 

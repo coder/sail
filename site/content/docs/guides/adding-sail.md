@@ -31,7 +31,7 @@ For example:
 
 ```Dockerfile
 # Use a predefined language base.
-FROM codercom/ubuntu-dev-python3.7
+FROM codercom/ubuntu-dev-python3.7:latest
 
 # Install some developer tooling to help out with system 
 # and program monitoring.

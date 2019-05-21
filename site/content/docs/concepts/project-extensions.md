@@ -12,7 +12,7 @@ In your Dockerfile, call `installext <extension ID>`.
 For example:
 
 ```Dockerfile
-FROM ubuntu-dev
+FROM codercom/ubuntu-dev:latest
 RUN installext vscodevim.vim
 ```
 
