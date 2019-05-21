@@ -14,7 +14,7 @@ In order to setup a project with docker support, your project's `.sail/Dockerfil
 should look similar to this:
 
 ```Dockerfile
-FROM codercom/ubuntu-dev
+FROM codercom/ubuntu-dev:latest
 
 # Share the host's docker socket with the Sail project so that you can
 # access it using the docker client.

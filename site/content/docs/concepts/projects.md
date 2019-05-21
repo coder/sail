@@ -79,7 +79,7 @@ For example, if your project has autotools as a dependency, you could install th
 project's `.sail/Dockerfile` like so:
 
 ```Dockerfile
-FROM codercom/ubuntu-dev
+FROM codercom/ubuntu-dev:latest
 
 RUN apt-get update && apt-get install -y \
     autoconf \

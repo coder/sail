@@ -158,7 +158,7 @@ func (p *project) buildImage() (string, bool, error) {
 }
 
 func fmtImage(img string) string {
-	return fmt.Sprintf("codercom/ubuntu-dev-%s", img)
+	return fmt.Sprintf("codercom/ubuntu-dev-%s:latest", img)
 }
 
 // defaultRepoImage returns a base image suitable for development with the
