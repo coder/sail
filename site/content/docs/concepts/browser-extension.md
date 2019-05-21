@@ -17,3 +17,9 @@ _Firefox support coming soon!_
 1. Run `sail install-for-chrome-ext`
 1. Get Sailing!
 
+## Demo
+_Opening code-server from GitHub.com_
+
+<video width="900px" controls src="/github-open.mkv"></video>
+
+
