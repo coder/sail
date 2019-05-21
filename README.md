@@ -1,5 +1,9 @@
 # sail
 
+[!["Open Issues"](https://img.shields.io/github/issues-raw/cdr/sail.svg)](https://github.com/cdr/sail/issues)
+[![MIT license](https://img.shields.io/badge/license-MIT-green.svg)](https://github.com/cdr/sail/blob/master/LICENSE)
+[![Discord](https://img.shields.io/discord/463752820026376202.svg?label=&logo=discord&logoColor=ffffff&color=7389D8&labelColor=6A7EC2)](https://discord.gg/zxSwN8Z)
+
 `sail` is a universal workflow for reproducible, project-defined development environments.
 
 It can be used as a command line, or through the browser with
