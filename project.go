@@ -142,7 +142,8 @@ func (p *project) buildImage() (string, bool, error) {
 		return "", false, nil
 	}
 
-	imageID := p.repo.DockerName()
+	// Docker image names must be completely lowercase.
+	imageID := strings.ToLower(p.repo.DockerName())
 
 	cmdStr := fmt.Sprintf("docker build --network=host -t %v -f %v %v --label %v=%v",
 		imageID, path, p.localDir(), baseImageLabel, imageID,

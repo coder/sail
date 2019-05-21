@@ -9,7 +9,7 @@
     <div class="msg">Rebuilding container</div>
     </div>`
         // Prevent keypresses.
-        let oldonkeydown = document.body.onkeydown
+        oldonkeydown = document.body.onkeydown
         document.body.onkeydown = ev => {
             ev.stopPropagation()
         }
