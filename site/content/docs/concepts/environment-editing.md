@@ -19,7 +19,7 @@ The UI will freeze as the container is being rebuilt.
 -  Move the active part of the Dockerfile to the bottom. Then, stable parts of your Dockerfile will stay
 cached.
 
----
-**Demo**: Modifying dev environment in real-time
+## Demo
+_Modifying dev environment in real-time_
 
 <video width="900px" controls src="/environment-editing.mkv"></video>
