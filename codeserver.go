@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
 	"time"
 
@@ -49,12 +50,6 @@ func loadCodeServer(ctx context.Context) (string, error) {
 
 	cachedBinExists := err == nil
 
-	fi, err := os.OpenFile(cachePath, os.O_CREATE|os.O_RDWR, 0750)
-	if err != nil {
-		return "", err
-	}
-	defer fi.Close()
-
 	downloadURL, err := codeserver.DownloadURL(ctx)
 	if err != nil {
 		return "", err
@@ -74,28 +69,44 @@ func loadCodeServer(ctx context.Context) (string, error) {
 		return cachePath, nil
 	}
 
+	// We can't just overwrite the binary, as that would cause a `text file busy` error if code-server is running.
+	// We write to a temporary path first, and then atomically swap in this new file.
+	tmpCachePath := cachePath + strconv.FormatInt(time.Now().UnixNano(), 10)
+	defer os.Remove(tmpCachePath)
+
+	// Update the binary.
+	cachedBinFi, err := os.OpenFile(tmpCachePath, os.O_CREATE|os.O_RDWR, 0750)
+	if err != nil {
+		return "", err
+	}
+	defer cachedBinFi.Close()
+
 	tarFi, err := http.Get(downloadURL)
 	if err != nil {
-		_ = os.Remove(cachePath)
 		return "", xerrors.Errorf("failed to get %v: %w", downloadURL, err)
 	}
 	defer tarFi.Body.Close()
 
 	binRd, err := codeserver.Extract(ctx, tarFi.Body)
 	if err != nil {
-		_ = os.Remove(cachePath)
 		return "", xerrors.Errorf("failed to untar %v: %w", downloadURL, err)
 	}
 
-	_, err = io.Copy(fi, binRd)
+	_, err = io.Copy(cachedBinFi, binRd)
 	if err != nil {
-		_ = os.Remove(cachePath)
-		return "", xerrors.Errorf("failed to copy binary into %v: %w", cachePath, err)
+		return "", xerrors.Errorf("failed to copy binary into %v: %w", tmpCachePath, err)
 	}
 
-	err = fi.Close()
+	err = cachedBinFi.Close()
 	if err != nil {
-		return "", xerrors.Errorf("failed to close %v: %v", fi.Name(), err)
+		return "", xerrors.Errorf("failed to close %v: %v", cachedBinFi.Name(), err)
+	}
+
+	// TODO: make this actually atomic.
+	_ = os.Remove(cachePath)
+	err = os.Rename(tmpCachePath, cachePath)
+	if err != nil {
+		return "", xerrors.Errorf("failed to rename %v to %v: %v", tmpCachePath, cachePath, err)
 	}
 
 	err = ioutil.WriteFile(downloadURLPath, []byte(downloadURL), 0640)
