@@ -22,17 +22,24 @@ Before using Sail, there are several dependencies that must be installed on the 
 
 ### Stable Releases
 
+It's recommended that user's install the sail binary from the stable releases.
+
 Binary releases can be downloaded from our [GitHub.](https://github.com/cdr/sail/releases)
 
 ### From Source
 
-To install the latest version of `sail`, run:
+To install the latest version of `sail`, you'll need [go](https://golang.org/) installed and configured on your system. 
 
-```bash
-go install go.coder.com/sail
+Sail uses go modules to build the project, so the easiest way to install it to your system is to clone it in a directory
+outside of your `GOPATH`.
+
 ```
-
-> `go install` will install to `$GOPATH/bin`
+mkdir $HOME/src
+cd $HOME/src
+git clone https://github.com/cdr/sail.git
+cd sail
+go install
+```
 
 
 ### Verifying the Installation
@@ -44,9 +51,9 @@ properly, you should see Sail's help text.
 sail --help
 ```
 
-### Browser Extension
+## Browser Extension
 
-We recommend [installing our extension](/docs/concepts/browser-extension/) for the best experience.
+In order to have an optimal experience while using Sail, we recommend [installing the browser extension](/docs/browser-extension/).
 
 
 ## Updating

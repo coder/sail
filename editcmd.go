@@ -32,16 +32,16 @@ func (c *editcmd) Spec() cli.CommandSpec {
 		Name:  "edit",
 		Usage: "[flags] <repo>",
 		Desc: `This command allows you to edit your project's environment while it's running.
-	Depending on what flags are set, the Dockerfile you want to change will be opened in your default
-	editor which can be set using the "EDITOR" environment variable. Once your changes are complete
-	and the editor is closed, the environment will be rebuilt and rerun with minimal downtime.
+Depending on what flags are set, the Dockerfile you want to change will be opened in your default
+editor which can be set using the "EDITOR" environment variable. Once your changes are complete
+and the editor is closed, the environment will be rebuilt and rerun with minimal downtime.
 
-	If no flags are set, this will open your project's Dockerfile. If the -hat flag is set, this
-	will open the hat Dockerfile associated with your running project in the editor. If the -new-hat
-	flag is set, the project will be adjusted to use the new hat.
+If no flags are set, this will open your project's Dockerfile. If the -hat flag is set, this
+will open the hat Dockerfile associated with your running project in the editor. If the -new-hat
+flag is set, the project will be adjusted to use the new hat.
 
-	VS Code users can edit their environment by editing their .sail/Dockerfile within the editor. VS Code
-	will rebuild the container on save.`,
+VS Code users can edit their environment by editing their .sail/Dockerfile within the editor. VS Code
+will rebuild the container when they click on the 'rebuild' button.`,
 	}
 }
 
