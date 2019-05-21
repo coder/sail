@@ -9,10 +9,10 @@ Sail comes out the box with VS Code integrated environment editing.
 
 1. Open the `.sail/Dockerfile` within your editor
 1. Make changes
-1. Press the `rebuild` button in the workbench. Your UI will freeze as the
-environment is recreated. ![rebuild button](/rebuild-button.png)
+1. Press the `rebuild` button in the workbench.
+![rebuild button](/rebuild-button.png)
 
-The UI will freeze as the container is being rebuilt.
+The UI will freeze as the container is rebuilding.
 
 ## Workflow Tips
 -  Ctrl+Shift+r also triggers an environment rebuild.

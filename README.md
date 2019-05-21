@@ -1,51 +1,18 @@
 # sail
 
-`sail` is a CLI to efficiently manage Dockerized [`code-server`](https://github.com/cdr/code-server) development environments.
-.
+`sail` is a universal workflow for reproducible, project-defined development environments.
+
+It can be used as a command line, or through the browser with
+[the Sail extension](https://sail.dev/docs/concepts/browser-extension/).
 
 ## Features
 
-- Projects can specify their own development environment via `.sail/Dockerfile`.
-- Shares VS Code settings between environments.
-  - Syncs with local VS Code as well.
-- Supports Linux and MacOS.
-- Native GitHub support.
-
-## Install
-
-```bash
-go get go.coder.com/sail
-```
-
-Add autocomplete to the current shell:
-
-```bash
-sail --install-autocomplete
-```
-
-## Basic usage
-
-Spin up a secure editor for `cdr/sail`.
-
-Or:
-
-```bash
-sail run cdr/sail
-# Creates a Docker container called `cdr_sail`,
-# installs code-server in it, and creates a browser.
-```
+- **No more "It works on my machine"**, everyone working on the same project is working in the same environment.
+- **Stop duplicating effort**, source-control and collaborate on the environment.
+- **Instant set-up**, open an IDE for a project straight from GitHub or GitLab.
 
 ## Documentation
 
-Documentation is available in markdown form at [site/content/docs.](site/content/docs)
+Documentation is available at [https://sail.dev/docs](https://sail.dev/docs/introduction/). 
 
-Or, you can find it at [https://sail.dev](https://sail.dev/docs/introduction/)
-
-## Future
-
-These features are planned for future releases:
-
-- Windows support
-- Synchronizing code-server extensions, settings, and themes.
-- Remote Host support.
-  - Cloud integration so `my-compute-instance` can be auto-resolved into an AWS/GCP/Azure instance.
+Or, you can read it in it's markdown form at [site/content/docs.](site/content/docs)
