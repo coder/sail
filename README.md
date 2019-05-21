@@ -9,6 +9,8 @@
 It can be used as a command line, or through the browser with
 [the Sail extension](https://sail.dev/docs/concepts/browser-extension/).
 
+![Demo](/site/demo.gif)
+
 ## Features
 
 - **No more "It works on my machine"**, everyone working on the same project is working in the same environment.
