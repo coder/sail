@@ -20,6 +20,6 @@ _Firefox support coming soon!_
 ## Demo
 _Opening code-server from GitHub.com_
 
-<video width="900px" controls src="/github-open.mkv"></video>
+<video width="900px" controls src="/github-open.mp4"></video>
 
 
