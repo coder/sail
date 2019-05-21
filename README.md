@@ -6,8 +6,18 @@
 
 `sail` is a universal workflow for reproducible, project-defined development environments.
 
-It can be used as a command line, or through the browser with
-[the Sail extension](https://sail.dev/docs/concepts/browser-extension/).
+Basically, it lets you open a repo in a VS Code window with a Docker-based backend.
+
+With the browser extension, you can open a repo right from GitHub or GitLab, or
+you can do
+
+```
+sail run cdr/sshcode
+```
+
+to open a project right from the command line.
+
+**[Browser extension](https://sail.dev/docs/concepts/browser-extension/) demo:**
 
 ![Demo](/site/demo.gif)
 
