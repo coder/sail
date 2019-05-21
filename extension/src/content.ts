@@ -64,7 +64,6 @@ const ensureButton = (): void | HTMLElement => {
 		button.innerText = "Open in Sail";
 		button.title = "Open in Sail";
 		button.classList.add("disabled");
-		// button.setAttribute("aria-label", "Open repository with Sail");
 
 		button.addEventListener("click", (event) => {
 			event.preventDefault();
@@ -141,7 +140,12 @@ const ensureButton = (): void | HTMLElement => {
 		});
 
 		requestSail().then(() => (button as HTMLElement).classList.remove("disabled"))
-			.catch(() => undefined);
+			.catch((ex) => {
+				if (ex.toString().indexOf("host not found") !== -1) {
+					(button as HTMLElement).style.opacity = "0.5";
+					(button as HTMLElement).title = "Setup Sail using the extension icon in the top-right!";
+				}
+			});
 	}
 
 	return button;
@@ -160,7 +164,7 @@ const getCloneUrl = (): void | string => {
 
 const createGitHubButton = (): HTMLElement => {
 	const a = document.createElement("a");
-	a.className = "open-in-sail btn btn-sm tooltipped tooltipped-s";
+	a.className = "open-in-sail btn btn-sm";
 	a.style.cssText = `
 		background: linear-gradient(180deg,#5883ff 0%,#344fd4 100%);
 		color: white;

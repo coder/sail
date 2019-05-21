@@ -2,7 +2,7 @@
 	"manifest_version": 2,
 
 	"name": "Sail",
-	"version": "1.0.4",
+	"version": "1.0.5",
 	"author": "Coder",
 	"description": "Work in immutable, pre-configured development environments.",
 
