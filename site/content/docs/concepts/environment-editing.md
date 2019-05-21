@@ -22,4 +22,4 @@ cached.
 ## Demo
 _Modifying dev environment in real-time_
 
-<video width="900px" controls src="/environment-editing.mp4"></video>
+<video autoplay="autoplay" loop="loop" width="90%" controls src="/environment-editing.mp4"></video>

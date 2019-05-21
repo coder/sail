@@ -6,14 +6,9 @@ section_order=4
 +++
 
 ```
-NAME:
-	sail shell - shell drops you into the default shell of a repo container.
+Usage: sail shell <repo>
 
-USAGE:
-	sail shell <repo>
-
-DESCRIPTION:
-	shell drops you into the default shell of a repo container.
+shell drops you into the default shell of a repo container.
 ```
 
 The `shell` command drops you into the container's shell on the host.

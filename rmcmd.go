@@ -24,7 +24,7 @@ func (c *rmcmd) Spec() cli.CommandSpec {
 		Usage: "[flags] <repo>",
 		Desc: `Remove a sail container from the system.
 This command allows for removing a single container
-    or all of the containers on a system with the -all flag.`,
+or all of the containers on a system with the -all flag.`,
 	}
 }
 
