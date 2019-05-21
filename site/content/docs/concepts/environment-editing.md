@@ -11,6 +11,7 @@ Sail comes out the box with VS Code integrated environment editing.
 1. Make changes
 1. Press the `rebuild` button in the workbench.
 ![rebuild button](/rebuild-button.png)
+
 The UI will freeze as the container is rebuilding.
 
 ## Workflow Tips
