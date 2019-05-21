@@ -221,7 +221,7 @@
   letter-spacing: 0.32px;
   line-height: 24px;
 }
-.main .terminal .block {
+.main .block {
   background: currentColor;
   white-space: pre;
 }
@@ -423,8 +423,8 @@
 }
 .code {
   position: absolute;
-  top: 15px;
-  left: 15px;
+  top: 12px;
+  left: 12px;
   color: #888;
   background: #1f1f1f;
   border-radius: 4px;
@@ -584,4 +584,244 @@ p {
   font-size: 18px;
   letter-spacing: 0.36px;
   line-height: 28px;
+}
+.github {
+  border-radius: 8px;
+  max-width: 600px;
+  width: 100%; 
+  height: 460px;
+  background: white;
+  box-shadow: 0 4px 10px 0 rgba(0, 23, 131, 0.3);
+  position: relative;
+  pointer-events: none;
+
+  @media (max-width: 700px) {
+	height: 375px;
+
+	.codecontent {
+		height: 110px !important;
+	}
+  }
+
+  .mouse {
+	  position: absolute;
+	  top: 50%;
+	  left: 50%;
+	  transition: 1000ms top ease, 1000ms left ease, 150ms filter ease;
+  }
+
+  .topbar {
+    background-color: #03193f;
+    height: 50px;
+    padding-left: 15px;
+	padding-right: 15px;
+	border-top-left-radius: 8px;
+	border-top-right-radius: 8px;
+
+
+    .circle {
+      height: 25px;
+      width: 25px;
+      background: white;
+	  border-radius: 50%;
+	  opacity: 0.5;
+    }
+
+    .rectangle {
+      background: #2b3d5d;
+      height: 23px;
+      width: 200px;
+      border-radius: 8px;
+      margin-left: 20px;
+    }
+  }
+
+  .flex-row {
+    align-items: center;
+    display: flex;
+    flex-direction: row;
+  }
+
+  $borderColor: #dfe4f1;
+
+  .titles {
+    padding: 15px;
+
+    .title {
+      font-weight: bold;
+      font-size: 20px;
+    }
+
+    .buttons {
+      margin-left: auto;
+
+      .btn {
+        width: 80px;
+        height: 25px;
+        border-radius: 8px;
+        border: 2px solid #d8dfef;
+        background: #edf1f8;
+        overflow: hidden;
+        margin-left: 15px;
+
+        .sub {
+          width: 25px;
+          height: 25px;
+          margin-left: auto;
+          background: white;
+        }
+      }
+	}
+	
+	@media (max-width: 500px) {
+		.buttons {
+			display: none;
+		}
+	}
+  }
+
+  .tinybuttons {
+    margin-top: 0px;
+    margin-bottom: 10px;
+    padding: 15px;
+    padding-top: 10px;
+    padding-bottom: 5px;
+
+    .tiny-btn {
+      border-radius: 8px;
+      height: 10px;
+      width: 60px;
+      background: #e9edf6;
+      margin-right: 15px;
+    }
+  }
+
+  .separator {
+    height: 2px;
+    width: 100%;
+    background: $borderColor;
+    margin-bottom: 10px;
+  }
+
+  .roundbox {
+    border: 2px solid #d5dced;
+    border-bottom: 0px;
+    height: 30px;
+    margin: 15px;
+    margin-bottom: 0px;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+  }
+
+  .languages {
+    padding: 15px;
+    padding-top: 0px;
+
+    * {
+      height: 6px;
+      width: 33%;
+    }
+
+    .blue {
+      background: #02b4d4;
+      width: 40%;
+    }
+
+    .yellow {
+      background: #e0cc97;
+      width: 50%;
+    }
+
+    .navy {
+      width: 10%;
+      background: #03193f;
+    }
+  }
+
+  .cloners {
+    margin-left: auto;
+    padding: 15px;
+    padding-top: 0px;
+    width: -moz-fit-content;
+    width: fit-content;
+
+    .clone,
+    .sail {
+      background: #00d5a8;
+      font-size: 16px;
+      border-radius: 8px;
+      color: white;
+      padding: 6px;
+      padding-left: 12px;
+      padding-right: 12px;
+      font-weight: 500;
+	  margin-left: 10px;
+	  transition: 150ms filter ease;
+    }
+
+    .sail {
+      background: #4080e6;
+    }
+  }
+
+  .codecontent {
+    border: 2px solid $borderColor;
+    margin: 15px;
+    margin-top: 0px;
+	border-radius: 8px;
+	height: 196px;
+	border-bottom-left-radius: 0px;
+	border-bottom-right-radius: 0px;
+	border-bottom: 0px;
+	overflow: hidden;
+
+    & > * {
+      border-bottom: 2px solid $borderColor;
+      height: 35px;
+      padding-left: 15px;
+      padding-right: 15px;
+    }
+
+    .top {
+      background: #edf1f8;
+      width: 100%;
+
+      .profile {
+        height: 20px;
+        width: 20px;
+        border-radius: 4px;
+        background: #03193f;
+        margin-right: 15px;
+      }
+    }
+
+    .commit {
+      height: 12px;
+      border-radius: 8px;
+      width: 50px;
+
+      &.dark {
+        background: #d6ddee;
+      }
+
+      &.light {
+        background: #e9edf6;
+      }
+
+      &.right {
+        margin-left: auto;
+      }
+    }
+
+    .coderow {
+      position: relative;
+
+      .commit {
+        &:nth-child(2) {
+          position: absolute;
+          left: 140px;
+        }
+      }
+    }
+  }
 }

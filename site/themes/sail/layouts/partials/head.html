@@ -1,8 +1,21 @@
 <head>
-    {{ $style := resources.Get "main.scss" | resources.ToCSS | resources.Minify | resources.Fingerprint }}
-    <link rel="stylesheet" href="{{ $style.Permalink }}">
-	<title>{{ .Params.browser_title }}</title>
-	<meta name="description" content="{{ .Params.browser_description }}">
-	<link rel="shortcut icon" type="image/png" href="/favicon.png"/>
-	<meta name="viewport" content="width=device-width, initial-scale=1">
+  {{ $style := resources.Get "main.scss" | resources.ToCSS | resources.Minify | resources.Fingerprint }}
+  <link rel="stylesheet" href="{{ $style.Permalink }}" />
+  <title>{{ .Params.browser_title }}</title>
+  <meta name="description" content="{{ .Params.browser_description }}" />
+  <link rel="shortcut icon" type="image/png" href="/favicon.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script
+    async
+    src="https://www.googletagmanager.com/gtag/js?id=UA-113858446-6"
+  ></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() {
+      dataLayer.push(arguments);
+    }
+    gtag("js", new Date());
+
+    gtag("config", "UA-113858446-6");
+  </script>
 </head>

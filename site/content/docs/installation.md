@@ -44,6 +44,10 @@ properly, you should see Sail's help text.
 sail --help
 ```
 
+### Browser Extension
+
+We recommend [installing our extension](/docs/concepts/browser-extension/) for the best experience.
+
 
 ## Updating
 

@@ -27,10 +27,10 @@ const bodyBaseHtml = `
 <span class="syntax-gray"># Your dev-env as code.</span><br>
 <span class="syntax-red">FROM</span> codercom/ubuntu-dev<br>
 <br>`;
-const mainTerminalElement = document.querySelector(".content .terminal");
-const baseTerminalContent = mainTerminalElement.innerHTML;
+const mouse = document.getElementById("mouse");
 const reset = () => {
-	mainTerminalElement.innerHTML = baseTerminalContent;
+	mouse.style.top = "50%";
+	mouse.style.left = "50%";
 };
 
 
@@ -115,14 +115,17 @@ const projects = [
 ];
 
 const play = async () => {
-	const words = [
-		"sail",
-		"run",
-		projects[Math.floor(Math.random() * projects.length)],
-	];
-	const textElement = document.getElementById("terminal-text");
-	await writeWords(words, textElement);
-	textElement.innerHTML += `2019-05-03 <span class="syntax-blue">INFO</span> opening http://127.0.0.1:8130<br>`;
+	await wait(500);
+	const btn = document.getElementById("open-in-sail");
+	mouse.style.top = "230px";
+	mouse.style.left = "86%";
+	await wait(1000);
+	mouse.style.filter = "brightness(80%)";
+	btn.style.filter = "brightness(80%)";
+	await wait(350);
+	mouse.style.filter = "brightness(100%)";
+	btn.style.filter = "brightness(100%)";
+
 	await wait(550);
 	const codeBox = document.querySelector(".code");
 	if (!codeBox) {
@@ -131,7 +134,6 @@ const play = async () => {
 	codeBox.classList.add("active");
 	await playCodeAnimation();
 	await wait(2500);
-	textElement.innerText = "";
 	codeBox.classList.remove("active");
 	await wait(500);
 	reset();

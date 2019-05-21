@@ -703,9 +703,12 @@
           <div class="version">
             Version 1.0.0
           </div>
-          <h1><b>Reproducible and consistent</b> dev environments.</h1>
+          <h1><b>Instant</b> dev environments.</h1>
           <p class="leading">
-            Sail is an open source universal standard that allows projects to define their own development environment via a single Dockerfile, allowing for consistent, reproducible, and instant environments. Contribute sooner and debug faster.
+            Sail is an open source universal standard that allows projects to
+            define their own development environment via a single Dockerfile,
+            allowing for consistent, reproducible, and instant environments.
+            Contribute sooner and debug faster.
           </p>
           <div class="buttons">
             <a class="button filled" href="/docs/introduction/">
@@ -716,16 +719,105 @@
             </a>
           </div>
         </div>
-        <div class="terminal">
-          <div class="topbar">
-            <div class="button"></div>
-            <div class="button"></div>
-            <div class="button"></div>
+        <div class="github">
+          <div class="topbar flex-row">
+            <div class="circle"></div>
+            <div class="rectangle"></div>
           </div>
-          <div class="body">
+          <div class="flex-row titles">
+            <div class="title">
+              cdr/code-server
+            </div>
+            <div class="buttons flex-row">
+              <div class="btn"><div class="sub"></div></div>
+              <div class="btn"><div class="sub"></div></div>
+              <div class="btn"><div class="sub"></div></div>
+            </div>
+          </div>
+          <div class="flex-row tinybuttons">
+            <div class="tiny-btn"></div>
+            <div class="tiny-btn"></div>
+            <div class="tiny-btn"></div>
+            <div class="tiny-btn"></div>
+          </div>
+          <div class="separator"></div>
+          <div class="roundbox"></div>
+          <div class="flex-row languages">
+            <div class="blue"></div>
+            <div class="yellow"></div>
+            <div class="navy"></div>
+          </div>
+          <div class="flex-row cloners">
+            <div class="clone">
+              Clone
+            </div>
+            <div class="sail" id="open-in-sail">
+              Open in Sail
+            </div>
+          </div>
+          <div class="codecontent">
+            <div class="flex-row top">
+              <div class="profile"></div>
+              <div class="commit dark" style="width: 25%;"></div>
+              <div class="commit dark right" style="width: 30%;"></div>
+            </div>
+            <div class="flex-row coderow">
+              <div class="commit dark" style="width: 10%;"></div>
+              <div class="commit light" style="width: 30%;"></div>
+              <div class="commit light right" style="width: 10%;"></div>
+            </div>
+            <div class="flex-row coderow">
+              <div class="commit dark" style="width: 15%;"></div>
+              <div class="commit light" style="width: 35%;"></div>
+              <div class="commit light right" style="width: 6%;"></div>
+            </div>
+            <div class="flex-row coderow">
+              <div class="commit dark" style="width: 12%;"></div>
+              <div class="commit light" style="width: 25%;"></div>
+              <div class="commit light right" style="width: 15%;"></div>
+            </div>
+            <div class="flex-row coderow">
+              <div class="commit dark" style="width: 14%;"></div>
+              <div class="commit light" style="width: 28%;"></div>
+              <div class="commit light right" style="width: 12%;"></div>
+            </div>
+            <div class="flex-row coderow">
+              <div class="commit dark" style="width: 14%;"></div>
+              <div class="commit light" style="width: 28%;"></div>
+              <div class="commit light right" style="width: 12%;"></div>
+            </div>
+          </div>
+          <svg
+            class="mouse"
+            id="mouse"
+            width="16px"
+            height="16px"
+            viewBox="0 0 16 16"
+            version="1.1"
+            xmlns="http://www.w3.org/2000/svg"
+            xmlns:xlink="http://www.w3.org/1999/xlink"
+          >
+            <!-- Generator: Sketch 53.2 (72643) - https://sketchapp.com -->
+            <title>v</title>
+            <desc>Created with Sketch.</desc>
+            <g
+              id="v"
+              stroke="none"
+              stroke-width="1"
+              fill="none"
+              fill-rule="evenodd"
+              stroke-linecap="round"
+              stroke-linejoin="round"
             >
-            <span id="terminal-text"></span><span class="block"> </span>
-          </div>
+              <g id="cursor-49" fill="#FFFFFF" stroke="#111111">
+                <path
+                  d="M0.5,0.5 L15.5,4.5 L9.5,7.5 L14.5,12.5 C14.7652688,12.7651887 14.914302,13.1249099 14.914302,13.5 C14.914302,13.8750901 14.7652688,14.2348113 14.5,14.5 L14.5,14.5 C14.2348113,14.7652688 13.8750901,14.914302 13.5,14.914302 C13.1249099,14.914302 12.7651887,14.7652688 12.5,14.5 L7.5,9.5 L4.5,15.5 L0.5,0.5 Z"
+                  id="Path"
+                ></path>
+              </g>
+            </g>
+          </svg>
+
           <div class="code">
             <div class="sidebar">
               <div class="icon explore"></div>
@@ -830,7 +922,7 @@
                 </div>
               </div>
               <div class="code-body">
-                <span class="text"></span><span class="block"> </span>
+                <span class="text"></span><span class="block">&nbsp;</span>
               </div>
               <div class="output">
                 <div class="titles">
@@ -849,7 +941,7 @@
                 </div>
                 <div class="panel">
                   <div class="panel-terminal active focused">
-                    <span class="text"></span><span class="block"> </span>
+                    <span class="text"></span><span class="block">&nbsp;</span>
                   </div>
                   <div class="panel-output">
                     OUTPUT
@@ -858,7 +950,6 @@
               </div>
             </div>
           </div>
-
           {{ $script := resources.Get "home.js" | resources.Minify | resources.Fingerprint }}
           <script src="{{ $script.Permalink }}"></script>
         </div>
@@ -947,7 +1038,12 @@
             Learn about our goals, vision, and comparison with existing
             solutions.
           </p>
-          <a href="/docs/introduction/">View about</a>
+          <a
+            href="https://medium.com/coderhq/announcing-sail-a-universal-standard-for-instant-dev-envs-839e8c1e4c1c"
+            target="_blank"
+            rel="noopener"
+            >View about</a
+          >
         </div>
       </div>
     </div>
