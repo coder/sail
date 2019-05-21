@@ -1,15 +1,18 @@
 @font-face {
   font-family: aktiv grotesk;
+  font-display: auto;
   src: url(/font/AktivGroteskRegular.ttf);
   font-weight: 400;
 }
 @font-face {
   font-family: aktiv grotesk;
+  font-display: auto;
   src: url(/font/AktivGroteskMedium.ttf);
   font-weight: 500;
 }
 @font-face {
   font-family: aktiv grotesk;
+  font-display: auto;
   src: url(/font/AktivGroteskBold.ttf);
   font-weight: 700;
 }
@@ -29,7 +32,7 @@ body {
 code {
   color: #3364dd;
   background-color: #fff;
-  font-family: ubuntu mono;
+  font-family: 'ubuntu mono', monospace;
   width: 100%;
 }
 a.button {
@@ -70,6 +73,11 @@ header .logo {
 
   a {
     all: unset;
+  }
+
+  img {
+	  height: 40px;
+	  margin-bottom: -6px;
   }
 }
 header .right {
