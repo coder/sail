@@ -21,6 +21,12 @@ to open a project right from the command line.
 
 ![Demo](/site/demo.gif)
 
+## Install
+
+```bash
+curl https://sail.dev/install.sh | bash
+```
+
 ## Features
 
 - **No more "It works on my machine"**, everyone working on the same project is working in the same environment.
