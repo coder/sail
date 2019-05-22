@@ -2,41 +2,47 @@
 
 set -euo pipefail || exit 1
 
+log() {
+	echo "$@" >&2
+}
+
 if [[ $HOSTTYPE != "x86_64" ]]; then
 	log "arch $HOSTTYPE is not supported"
 	log "please see https://sail.dev/docs/installation"
 	exit 1
 fi
 
-downloadURL() {
+if ! command -v curl > /dev/null && ! command -v wget > /dev/null; then
+	log "please install curl or wget to use this script"
+	exit 1
+fi
+
+download() {
+	if command -v curl > /dev/null; then
+		curl --progress-bar -L "$1"
+	elif command -v wget > /dev/null; then
+		wget "$1" -O -
+	fi
+}
+
+latestReleaseURL() {
 	log "finding latest release"
 	local os=$1
-	curl --progress-bar https://api.github.com/repos/cdr/sail/releases/latest |
+	download https://api.github.com/repos/cdr/sail/releases/latest |
 		jq -r ".assets[]
 		| select(.name | test(\"sail-${os}-amd64.tar\"))
 		| .browser_download_url"
-}
-
-log() {
-	echo "$@" >&2
 }
 
 downloadArchive() {
 	local os=$1
 	local downloadURL
 
-	downloadURL="$(downloadURL "$os")"
+	downloadURL="$(latestReleaseURL "$os")"
 
 	log "downloading archive"
 
-	if command -v curl > /dev/null; then
-		curl --progress-bar -L "$downloadURL"
-	elif command -v wget > /dev/null; then
-		log "wget is not supported atm"
-	else
-		log "please install curl or wget to use this script"
-		exit 1
-	fi
+	download "$downloadURL"
 }
 
 install() {
@@ -44,6 +50,7 @@ install() {
 	local archive
 	archive=$(mktemp)
 
+	log "ensuring /usr/local/bin"
 	sudo mkdir -p /usr/local/bin
 
 	downloadArchive "$os" > "$archive"
