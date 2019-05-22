@@ -8,9 +8,8 @@ RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.34.0/install.sh | b
 
 RUN sudo apt-get update && \
   sudo apt-get install -y htop && \
-  sudo apt-get install -y software-properties-common && \
-  curl -sL https://deb.nodesource.com/setup_10.x | sudo -E bash - && \
-  sudo apt-get install -y nodejs
+  curl -sL https://raw.githubusercontent.com/creationix/nvm/v0.33.11/install.sh | sudo -E bash -
+
 LABEL project_root "~/go/src/go.coder.com"
 
 # Modules break much of Go's tooling.
