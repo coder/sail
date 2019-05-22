@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -260,7 +261,22 @@ func (p *project) waitOnline() error {
 			return err
 		}
 		if !cnt.State.Running {
-			return xerrors.Errorf("container %v not running", p.cntName())
+			logRdr, err := cli.ContainerLogs(context.Background(), p.cntName(), types.ContainerLogsOptions{
+				ShowStdout: true,
+				ShowStderr: true,
+				Details:    true,
+			})
+			if err != nil {
+				return xerrors.Errorf("container %v not running: %w", p.cntName(), err)
+			}
+			defer logRdr.Close()
+
+			logs, err := ioutil.ReadAll(logRdr)
+			if err != nil {
+				return xerrors.Errorf("container %v not running, failed to read logs: %w", p.cntName(), err)
+			}
+
+			return xerrors.Errorf("container %v not running: %s", p.cntName(), logs)
 		}
 
 		_, err = codeserver.PID(p.cntName())
