@@ -29,9 +29,9 @@ latestReleaseURL() {
 	log "finding latest release"
 	local os=$1
 	download https://api.github.com/repos/cdr/sail/releases/latest |
-		jq -r ".assets[]
-		| select(.name | test(\"sail-${os}-amd64.tar\"))
-		| .browser_download_url"
+		grep "/sail-${os}" |
+		awk -F ": " '{print $2}' |
+		tr -d \"
 }
 
 downloadArchive() {
@@ -74,5 +74,4 @@ darwin*)
 esac
 
 log "sail has been installed into /usr/local/bin/sail"
-# shellcheck disable=SC2016
 log 'please ensure /usr/local/bin is in your $PATH'
