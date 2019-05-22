@@ -20,6 +20,8 @@ RUN wget -O /tmp/hugo.deb https://github.com/gohugoio/hugo/releases/download/v0.
 
 RUN installext peterjausovec.vscode-docker
 
-RUN sudo apt-get install curl python-software-properties && \
+RUN sudo apt-get install curl
+
+RUN sudo apt-get install software-properties-common && \
   curl -sL https://deb.nodesource.com/setup_10.x | sudo -E bash - && \
   sudo apt-get install nodejs
