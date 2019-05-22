@@ -74,4 +74,5 @@ darwin*)
 esac
 
 log "sail has been installed into /usr/local/bin/sail"
-log "please ensure /usr/local/bin is in your \$PATH"
+# shellcheck disable=SC2016
+log 'please ensure /usr/local/bin is in your $PATH'
