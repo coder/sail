@@ -19,5 +19,5 @@ func (v *versioncmd) Spec() cli.CommandSpec {
 }
 
 func (v *versioncmd) Run(fl *flag.FlagSet) {
-	fmt.Printf(version)
+	fmt.Println(version)
 }
