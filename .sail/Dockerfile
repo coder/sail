@@ -18,4 +18,4 @@ RUN sudo apt-get install curl -y
 
 RUN sudo apt-get install software-properties-common -y && \
   curl -sL https://deb.nodesource.com/setup_10.x | sudo -E bash - && \
-  sudo apt-get install nodejs
+  sudo apt-get install nodejs -y
