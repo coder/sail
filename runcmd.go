@@ -127,6 +127,9 @@ func (c *runcmd) Run(fl *flag.FlagSet) {
 		if err == nil {
 			resp.Body.Close()
 
+			if c.noOpen {
+				os.Exit(0)
+			}
 			err = proj.open()
 			if err != nil {
 				flog.Error("failed to open project: %v", err)
