@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"os"
 	"os/exec"
+	"os/user"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -83,6 +84,11 @@ func (r *runner) runContainer(image string) error {
 	var envs []string
 	envs = r.environment(envs)
 
+	user, err := getUser()
+	if err != nil {
+		return err
+	}
+
 	containerConfig := &container.Config{
 		Hostname: r.hostname,
 		Env:      envs,
@@ -97,10 +103,7 @@ func (r *runner) runContainer(image string) error {
 			projectNameLabel:     r.projectName,
 			proxyURLLabel:        r.proxyURL,
 		},
-		// The user inside has uid 1000. This works even on macOS where the default user has uid 501.
-		// See https://stackoverflow.com/questions/43097341/docker-on-macosx-does-not-translate-file-ownership-correctly-in-volumes
-		// The docker image runs it as uid 1000 so we don't need to set anything.
-		User: "",
+		User: user,
 	}
 
 	err = r.addImageDefinedLabels(image, containerConfig.Labels)
@@ -132,6 +135,28 @@ func (r *runner) runContainer(image string) error {
 	}
 
 	return nil
+}
+
+func getUser() (string, error) {
+	switch runtime.GOOS {
+	case "darwin":
+		// The user inside has uid 1000. This works even on macOS where the default user has uid 501.
+		// See https://stackoverflow.com/questions/43097341/docker-on-macosx-does-not-translate-file-ownership-correctly-in-volumes
+		// The docker image runs it as uid 1000 so we don't need to set anything.
+		return "", nil
+
+	case "linux":
+		// For linux we want to map the user to the user outside of the container for correct file permissions.
+		user, err := user.Current()
+		if err != nil {
+			return "", err
+		}
+
+		return fmt.Sprintf("%s:%s", user.Uid, user.Gid), nil
+
+	default:
+		return "", xerrors.Errorf("sail does not support OS: %s", runtime.GOOS)
+	}
 }
 
 // constructCommand constructs the code-server command that will be used
