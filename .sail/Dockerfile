@@ -1,7 +1,10 @@
 FROM codercom/ubuntu-dev-go:latest
 
-RUN sudo apt-get update
-RUN sudo apt-get install -y htop
+RUN sudo apt-get update && \
+  sudo apt-get install -y htop && \
+  sudo apt-get install -y software-properties-common && \
+  curl -sL https://deb.nodesource.com/setup_10.x | sudo -E bash - && \
+  sudo apt-get install -y nodejs
 LABEL project_root "~/go/src/go.coder.com"
 
 # Modules break much of Go's tooling.
@@ -13,9 +16,3 @@ RUN wget -O /tmp/hugo.deb https://github.com/gohugoio/hugo/releases/download/v0.
   rm -f /tmp/hugo.deb
 
 RUN installext peterjausovec.vscode-docker
-
-RUN sudo apt-get install curl -y
-
-RUN sudo apt-get install software-properties-common -y && \
-  curl -sL https://deb.nodesource.com/setup_10.x | sudo -E bash - && \
-  sudo apt-get install nodejs -y
