@@ -16,6 +16,7 @@ script:
   - env
   - ci/build.sh
   - cat /etc/passwd
+  - ps -ef
   - sudo usermod -u 1000 travis
   - sudo groupmod -g 1000 travis
   - go test -v ./...

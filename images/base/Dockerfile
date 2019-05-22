@@ -28,22 +28,3 @@ RUN wget -O /usr/bin/code-server https://codesrv-ci.cdr.sh/latest-linux && \
 
 
 ADD installext /usr/bin/installext
-
-# Use fixuid so that we can dynamically change the uid:gid to match what is being used by the host user.
-# Note: If the project is large, the `chown -R` call from fixuid can take a long time.
-# TODO: optimize the chown for larger projects.
-RUN addgroup --gid 1000 user && \
-    adduser --uid 1000 --ingroup user --home /home/user --shell /bin/sh --disabled-password --gecos "" user && \
-    echo "user ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers.d/nopasswd
-
-RUN USER=user && \
-    GROUP=user && \
-    curl -SsL https://github.com/boxboat/fixuid/releases/download/v0.4/fixuid-0.4-linux-amd64.tar.gz | tar -C /usr/local/bin -xzf - && \
-    chown root:root /usr/local/bin/fixuid && \
-    chmod 4755 /usr/local/bin/fixuid && \
-    mkdir -p /etc/fixuid && \
-    printf "user: $USER\ngroup: $GROUP\n" > /etc/fixuid/config.yml
-
-USER user:user
-
-ENTRYPOINT ["fixuid"]
