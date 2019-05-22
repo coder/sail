@@ -22,13 +22,25 @@ Before using Sail, there are several dependencies that must be installed on the 
 
 ### Stable Releases
 
-It's recommended that user's install the sail binary from the stable releases.
+It's recommended that users install the sail binary from the stable releases.
 
-Binary releases can be downloaded from our [GitHub.](https://github.com/cdr/sail/releases)
+You can download and untar the binary to your current working directory by running the following command with the download URL for your platform.
+
+The download URLs can be found on our [releases page](https://github.com/cdr/sail/releases).
+```
+curl -L <DOWNLOAD_URL> | tar -C ./ -xv
+```
+
+After installing, you can move the binary to your [PATH](https://superuser.com/questions/284342/what-are-path-and-other-environment-variables-and-how-can-i-set-or-use-them) in order
+to use Sail from anywhere in your terminal.
 
 ### From Source
 
-To install the latest version of `sail`, you'll need [go](https://golang.org/) installed and configured on your system. 
+For more **advanced users** who want to install the latest version from master, you can install Sail from source.
+
+You'll need the [go programming language](https://golang.org/) installed and configured on your machine, and `$GOPATH/bin`
+added to your [PATH](https://superuser.com/questions/284342/what-are-path-and-other-environment-variables-and-how-can-i-set-or-use-them) for
+the following to work correctly.
 
 Sail uses go modules to build the project, so the easiest way to install it to your system is to clone it in a directory
 outside of your `GOPATH`.
@@ -42,7 +54,7 @@ go install
 ```
 
 
-### Verifying the Installation
+## Verifying the Installation
 
 To verify Sail is properly installed, run `sail --help` on your system. If everything is installed
 properly, you should see Sail's help text.
