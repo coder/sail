@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"net/url"
 	"path"
@@ -18,7 +19,11 @@ type repo struct {
 }
 
 func (r repo) CloneURI() string {
-	return r.String()
+	uri := r.String()
+	if !strings.HasSuffix(uri, ".git") {
+		return fmt.Sprintf("%s.git", uri)
+	}
+	return uri
 }
 
 func (r repo) DockerName() string {
@@ -38,9 +43,8 @@ func (r repo) BaseName() string {
 // parseRepo parses a reponame into a repo.
 // It can be a full url like https://github.com/cdr/sail or ssh://git@github.com/cdr/sail,
 // or just the path like cdr/sail and the host + schema will be inferred.
-// By default the host will always be inferred as github.com and the schema
-// will be the provided defaultSchema.
-func parseRepo(defaultSchema, name string) (repo, error) {
+// By default the host and the schema will be the provided defaultSchema.
+func parseRepo(defaultSchema, defaultHost, name string) (repo, error) {
 	u, err := url.Parse(name)
 	if err != nil {
 		return repo{}, xerrors.Errorf("failed to parse repo path: %w", err)
@@ -60,13 +64,15 @@ func parseRepo(defaultSchema, name string) (repo, error) {
 			r.Host = parts[0]
 			r.Path = strings.Join(parts[1:], "/")
 		} else {
-			// as a default case we assume github
-			r.Host = "github.com"
+			r.Host = defaultHost
 		}
 	}
 
 	// make sure path doesn't have a leading forward slash
 	r.Path = strings.TrimPrefix(r.Path, "/")
+
+	// make sure the path doesn't have a trailing .git
+	r.Path = strings.TrimSuffix(r.Path, ".git")
 
 	// non-existent or invalid path
 	if r.Path == "" || len(strings.Split(r.Path, "/")) != 2 {

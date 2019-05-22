@@ -43,7 +43,7 @@ func requireRepo(conf config, prefs schemaPrefs, fl *flag.FlagSet) repo {
 		flog.Fatal("Argument <repo> must be provided.")
 	}
 
-	r, err := parseRepo(defaultSchema(conf, prefs), repoURI)
+	r, err := parseRepo(defaultSchema(conf, prefs), conf.DefaultHost, repoURI)
 	if err != nil {
 		flog.Fatal("failed to parse repo %q: %v", repoURI, err)
 	}

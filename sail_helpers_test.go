@@ -43,7 +43,7 @@ func run(t *testing.T, name, repo, hatPath string, fns ...func(t *testing.T, p *
 
 		conf := mustReadConfig(filepath.Join(metaRoot(), ".sail.toml"))
 
-		repo, err := parseRepo("ssh", repo)
+		repo, err := parseRepo("ssh", "github.com", repo)
 		require.NoError(t, err)
 
 		p.proj = &project{
@@ -115,11 +115,17 @@ func run(t *testing.T, name, repo, hatPath string, fns ...func(t *testing.T, p *
 	})
 }
 
-func requireNoRunningSailContainers(t *testing.T) {
-	cnts, err := listContainers()
+func requireProjectsNotRunning(t *testing.T, projects ...string) {
+	runningProjects, err := listProjects()
 	require.NoError(t, err)
-	if len(cnts) > 0 {
-		t.Fatal("Unable to run tests, Sail containers currently running")
+
+	for _, proj := range projects {
+		for _, runningProj := range runningProjects {
+			require.NotEqual(t,
+				proj, runningProj.name,
+				"Unable to run tests, %s currently running and needed for tests", proj,
+			)
+		}
 	}
 }
 
@@ -177,6 +183,10 @@ func requireContainerRemove(t *testing.T, cntName string) {
 
 	err := dockutil.StopRemove(context.Background(), cli, cntName)
 	require.NoError(t, err)
+}
+
+func requireUbuntuDevImage(t *testing.T) {
+	require.NoError(t, ensureImage("codercom/ubuntu-dev"))
 }
 
 type rollback struct {

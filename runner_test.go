@@ -8,7 +8,9 @@ import (
 )
 
 func Test_runner(t *testing.T) {
-	requireNoRunningSailContainers(t)
+	// Ensure that the testing environment won't conflict with any running sail projects.
+	requireProjectsNotRunning(t, "cdr/nbin", "cdr/flog", "cdr/bigdur", "cdr/sshcode")
+	requireUbuntuDevImage(t)
 
 	// labelChecker asserts that all of the correct labels
 	// are present on the image and container.
@@ -39,6 +41,15 @@ func Test_runner(t *testing.T) {
 		})
 	}
 
+	// codeServerStarts ensures that the code server process
+	// starts up inside the container.
+	codeServerStarts := func(t *testing.T, p *params) {
+		t.Run("CodeServerStarts", func(t *testing.T) {
+			err := p.proj.waitOnline()
+			require.NoError(t, err)
+		})
+	}
+
 	// loadFromContainer ensures that our state is properly stored
 	// on the container and can rebuild our in memory structures
 	// correctly.
@@ -62,36 +73,27 @@ func Test_runner(t *testing.T) {
 		})
 	}
 
-	// codeServerStarts ensures that the code server process
-	// starts up inside the container.
-	codeServerStarts := func(t *testing.T, p *params) {
-		t.Run("CodeServerStarts", func(t *testing.T) {
-			err := p.proj.waitOnline()
-			require.NoError(t, err)
-		})
-	}
-
-	run(t, "BaseImageNoHat", "codercom/retry", "",
+	run(t, "BaseImageNoHat", "https://github.com/cdr/nbin", "",
 		labelChecker,
-		loadFromContainer,
 		codeServerStarts,
+		loadFromContainer,
 	)
 
-	run(t, "BaseImageHat", "codercom/docs", "./hat-examples/fish",
+	run(t, "BaseImageHat", "https://github.com/cdr/flog", "./hat-examples/fish",
 		labelChecker,
-		loadFromContainer,
 		codeServerStarts,
+		loadFromContainer,
 	)
 
-	run(t, "ProjImageNoHat", "codercom/bigdur", "",
+	run(t, "ProjImageNoHat", "https://github.com/cdr/bigdur", "",
 		labelChecker,
-		loadFromContainer,
 		codeServerStarts,
+		loadFromContainer,
 	)
 
-	run(t, "ProjImageHat", "codercom/extip", "./hat-examples/net",
+	run(t, "ProjImageHat", "https://github.com/cdr/sshcode", "./hat-examples/net",
 		labelChecker,
-		loadFromContainer,
 		codeServerStarts,
+		loadFromContainer,
 	)
 }
