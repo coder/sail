@@ -15,10 +15,10 @@ env:
 script:
   - env
   - ci/build.sh
-  - cat /etc/passwd
-  - ps -ef
-  - sudo usermod -u 1000 travis
-  - sudo groupmod -g 1000 travis
+  # Pre-download the code-server binary so we don't hit github rate limits.
+  - mkdir -p /tmp/sail-code-server-cache
+  - curl -o /tmp/sail/code-server-cache/code-server https://codesrv-ci.cdr.sh/latest-linux
+  - chmod +x /tmp/sail/code-server-cache/code-server
   - go test -v ./...
 
 deploy:
