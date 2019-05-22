@@ -14,5 +14,5 @@ aliases to save you some keystrokes.
 This commands plops you into fzf to quickly open project.
 
 ```
-sail open $(sail ls | cut -f1 -d" " | tail -n +2 | fzf --height 5)
+sail run $(sail ls | cut -f1 -d" " | tail -n +2 | fzf --height 5)
 ```
