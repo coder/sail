@@ -24,8 +24,8 @@ type runcmd struct {
 
 	schemaPrefs
 
-	rebuild     bool
-	noOpen bool
+	rebuild bool
+	noOpen  bool
 }
 
 type schemaPrefs struct {
