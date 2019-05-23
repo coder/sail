@@ -52,7 +52,12 @@ func (b *hatBuilder) resolveHatPath() (string, error) {
 		return hat.ResolveGitHubPath(hatPath)
 	}
 
-	return hatPath, nil
+	hostHomeDir, err := os.UserHomeDir()
+	if err != nil {
+		return "", err
+	}
+
+	return resolvePath(hostHomeDir, hatPath), nil
 }
 
 // applyHat applies the hat to the base image.
