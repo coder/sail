@@ -15,7 +15,7 @@ env:
 script:
   - ci/user.sh
   - sudo su runner -c ./ci/build.sh
-  - sudo su runner -c ./ci/test.sh
+  - sudo -E su runner -c ./ci/test.sh
 
 deploy:
   provider: releases
