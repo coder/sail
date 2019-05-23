@@ -13,7 +13,9 @@ install: true
 env:
   - GO111MODULE=on
 script:
+  - env
   - ci/user.sh
+  - sudo su runner -c env
   - sudo su runner -c ./ci/build.sh
   - sudo -E su runner -c ./ci/test.sh
 
