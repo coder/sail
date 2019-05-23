@@ -66,6 +66,7 @@ func (r rootCmd) Subcommands() []cli.Command {
 		&rmcmd{gf: &r.globalFlags},
 		&proxycmd{},
 		&chromeExtInstall{},
+		&versioncmd{},
 	}
 }
 
