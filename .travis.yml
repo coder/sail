@@ -14,12 +14,8 @@ env:
   - GO111MODULE=on
 script:
   - ci/user.sh
-  - ci/build.sh
-  # Pre-download the code-server binary so we don't hit github rate limits.
-  - mkdir -p /tmp/sail-code-server-cache
-  - curl  > /tmp/sail-code-server-cache/code-server https://codesrv-ci.cdr.sh/latest-linux
-  - chmod +x /tmp/sail-code-server-cache/code-server
-  - go test -v ./...
+  - sudo su runner -c ./ci/build.sh
+  - sudo su runner -c ./ci/test.sh
 
 deploy:
   provider: releases
