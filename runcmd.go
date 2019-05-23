@@ -24,7 +24,7 @@ type runcmd struct {
 
 	schemaPrefs
 
-	rm     bool
+	rebuild     bool
 	noOpen bool
 }
 
@@ -90,7 +90,7 @@ func (c *runcmd) RegisterFlags(fl *flag.FlagSet) {
 	fl.BoolVar(&c.ssh, "ssh", false, "Clone repo over SSH")
 	fl.BoolVar(&c.http, "http", false, "Clone repo over HTTP")
 	fl.BoolVar(&c.https, "https", false, "Clone repo over HTTPS")
-	fl.BoolVar(&c.rm, "rm", false, "Delete existing container")
+	fl.BoolVar(&c.rebuild, "rebuild", false, "Delete existing container")
 	fl.BoolVar(&c.noOpen, "no-open", false, "Don't open an editor session")
 }
 
@@ -107,7 +107,7 @@ func (c *runcmd) Run(fl *flag.FlagSet) {
 		flog.Fatal("%v", err)
 	}
 
-	if exists && c.rm {
+	if exists && c.rebuild {
 		err = proj.delete()
 		if err != nil {
 			flog.Fatal("failed to delete existing container: %v", err)
