@@ -3,9 +3,8 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
 	"os"
-	"strings"
+	"path/filepath"
 	"time"
 
 	"go.coder.com/cli"
@@ -33,7 +32,7 @@ or all of the containers on a system with the -all flag.`,
 
 func (c *rmcmd) RegisterFlags(fl *flag.FlagSet) {
 	fl.BoolVar(&c.all, "all", false, "Remove all Sail containers.")
-	fl.BoolVar(&c.withData, "with-data", false, "Remove all data associated with the Sail instance.")
+	fl.BoolVar(&c.withData, "with-data", false, "Remove the cloned repository's directory.")
 }
 
 func (c *rmcmd) Run(fl *flag.FlagSet) {
@@ -44,7 +43,6 @@ func (c *rmcmd) Run(fl *flag.FlagSet) {
 		os.Exit(1)
 	}
 
-	// The docker daemon should not be running for the usage command.
 	c.gf.ensureDockerDaemon()
 
 	names := c.getRemovalList()
@@ -93,10 +91,11 @@ func (c *rmcmd) removeContainers(names ...string) {
 		}
 		if c.withData {
 			root := c.gf.config().ProjectRoot
-			if !strings.HasSuffix(root, "/") {
-				root = root + "/"
+			path := filepath.Join(root, c.repoArg)
+			err = os.RemoveAll(path)
+			if err != nil {
+				flog.Error("Failed to remove cloned directory: %v", err)
 			}
-			os.RemoveAll(fmt.Sprintf("%s%s", root, c.repoArg))
 		}
 		flog.Info("removed %s", name)
 	}
