@@ -37,7 +37,7 @@ Examples:
 	Force HTTPS on a Gitlab repo
 	- sail run https://gitlab.com/inkscape/inkscape
 	- sail run --https gitlab.com/inkscape/inkscape
-	
+
 Note:
 If you use ssh://, http://, or https://, you must specify a host.
 
@@ -56,7 +56,7 @@ sail run flags:
 	--image	Custom docker image to use.
 	--keep	Keep container when it fails to build.	(false)
 	--no-open	Don't open an editor session	(false)
-	--rm	Delete existing container	(false)
+	--rebuild	Delete existing container	(false)
 	--ssh	Clone repo over SSH	(false)
 	--test-cmd	A command to use in-place of starting code-server for testing purposes.
 ```
