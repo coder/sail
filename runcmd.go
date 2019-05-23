@@ -248,6 +248,9 @@ func (c *runcmd) build(gf *globalFlags, proj *project, b *hatBuilder, r *runner)
 	image := b.baseImage
 	if b.hatPath != "" {
 		image, err = b.applyHat()
+		if err != nil {
+			return err
+		}
 	}
 
 	// TODO proxy if container already exists.
