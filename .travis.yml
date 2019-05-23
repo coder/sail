@@ -13,7 +13,7 @@ install: true
 env:
   - GO111MODULE=on
 script:
-  - env
+  - ci/user.sh
   - ci/build.sh
   # Pre-download the code-server binary so we don't hit github rate limits.
   - mkdir -p /tmp/sail-code-server-cache
