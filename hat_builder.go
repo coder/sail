@@ -71,7 +71,10 @@ func (b *hatBuilder) applyHat() (string, error) {
 		return "", xerrors.Errorf("failed to resolve hat path: %w", err)
 	}
 
-	dockerFilePath := filepath.Join(hatPath, "Dockerfile")
+	dockerFilePath := hatPath
+	if base := filepath.Base(hatPath); strings.ToLower(base) != "dockerfile" {
+		dockerFilePath = filepath.Join(hatPath, "Dockerfile")
+	}
 
 	dockerFileByt, err := ioutil.ReadFile(dockerFilePath)
 	if err != nil {
