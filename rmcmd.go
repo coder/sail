@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"os"
+	"path/filepath"
 	"time"
 
 	"go.coder.com/cli"
@@ -14,8 +15,9 @@ import (
 type rmcmd struct {
 	gf *globalFlags
 
-	repoArg string
-	all     bool
+	repoArg  string
+	all      bool
+	withData bool
 }
 
 func (c *rmcmd) Spec() cli.CommandSpec {
@@ -29,12 +31,11 @@ or all of the containers on a system with the -all flag.`,
 }
 
 func (c *rmcmd) RegisterFlags(fl *flag.FlagSet) {
-	fl.BoolVar(&c.all, "all", false, "Remove all sail containers.")
+	fl.BoolVar(&c.all, "all", false, "Remove all Sail containers.")
+	fl.BoolVar(&c.withData, "with-data", false, "Remove the cloned repository's directory.")
 }
 
 func (c *rmcmd) Run(fl *flag.FlagSet) {
-	c.gf.ensureDockerDaemon()
-
 	c.repoArg = fl.Arg(0)
 
 	if c.repoArg == "" && !c.all {
@@ -42,9 +43,10 @@ func (c *rmcmd) Run(fl *flag.FlagSet) {
 		os.Exit(1)
 	}
 
-	names := c.getRemovalList()
+	c.gf.ensureDockerDaemon()
 
-	removeContainers(names...)
+	names := c.getRemovalList()
+	c.removeContainers(names...)
 }
 
 // getRemovalList returns a list of container names that should be removed.
@@ -74,7 +76,7 @@ func (c *rmcmd) getRemovalList() []string {
 	return names
 }
 
-func removeContainers(names ...string) {
+func (c *rmcmd) removeContainers(names ...string) {
 	cli := dockerClient()
 	defer cli.Close()
 
@@ -87,7 +89,14 @@ func removeContainers(names ...string) {
 			flog.Error("failed to remove %s: %v", name, err)
 			continue
 		}
-
+		if c.withData {
+			root := c.gf.config().ProjectRoot
+			path := filepath.Join(root, c.repoArg)
+			err = os.RemoveAll(path)
+			if err != nil {
+				flog.Error("Failed to remove cloned directory: %v", err)
+			}
+		}
 		flog.Info("removed %s", name)
 	}
 }
