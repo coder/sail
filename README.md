@@ -2,6 +2,7 @@
 
 [!["Open Issues"](https://img.shields.io/github/issues-raw/cdr/sail.svg)](https://github.com/cdr/sail/issues)
 [![MIT license](https://img.shields.io/badge/license-MIT-green.svg)](https://github.com/cdr/sail/blob/master/LICENSE)
+[![AUR version](https://img.shields.io/aur/version/sail.svg)](https://aur.archlinux.org/packages/sail/)
 [![Discord](https://img.shields.io/discord/463752820026376202.svg?label=&logo=discord&logoColor=ffffff&color=7389D8&labelColor=6A7EC2)](https://discord.gg/zxSwN8Z)
 
 `sail` is a universal workflow for reproducible, project-defined development environments.
@@ -57,6 +58,8 @@ in your [$PATH](https://superuser.com/questions/284342/what-are-path-and-other-e
 curl https://sail.dev/install.sh | bash
 ```
 
+For Arch users, there is an official [AUR package](https://aur.archlinux.org/packages/sail).
+
 ### Verify the Installation
 
 To verify Sail is properly installed, run `sail --help` on your system. If everything is installed correctly, you should see Sail's help text.
@@ -73,3 +76,4 @@ To open GitHub or GitLab projects in a Sail environment with a single click, see
 ### Learn More
 
 Additional docs covering concepts and configuration can be found at [https://sail.dev/docs](https://sail.dev/docs/introduction/).
+
