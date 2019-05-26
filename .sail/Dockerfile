@@ -15,6 +15,5 @@ RUN wget -O /tmp/hugo.deb https://github.com/gohugoio/hugo/releases/download/v0.
   sudo dpkg -i /tmp/hugo.deb && \
   rm -f /tmp/hugo.deb
 
-RUN mkdir -p ~/go && sudo chown -R user:user ~/go
-
+RUN mkdir -p ~/go && sudo chown -R user:root ~/go
 RUN installext peterjausovec.vscode-docker
