@@ -6,6 +6,7 @@ import (
 
 	"github.com/fatih/color"
 	"go.coder.com/flog"
+	"go.coder.com/sail/internal/environment"
 )
 
 type globalFlags struct {
@@ -37,13 +38,13 @@ func (gf *globalFlags) ensureDockerDaemon() {
 	gf.debug("verified Docker is running")
 }
 
-func requireRepo(conf config, prefs schemaPrefs, fl *flag.FlagSet) repo {
+func requireRepo(conf config, prefs schemaPrefs, fl *flag.FlagSet) environment.Repo {
 	repoURI := fl.Arg(0)
 	if repoURI == "" {
 		flog.Fatal("Argument <repo> must be provided.")
 	}
 
-	r, err := parseRepo(defaultSchema(conf, prefs), conf.DefaultHost, repoURI)
+	r, err := environment.ParseRepo(defaultSchema(conf, prefs), conf.DefaultHost, repoURI)
 	if err != nil {
 		flog.Fatal("failed to parse repo %q: %v", repoURI, err)
 	}

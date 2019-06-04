@@ -1,4 +1,4 @@
-package main
+package environment
 
 import (
 	"testing"
@@ -99,7 +99,7 @@ func TestParseRepo(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		repo, err := parseRepo(test.defSchema, test.defHost, test.fullPath)
+		repo, err := ParseRepo(test.defSchema, test.defHost, test.fullPath)
 		require.NoError(t, err)
 
 		assert.Equal(t, test.expPath, repo.Path, "expected path to be the same")

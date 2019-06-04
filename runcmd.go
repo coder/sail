@@ -67,9 +67,9 @@ Examples:
 	Force HTTPS on a Gitlab repo
 	- sail run https://gitlab.com/inkscape/inkscape
 	- sail run --https gitlab.com/inkscape/inkscape
-	
+
 Note:
-If you use ssh://, http://, or https://, you must specify a host. 
+If you use ssh://, http://, or https://, you must specify a host.
 
 This won't work:
 	- sail run ssh://cdr/code-server

@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"go.coder.com/sail/internal/dockutil"
+	"go.coder.com/sail/internal/environment"
 
 	"go.coder.com/sail/internal/browserapp"
 	"go.coder.com/sail/internal/codeserver"
@@ -29,7 +30,7 @@ const (
 // project represents a sail project.
 type project struct {
 	conf config
-	repo repo
+	repo environment.Repo
 }
 
 func (p *project) pathName() string {
@@ -54,7 +55,7 @@ func (p *project) dockerfilePath() string {
 }
 
 // clone clones a git repository to dir.
-func clone(r repo, dir string) error {
+func clone(r environment.Repo, dir string) error {
 	uri := r.CloneURI()
 	cmd := xexec.Fmt("git clone %v %v", uri, dir)
 	xexec.Attach(cmd)
@@ -166,7 +167,7 @@ func fmtImage(img string) string {
 // repo's language. If the repo language isn't able to be determined, this
 // returns the default image from the sail config.
 func (p *project) defaultRepoImage() string {
-	lang := p.repo.language()
+	lang := p.repo.Language()
 
 	switch strings.ToLower(lang) {
 	case "go":

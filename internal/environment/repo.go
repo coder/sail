@@ -1,4 +1,4 @@
-package main
+package environment
 
 import (
 	"context"
@@ -9,48 +9,27 @@ import (
 	"strings"
 
 	"github.com/google/go-github/v24/github"
-	"golang.org/x/xerrors"
-
 	"go.coder.com/flog"
+	"golang.org/x/xerrors"
 )
 
-type repo struct {
+type Repo struct {
 	*url.URL
 }
 
-func (r repo) CloneURI() string {
-	uri := r.String()
-	if !strings.HasSuffix(uri, ".git") {
-		return fmt.Sprintf("%s.git", uri)
-	}
-	return uri
-}
-
-func (r repo) DockerName() string {
-	return toDockerName(
-		r.trimPath(),
-	)
-}
-
-func (r repo) trimPath() string {
-	return strings.TrimPrefix(r.Path, "/")
-}
-
-func (r repo) BaseName() string {
-	return strings.TrimSuffix(path.Base(r.Path), ".git")
-}
-
-// parseRepo parses a reponame into a repo.
-// It can be a full url like https://github.com/cdr/sail or ssh://git@github.com/cdr/sail,
-// or just the path like cdr/sail and the host + schema will be inferred.
-// By default the host and the schema will be the provided defaultSchema.
-func parseRepo(defaultSchema, defaultHost, name string) (repo, error) {
+// ParseRepo parses a Reponame into a Repo.
+//
+// It can be a full url like https://github.com/cdr/sail or
+// ssh://git@github.com/cdr/sail, or just the path like cdr/sail and the host +
+// schema will be inferred.  By default the host and the schema will be the
+// provided defaultSchema.
+func ParseRepo(defaultSchema, defaultHost, name string) (Repo, error) {
 	u, err := url.Parse(name)
 	if err != nil {
-		return repo{}, xerrors.Errorf("failed to parse repo path: %w", err)
+		return Repo{}, xerrors.Errorf("failed to parse Repo path: %w", err)
 	}
 
-	r := repo{u}
+	r := Repo{u}
 
 	if r.Scheme == "" {
 		r.Scheme = defaultSchema
@@ -76,7 +55,7 @@ func parseRepo(defaultSchema, defaultHost, name string) (repo, error) {
 
 	// non-existent or invalid path
 	if r.Path == "" || len(strings.Split(r.Path, "/")) != 2 {
-		return repo{}, xerrors.Errorf("invalid repo: %s", r.Path)
+		return Repo{}, xerrors.Errorf("invalid Repo: %s", r.Path)
 	}
 
 	// if host contains a username, e.g. git@github.com
@@ -90,7 +69,7 @@ func parseRepo(defaultSchema, defaultHost, name string) (repo, error) {
 		case 2:
 			r.User = url.UserPassword(usp[0], usp[1])
 		default:
-			return repo{}, xerrors.Errorf("invalid user: %s", sp[0])
+			return Repo{}, xerrors.Errorf("invalid user: %s", sp[0])
 		}
 
 		// remove username from host
@@ -105,17 +84,37 @@ func parseRepo(defaultSchema, defaultHost, name string) (repo, error) {
 	return r, nil
 }
 
-// language returns the language of a repository using github's detected language.
+func (r Repo) CloneURI() string {
+	uri := r.String()
+	if !strings.HasSuffix(uri, ".git") {
+		return fmt.Sprintf("%s.git", uri)
+	}
+	return uri
+}
+
+func (r Repo) DockerName() string {
+	return strings.Replace(r.trimPath(), "/", "_", 1)
+}
+
+func (r Repo) trimPath() string {
+	return strings.TrimPrefix(r.Path, "/")
+}
+
+func (r Repo) BaseName() string {
+	return strings.TrimSuffix(path.Base(r.Path), ".git")
+}
+
+// Language returns the language of a Repository using github's detected language.
 // This is a best effort try and will return the empty string if something fails.
-func (r repo) language() string {
+func (r Repo) Language() string {
 	orgRepo := strings.SplitN(r.trimPath(), "/", 2)
 	if len(orgRepo) != 2 {
 		return ""
 	}
 
-	repo, resp, err := github.NewClient(nil).Repositories.Get(context.Background(), orgRepo[0], orgRepo[1])
+	Repo, resp, err := github.NewClient(nil).Repositories.Get(context.Background(), orgRepo[0], orgRepo[1])
 	if err != nil {
-		flog.Error("unable to get repo language: %v", err)
+		flog.Error("unable to get Repo language: %v", err)
 		return ""
 	}
 
@@ -123,7 +122,7 @@ func (r repo) language() string {
 		return ""
 	}
 
-	return repo.GetLanguage()
+	return Repo.GetLanguage()
 }
 
 func isAllowedSchema(s string) bool {

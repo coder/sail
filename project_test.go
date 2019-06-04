@@ -7,6 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.coder.com/sail/internal/environment"
 )
 
 func Test_project(t *testing.T) {
@@ -51,7 +52,7 @@ func Test_project(t *testing.T) {
 			rb := newRollback()
 			defer rb.run()
 
-			repo, err := parseRepo(test.schema, "github.com", test.repo)
+			repo, err := environment.ParseRepo(test.schema, "github.com", test.repo)
 			require.NoError(t, err)
 
 			p := &project{
