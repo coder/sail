@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"flag"
-	"net/http"
 	"os"
 	"time"
 
@@ -11,7 +10,7 @@ import (
 
 	"go.coder.com/cli"
 	"go.coder.com/flog"
-	"go.coder.com/sail/internal/dockutil"
+	"go.coder.com/sail/internal/environment"
 )
 
 type runcmd struct {
@@ -99,145 +98,30 @@ const guestHomeDir = "/home/user"
 func (c *runcmd) Run(fl *flag.FlagSet) {
 	c.gf.ensureDockerDaemon()
 
-	proj := c.gf.project(c.schemaPrefs, fl)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
 
-	// Abort if container already exists.
-	exists, err := proj.cntExists()
-	if err != nil {
-		flog.Fatal("%v", err)
+	repoURI := fl.Arg(0)
+	if repoURI == "" {
+		flog.Fatal("Argument <repo> must be provided.")
 	}
 
-	if exists && c.rebuild {
-		err = proj.delete()
+	conf := c.gf.config()
+	schema := defaultSchema(conf, c.schemaPrefs)
+	repo, err := environment.ParseRepo(schema, conf.DefaultHost, repoURI)
+	if err != nil {
+		flog.Fatal("failed to parse repo %s: %v", repoURI, err)
+	}
+
+	_, err = environment.FindEnvironment(ctx, &repo)
+	if xerrors.Is(err, environment.ErrMissingContainer) {
+		builder := environment.NewDefaultBuilder(&repo)
+		_, err = environment.Bootstrap(ctx, builder)
 		if err != nil {
-			flog.Fatal("failed to delete existing container: %v", err)
+			flog.Fatal("failed to bootstrap environment: %v", err)
 		}
-		exists = false
-	}
-
-	if exists {
-		c.gf.debug("opening existing project")
-
-		u, err := proj.proxyURL()
-		if err != nil {
-			flog.Fatal("%v", err)
-		}
-
-		resp, err := http.Get(u + "/sail/api/v1/heartbeat")
-		if err == nil {
-			resp.Body.Close()
-
-			if c.noOpen {
-				os.Exit(0)
-			}
-			err = proj.open()
-			if err != nil {
-				flog.Error("failed to open project: %v", err)
-				err = proj.delete()
-				if err != nil {
-					flog.Error("failed to delete project container: %v", err)
-				}
-				os.Exit(1)
-			}
-			os.Exit(0)
-		}
-
-		// Proxy is not up, meaning the container shut down at some point, or the proxy
-		// was killed. We're going to restart the proxy and update the container label.
-
-		cli := dockerClient()
-		defer cli.Close()
-
-		ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
-		defer cancel()
-
-		err = dockutil.StopRemove(ctx, cli, proj.cntName())
-		if err != nil {
-			flog.Fatal("failed to remove container without running proxy: %v", err)
-		}
-
-		// The container will be rebuilt properly.
-	}
-
-	err = proj.ensureDir()
-	if err != nil {
-		flog.Fatal("%v", err)
-	}
-
-	var image string
-	if c.image != "" {
-		image = c.image
-	} else {
-		var customImageExists bool
-		image, customImageExists, err = proj.buildImage()
-		if err != nil {
-			flog.Fatal("failed to build image: %v", err)
-		}
-		if !customImageExists {
-			image = proj.defaultRepoImage()
-			flog.Info("using default image %v", image)
-
-			err = ensureImage(image)
-			if err != nil {
-				flog.Fatal("failed to ensure image %v: %v", image, err)
-			}
-		} else {
-			flog.Info("using repo image %v", image)
-		}
-	}
-
-	// Apply hat if configured.
-	var hatPath string
-	switch {
-	case c.hat != "":
-		hatPath = c.hat
-	case c.gf.config().DefaultHat != "":
-		hatPath = c.gf.config().DefaultHat
-	}
-
-	hostHomeDir, err := os.UserHomeDir()
-	if err != nil {
-		panic(err)
-	}
-	c.gf.debug("host home dir: %v", hostHomeDir)
-
-	b := &hatBuilder{
-		baseImage: image,
-		hatPath:   hatPath,
-	}
-
-	r := &runner{
-		projectName:     proj.repo.BaseName(),
-		projectLocalDir: proj.localDir(),
-		cntName:         proj.cntName(),
-		hostname:        proj.repo.BaseName(),
-		// Use `0` as the port so that the host assigns an available one.
-		port:    "0",
-		testCmd: c.testCmd,
-	}
-
-	err = c.build(c.gf, proj, b, r)
-	if err != nil {
-		flog.Error("build run failed: %v", err)
-		if !c.keep {
-			// We remove the container if it fails to start as that means the developer
-			// can iterate w/o having to do the obnoxious `docker rm` step.
-			c.gf.debug("removing %v", proj.cntName())
-			err = dockutil.StopRemove(context.Background(), dockerClient(), proj.cntName())
-			if err != nil {
-				flog.Error("failed to remove %v", proj.cntName())
-			}
-		}
-		os.Exit(1)
-	}
-
-	if c.noOpen {
-		os.Exit(0)
-	}
-
-	err = proj.open()
-	if err != nil {
-		flog.Fatal("failed to open project: %w", err)
+	} else if err != nil {
+		flog.Fatal("failed to find environment: %v", err)
 	}
 
 	os.Exit(0)

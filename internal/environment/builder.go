@@ -15,6 +15,9 @@ import (
 )
 
 // Builder is able to build environments for a repo.
+//
+// TODO: It doesn't make a lot of sense to have this be aware of the repo. Will
+// probably change this to be BuildConfig.
 type Builder struct {
 	repo  *Repo
 	image string
@@ -56,6 +59,8 @@ func (b *Builder) Build(ctx context.Context) (*Environment, error) {
 		Image:  b.image,
 		Labels: map[string]string{},
 		User:   u.Uid + ":user",
+		// TODO: Do something about this.
+		Env: []string{"HOME=/home/user"},
 	}
 
 	repoVol, err := ensureVolumeForRepo(ctx, b.repo)

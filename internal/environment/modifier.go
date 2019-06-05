@@ -16,15 +16,54 @@ import (
 	"golang.org/x/xerrors"
 )
 
-// Modifier allows for modifying environments.
-type Modifier interface {
-	Modify(ctx context.Context, env *Environment) (*Environment, error)
-}
-
 // BuildContextProvider is able to provide a build context for creating an
 // image.
 type BuildContextProvider interface {
 	BuildContext(ctx context.Context) (io.Reader, error)
+}
+
+// Modify applies a modification to an environment by taking a build context and
+// applying it the environment's existing image.
+//
+// The build context's "FROM" will be discarded an replaced with the reference
+// to the environment's current image.
+func Modify(ctx context.Context, prov BuildContextProvider, env *Environment) (*Environment, error) {
+	rdr, err := prov.BuildContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	rdr, err = replaceFrom(ctx, rdr, env.cnt.Image)
+	if err != nil {
+		return nil, err
+	}
+
+	imgName := env.name + "_" + randstr.MakeCharset(randstr.Lower, 5)
+	err = buildImage(ctx, rdr, imgName)
+	if err != nil {
+		return nil, err
+	}
+
+	err = Stop(ctx, env)
+	if err != nil {
+		return nil, err
+	}
+	err = Remove(ctx, env)
+	if err != nil {
+		return nil, err
+	}
+
+	b := &Builder{
+		image: imgName,
+		repo:  env.repo,
+	}
+
+	env, err = b.Build(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return env, nil
 }
 
 // LocalProvider provides a local build context. This may be a path pointing
@@ -65,7 +104,7 @@ func (p LocalProvider) BuildContext(ctx context.Context) (io.Reader, error) {
 			return xerrors.Errorf("failed to get header from file info: %w", err)
 		}
 		// By default, FileInfoHeader only puts the basename on the info. We
-		// want the complete relative path.
+		// want the complete relative path (relative to the root of tar).
 		hdr.Name = link
 
 		if info.IsDir() {
@@ -172,57 +211,6 @@ func (p RawDockerfileProvider) BuildContext(_ context.Context) (io.Reader, error
 	}
 
 	return &buf, err
-}
-
-type modifier struct {
-	provider BuildContextProvider
-}
-
-var _ Modifier = new(modifier)
-
-func NewModifier(p BuildContextProvider) Modifier {
-	return &modifier{
-		provider: p,
-	}
-}
-
-func (m *modifier) Modify(ctx context.Context, env *Environment) (*Environment, error) {
-	rdr, err := m.provider.BuildContext(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	rdr, err = replaceFrom(ctx, rdr, env.cnt.Image)
-	if err != nil {
-		return nil, err
-	}
-
-	imgName := env.name + "_" + randstr.MakeCharset(randstr.Lower, 5)
-	err = buildImage(ctx, rdr, imgName)
-	if err != nil {
-		return nil, err
-	}
-
-	err = Stop(ctx, env)
-	if err != nil {
-		return nil, err
-	}
-	err = Remove(ctx, env)
-	if err != nil {
-		return nil, err
-	}
-
-	b := &Builder{
-		image: imgName,
-		repo:  env.repo,
-	}
-
-	env, err = b.Build(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	return env, nil
 }
 
 func replaceFrom(ctx context.Context, rdr io.Reader, base string) (io.Reader, error) {
