@@ -14,29 +14,25 @@ import (
 	"golang.org/x/xerrors"
 )
 
-// Builder is able to build environments for a repo.
-//
-// TODO: It doesn't make a lot of sense to have this be aware of the repo. Will
-// probably change this to be BuildConfig.
-type Builder struct {
-	repo  *Repo
-	image string
-	envs  []string
+type BuildConfig struct {
+	Name  string
+	Image string
+	Envs  []string
 }
 
-func NewDefaultBuilder(r *Repo) *Builder {
-	return &Builder{
-		image: "codercom/ubuntu-dev",
-		repo:  r,
+func NewDefaultBuildConfig(name string) *BuildConfig {
+	return &BuildConfig{
+		Name:  name,
+		Image: "codercom/ubuntu-dev",
 	}
 }
 
-func (b *Builder) Build(ctx context.Context) (*Environment, error) {
+func Build(ctx context.Context, cfg *BuildConfig) (*Environment, error) {
 	cli := dockerClient()
 	defer cli.Close()
 
 	var (
-		projDir = defaultDirForRepo(b.repo)
+		projDir = defaultDirForRepo(nil) // TODO
 		port    = codeServerPort()
 	)
 
@@ -49,29 +45,29 @@ func (b *Builder) Build(ctx context.Context) (*Environment, error) {
 		return nil, xerrors.Errorf("failed to get current user: %w", err)
 	}
 
-	name := b.repo.DockerName()
 	// TODO: Will need to add envs for forwarding ssh agent.
 	containerConfig := &container.Config{
-		Hostname: name,
+		Hostname: cfg.Name,
 		Cmd: strslice.StrSlice{
 			"bash", "-c", cmd,
 		},
-		Image:  b.image,
+		Image:  cfg.Image,
 		Labels: map[string]string{},
 		User:   u.Uid + ":user",
-		// TODO: Do something about this.
+		// TODO: Do something about this. This is just to get the vscode remote
+		// extension working.
 		Env: []string{"HOME=/home/user"},
 	}
 
-	repoVol, err := ensureVolumeForRepo(ctx, b.repo)
-	if err != nil {
-		return nil, err
-	}
+	// repoVol, err := ensureVolumeForRepo(ctx, b.repo)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
 	mounts := []mount.Mount{
 		{
-			Type:   mount.TypeVolume,
-			Source: repoVol.vol.Name,
+			Type: mount.TypeVolume,
+			// Source: repoVol.vol.Name,
 			Target: projDir,
 		},
 	}
@@ -85,19 +81,18 @@ func (b *Builder) Build(ctx context.Context) (*Environment, error) {
 		Mounts: mounts,
 	}
 
-	_, err = cli.ContainerCreate(ctx, containerConfig, hostConfig, nil, name)
+	_, err = cli.ContainerCreate(ctx, containerConfig, hostConfig, nil, cfg.Name)
 	if err != nil {
 		return nil, xerrors.Errorf("failed to create container: %w", err)
 	}
 
-	cnt, err := cli.ContainerInspect(ctx, name)
+	cnt, err := cli.ContainerInspect(ctx, cfg.Name)
 	if err != nil {
 		return nil, xerrors.Errorf("failed to inspect container after create: %w", err)
 	}
 
 	env := &Environment{
-		repo: b.repo,
-		name: name,
+		name: cfg.Name,
 		cnt:  cnt,
 	}
 

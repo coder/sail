@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
+	"go.coder.com/sail/internal/randstr"
 )
 
 func Test_Modifier(t *testing.T) {
@@ -16,12 +17,11 @@ func Test_Modifier(t *testing.T) {
 
 	createBaseEnv := func(t *testing.T) (env *Environment, destroy func(*testing.T)) {
 		// TODO: Remove reliance on needing to have a repo to create an env.
-		const uri = "https://github.com/cdr/sshcode"
-		r, err := ParseRepo("", "", uri)
-		require.NoError(t, err)
-		b := NewDefaultBuilder(&r)
+		name := "modifier-test-" + randstr.MakeCharset(randstr.Lower, 5)
+		t.Logf("created base env: %s", name)
+		cfg := NewDefaultBuildConfig(name)
 
-		env, err = b.Build(ctx)
+		env, err := Build(ctx, cfg)
 		require.NoError(t, err)
 
 		destroy = func(t *testing.T) {

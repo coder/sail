@@ -15,20 +15,17 @@ import (
 )
 
 type Environment struct {
-	repo *Repo
 	name string
 	cnt  types.ContainerJSON
 }
 
 var ErrMissingContainer = xerrors.Errorf("missing container")
 
-// FindEnvironment tries to find a container for the given repo, or
+// FindEnvironment tries to find a container for an environment, returning
 // ErrMissingContainer if not found.
-func FindEnvironment(ctx context.Context, r *Repo) (*Environment, error) {
+func FindEnvironment(ctx context.Context, name string) (*Environment, error) {
 	cli := dockerClient()
 	defer cli.Close()
-
-	name := r.DockerName()
 
 	cnt, err := cli.ContainerInspect(ctx, name)
 	if isContainerNotFoundError(err) {
@@ -39,7 +36,6 @@ func FindEnvironment(ctx context.Context, r *Repo) (*Environment, error) {
 	}
 
 	env := &Environment{
-		repo: r,
 		name: name,
 		cnt:  cnt,
 	}
@@ -110,10 +106,10 @@ func Purge(ctx context.Context, env *Environment) error {
 	cli := dockerClient()
 	defer cli.Close()
 
-	err = cli.VolumeRemove(ctx, formatRepoVolumeName(env.repo), true)
-	if err != nil {
-		return xerrors.Errorf("failed to remove volume: %w", err)
-	}
+	// err = cli.VolumeRemove(ctx, formatRepoVolumeName(env.repo), true)
+	// if err != nil {
+	// 	return xerrors.Errorf("failed to remove volume: %w", err)
+	// }
 
 	return nil
 }
@@ -125,7 +121,7 @@ func (e *Environment) clone(ctx context.Context, dir string) error {
 		return xerrors.Errorf("failed to chown: %s, %w", out, err)
 	}
 
-	cloneStr := fmt.Sprintf("cd %s; git clone %s .", dir, e.repo.URL.String())
+	cloneStr := fmt.Sprintf("cd %s; git clone %s .", dir, "todo")
 	out, err = e.exec(ctx, "bash", []string{"-c", cloneStr}...).CombinedOutput()
 	if err != nil {
 		return xerrors.Errorf("failed to clone: %s, %w", out, err)

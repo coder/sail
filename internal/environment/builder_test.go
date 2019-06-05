@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
+	"go.coder.com/sail/internal/randstr"
 )
 
 // checkDockerDaemon checks if the docker daemon is running. The daemon may be
@@ -32,15 +33,14 @@ func Test_Builder(t *testing.T) {
 	checkDockerDaemon(t)
 
 	t.Run("Basic", func(t *testing.T) {
-		const uri = "https://github.com/cdr/sshcode"
-		t.Logf("repo: %s", uri)
-		r, err := ParseRepo("", "", uri)
-		b := NewDefaultBuilder(&r)
+		name := "builder-test-" + randstr.MakeCharset(randstr.Lower, 5)
+		t.Logf("create env: %s", name)
+		cfg := NewDefaultBuildConfig(name)
 
 		ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 		defer cancel()
 
-		env, err := b.Build(ctx)
+		env, err := Build(ctx, cfg)
 		require.NoError(t, err)
 		defer func() {
 			err := Purge(ctx, env)

@@ -2,12 +2,14 @@ package environment
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
 
 	"github.com/docker/docker/api/types"
 	"go.coder.com/flog"
+	"go.coder.com/sail/internal/randstr"
 	"golang.org/x/xerrors"
 )
 
@@ -20,11 +22,19 @@ import (
 // image.
 //
 // The default environment will be returned if no sail docker file exists.
-func Bootstrap(ctx context.Context, b *Builder) (*Environment, error) {
-	env, err := b.Build(ctx)
+func Bootstrap(ctx context.Context, cfg *BuildConfig, repo *Repo) (*Environment, error) {
+	env, err := Build(ctx, cfg)
 	if err != nil {
 		return nil, err
 	}
+
+	err = cloneInto(ctx, env, repo, "/home/user/Projects/project")
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO: Actually do the other stuff too.
+	return env, nil
 
 	imgName, err := imageFromEnvRepo(ctx, env)
 	if xerrors.Is(err, errMissingDockerfile) {
@@ -48,19 +58,42 @@ func Bootstrap(ctx context.Context, b *Builder) (*Environment, error) {
 		return nil, err
 	}
 
-	// Update builder to not clone repo since we already have a volume
-	// containing the repo.
-	// b.skipClone = true
 	// Set new image to build with.
-	b.image = imgName
+	cfg.Image = imgName
 
 	// Rebuild with image specific to the repo.
-	env, err = b.Build(ctx)
+	env, err = Build(ctx, cfg)
 	if err != nil {
 		return nil, err
 	}
 
 	return env, nil
+}
+
+// cloneInto clones the repo into the environment.
+//
+// The enviroment should have its auth set up in such a way that would allow the
+// user to clone a private repo.
+//
+// TODO: Should this handle creating/attaching the volume?
+func cloneInto(ctx context.Context, env *Environment, repo *Repo, path string) error {
+	out, err := env.exec(ctx, "sudo", "mkdir", "-p", path).CombinedOutput()
+	if err != nil {
+		return xerrors.Errorf("failed to create dir: %s: %w", out, err)
+	}
+
+	out, err = env.exec(ctx, "sudo", "chown", "-R", "user", path).CombinedOutput()
+	if err != nil {
+		return xerrors.Errorf("failed to chown: %s: %w", out, err)
+	}
+
+	cloneStr := fmt.Sprintf("cd %s; git clone %s .", path, repo.CloneURI())
+	out, err = env.exec(ctx, "bash", []string{"-c", cloneStr}...).CombinedOutput()
+	if err != nil {
+		return xerrors.Errorf("failed to clone: %s: %w", out, err)
+	}
+
+	return nil
 }
 
 var errMissingDockerfile = xerrors.Errorf("missing dockerfile")
@@ -73,7 +106,8 @@ func imageFromEnvRepo(ctx context.Context, env *Environment) (string, error) {
 
 	// Read the file from the docker container and not directly from the path
 	// on the host machine. The path on the host machine is owned by root.
-	rdr, err := env.readPath(ctx, filepath.Join(defaultDirForRepo(env.repo), relPath))
+	// TODO: Fix repo path.
+	rdr, err := env.readPath(ctx, filepath.Join(defaultDirForRepo(nil), relPath))
 	if xerrors.Is(err, errNoSuchFile) {
 		return "", errMissingDockerfile
 	}
@@ -81,7 +115,8 @@ func imageFromEnvRepo(ctx context.Context, env *Environment) (string, error) {
 		return "", err
 	}
 
-	imgName := env.repo.DockerName()
+	// TODO: Better image name
+	imgName := env.name + "-bootstrap-" + randstr.MakeCharset(randstr.Lower, 5)
 	err = buildImage(ctx, rdr, imgName)
 	if err != nil {
 		return "", err

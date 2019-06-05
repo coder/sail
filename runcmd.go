@@ -113,10 +113,11 @@ func (c *runcmd) Run(fl *flag.FlagSet) {
 		flog.Fatal("failed to parse repo %s: %v", repoURI, err)
 	}
 
-	_, err = environment.FindEnvironment(ctx, &repo)
+	name := repo.DockerName()
+	_, err = environment.FindEnvironment(ctx, name)
 	if xerrors.Is(err, environment.ErrMissingContainer) {
-		builder := environment.NewDefaultBuilder(&repo)
-		_, err = environment.Bootstrap(ctx, builder)
+		buildCfg := environment.NewDefaultBuildConfig(name)
+		_, err = environment.Bootstrap(ctx, buildCfg, &repo)
 		if err != nil {
 			flog.Fatal("failed to bootstrap environment: %v", err)
 		}

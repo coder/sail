@@ -25,6 +25,9 @@ type BuildContextProvider interface {
 // Modify applies a modification to an environment by taking a build context and
 // applying it the environment's existing image.
 //
+// The provided environment will be removed, allowing for the new environment to
+// use the same name.
+//
 // The build context's "FROM" will be discarded an replaced with the reference
 // to the environment's current image.
 func Modify(ctx context.Context, prov BuildContextProvider, env *Environment) (*Environment, error) {
@@ -53,12 +56,12 @@ func Modify(ctx context.Context, prov BuildContextProvider, env *Environment) (*
 		return nil, err
 	}
 
-	b := &Builder{
-		image: imgName,
-		repo:  env.repo,
+	cfg := &BuildConfig{
+		Name:  env.name,
+		Image: imgName,
 	}
 
-	env, err = b.Build(ctx)
+	env, err = Build(ctx, cfg)
 	if err != nil {
 		return nil, err
 	}
