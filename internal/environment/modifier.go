@@ -12,9 +12,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/codercom/crand"
-	"github.com/docker/docker/api/types"
-	"go.coder.com/flog"
+	"go.coder.com/sail/internal/randstr"
 	"golang.org/x/xerrors"
 )
 
@@ -108,19 +106,19 @@ func (p LocalProvider) BuildContext(ctx context.Context) (io.Reader, error) {
 	return &buf, nil
 }
 
-// GitRepoProvider is able to provide a build context from a git repo.
+// ExternalGitProvider is able to provide a build context from a git repo.
 //
 // The provided environment will be used to clone the repo. When ssh agent
 // forwarding works, this will allow for private repos to be used.
-type GitRepoProvider struct {
+type ExternalGitProvider struct {
 	WorkingEnv *Environment
 	URI        string
 }
 
-var _ BuildContextProvider = new(GitRepoProvider)
+var _ BuildContextProvider = new(ExternalGitProvider)
 
-func (p *GitRepoProvider) BuildContext(ctx context.Context) (io.Reader, error) {
-	workingDir := "/tmp/hat-working-" + crand.MustString(5)
+func (p *ExternalGitProvider) BuildContext(ctx context.Context) (io.Reader, error) {
+	workingDir := "/tmp/hat-working-" + randstr.Make(5)
 
 	cloneStr := fmt.Sprintf("mkdir -p %s; cd %s; git clone %s .", workingDir, workingDir, p.URI)
 	out, err := p.WorkingEnv.exec(ctx, "bash", []string{"-c", cloneStr}...).CombinedOutput()
@@ -134,6 +132,19 @@ func (p *GitRepoProvider) BuildContext(ctx context.Context) (io.Reader, error) {
 	}
 
 	return rdr, nil
+}
+
+// ClonedRepoProvider provides a build context from the given path inside the
+// environment.
+type EnvPathProvider struct {
+	Env  *Environment
+	Path string
+}
+
+var _ BuildContextProvider = new(EnvPathProvider)
+
+func (p *EnvPathProvider) BuildContext(ctx context.Context) (io.Reader, error) {
+	return p.Env.readPath(ctx, p.Path)
 }
 
 type RawDockerfileProvider []byte
@@ -186,7 +197,7 @@ func (m *modifier) Modify(ctx context.Context, env *Environment) (*Environment, 
 		return nil, err
 	}
 
-	imgName := env.name + "_" + crand.MustStringCharset(crand.Lower, 5)
+	imgName := env.name + "_" + randstr.MakeCharset(randstr.Lower, 5)
 	err = buildImage(ctx, rdr, imgName)
 	if err != nil {
 		return nil, err
@@ -204,7 +215,6 @@ func (m *modifier) Modify(ctx context.Context, env *Environment) (*Environment, 
 	b := &Builder{
 		image: imgName,
 		repo:  env.repo,
-		// skipClone: true,
 	}
 
 	env, err = b.Build(ctx)
@@ -263,27 +273,4 @@ func replaceFrom(ctx context.Context, rdr io.Reader, base string) (io.Reader, er
 	}
 
 	return &buf, nil
-}
-
-// buildImage builds an image from the given directory. The dir should contain a
-// valid dockerfile at its root.
-func buildImage(ctx context.Context, buildContext io.Reader, name string) error {
-	cli := dockerClient()
-	defer cli.Close()
-
-	flog.Info("building image: %s", name)
-
-	opts := types.ImageBuildOptions{
-		Tags: []string{name},
-	}
-	resp, err := cli.ImageBuild(ctx, buildContext, opts)
-	if err != nil {
-		return xerrors.Errorf("failed to build image: %w", err)
-	}
-	defer resp.Body.Close()
-
-	// Mostly for debugging.
-	io.Copy(os.Stdout, resp.Body)
-
-	return nil
 }

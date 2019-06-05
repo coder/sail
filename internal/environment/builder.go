@@ -9,6 +9,7 @@ import (
 	"strconv"
 
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/api/types/strslice"
 	"golang.org/x/xerrors"
 )
@@ -57,18 +58,18 @@ func (b *Builder) Build(ctx context.Context) (*Environment, error) {
 		User:   u.Uid + ":user",
 	}
 
-	// repoVol, err := ensureVolumeForRepo(ctx, b.repo)
-	// if err != nil {
-	// 	return nil, err
-	// }
+	repoVol, err := ensureVolumeForRepo(ctx, b.repo)
+	if err != nil {
+		return nil, err
+	}
 
-	// mounts := []mount.Mount{
-	// 	{
-	// 		Type:   mount.TypeVolume,
-	// 		Source: repoVol.vol.Name,
-	// 		Target: projDir,
-	// 	},
-	// }
+	mounts := []mount.Mount{
+		{
+			Type:   mount.TypeVolume,
+			Source: repoVol.vol.Name,
+			Target: projDir,
+		},
+	}
 
 	hostConfig := &container.HostConfig{
 		NetworkMode: "host",
@@ -76,7 +77,7 @@ func (b *Builder) Build(ctx context.Context) (*Environment, error) {
 		ExtraHosts: []string{
 			containerConfig.Hostname + ":127.0.0.1",
 		},
-		// Mounts: mounts,
+		Mounts: mounts,
 	}
 
 	_, err = cli.ContainerCreate(ctx, containerConfig, hostConfig, nil, name)
@@ -108,6 +109,21 @@ func (b *Builder) Build(ctx context.Context) (*Environment, error) {
 	// }
 
 	return env, nil
+}
+
+// ensureVolumeForRepo ensures that there's a volume dedicated to storing the
+// repo.
+func ensureVolumeForRepo(ctx context.Context, r *Repo) (*localVolume, error) {
+	name := formatRepoVolumeName(r)
+	lv, err := findLocalVolume(ctx, name)
+	if xerrors.Is(err, errMissingVolume) {
+		lv, err = createLocalVolume(ctx, name)
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	return lv, nil
 }
 
 func defaultDirForRepo(r *Repo) string {

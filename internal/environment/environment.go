@@ -4,6 +4,7 @@ import (
 	"archive/tar"
 	"bytes"
 	"context"
+	"fmt"
 	"io"
 	"os/exec"
 	"path/filepath"
@@ -112,6 +113,22 @@ func Purge(ctx context.Context, env *Environment) error {
 	err = cli.VolumeRemove(ctx, formatRepoVolumeName(env.repo), true)
 	if err != nil {
 		return xerrors.Errorf("failed to remove volume: %w", err)
+	}
+
+	return nil
+}
+
+// clone clones the repo into the project directory.
+func (e *Environment) clone(ctx context.Context, dir string) error {
+	out, err := e.exec(ctx, "sudo", "chown", "-R", "user", dir).CombinedOutput()
+	if err != nil {
+		return xerrors.Errorf("failed to chown: %s, %w", out, err)
+	}
+
+	cloneStr := fmt.Sprintf("cd %s; git clone %s .", dir, e.repo.URL.String())
+	out, err = e.exec(ctx, "bash", []string{"-c", cloneStr}...).CombinedOutput()
+	if err != nil {
+		return xerrors.Errorf("failed to clone: %s, %w", out, err)
 	}
 
 	return nil
