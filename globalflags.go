@@ -12,6 +12,7 @@ import (
 type globalFlags struct {
 	verbose    bool
 	configPath string
+	remoteHost string
 }
 
 func (gf *globalFlags) debug(msg string, args ...interface{}) {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"os"
+	"os/signal"
 	"time"
 
 	"golang.org/x/xerrors"
@@ -96,7 +97,13 @@ func (c *runcmd) RegisterFlags(fl *flag.FlagSet) {
 const guestHomeDir = "/home/user"
 
 func (c *runcmd) Run(fl *flag.FlagSet) {
-	c.gf.ensureDockerDaemon()
+	if c.gf.remoteHost != "" {
+		closeSockFn, err := environment.EnsureRemoteContainerSock(c.gf.remoteHost)
+		if err != nil {
+			flog.Fatal("failed to ensure remote container socket: %v", err)
+		}
+		defer closeSockFn()
+	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
@@ -125,7 +132,11 @@ func (c *runcmd) Run(fl *flag.FlagSet) {
 		flog.Fatal("failed to find environment: %v", err)
 	}
 
-	os.Exit(0)
+	flog.Info("running...")
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, os.Interrupt, os.Kill)
+	<-sigs
+	flog.Info("closing...")
 }
 
 func (c *runcmd) build(gf *globalFlags, proj *project, b *hatBuilder, r *runner) error {

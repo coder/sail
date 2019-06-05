@@ -51,6 +51,12 @@ func (r *rootCmd) RegisterFlags(fl *flag.FlagSet) {
 		filepath.Join(metaRoot(), "sail.toml"),
 		"Path to config.",
 	)
+	fl.StringVar(
+		&r.remoteHost,
+		"remote",
+		"",
+		"Optionally specify a remote host to run the sail environment",
+	)
 
 	// We don't use these directly, just added for visability on fl.Usage().
 	fl.BoolVar(&r.installAutocomplete, "install-autocomplete", false, "Install autocomplete")
