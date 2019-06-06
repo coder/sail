@@ -1,13 +1,15 @@
 package main
 
 import (
-	"bytes"
+	"context"
 	"flag"
 	"os"
+	"strings"
+	"time"
 
 	"go.coder.com/cli"
 	"go.coder.com/flog"
-	"go.coder.com/sail/internal/dockutil"
+	"go.coder.com/sail/internal/environment"
 	"go.coder.com/sail/internal/xexec"
 )
 
@@ -24,15 +26,32 @@ func (c *shellcmd) Spec() cli.CommandSpec {
 }
 
 func (c *shellcmd) Run(fl *flag.FlagSet) {
-	proj := c.gf.project(schemaPrefs{}, fl)
-	c.gf.ensureDockerDaemon()
-
-	out, err := dockutil.FmtExec(proj.cntName(), "grep ^.*:.*:$(id -u): /etc/passwd | cut -d : -f 7-").CombinedOutput()
-	if err != nil {
-		flog.Fatal("failed to get default shell: %v\n%s", err, out)
+	repoURI := fl.Arg(0)
+	if repoURI == "" {
+		flog.Fatal("Argument <repo> must be provided.")
 	}
 
-	cmd := dockutil.ExecTTY(proj.cntName(), guestHomeDir, string(bytes.TrimSpace(out)))
+	conf := c.gf.config()
+	repo, err := environment.ParseRepo(conf.DefaultSchema, conf.DefaultHost, repoURI)
+	if err != nil {
+		flog.Fatal("failed to parse repo: %s: %v", repoURI, err)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	env, err := environment.FindEnvironment(ctx, repo.DockerName())
+	if err != nil {
+		flog.Fatal("failed to find environment: %v", err)
+	}
+
+	// Get user's login shell from /etc/passwd.
+	out, err := env.Exec(ctx, "bash", "-c", "getent passwd $(whoami) | cut -d: -f7").CombinedOutput()
+	if err != nil {
+		flog.Fatal("failed to get user's default shell: %s: %v", out, err)
+	}
+	shell := strings.TrimSpace(string(out))
+
+	cmd := env.ExecTTY(context.Background(), shell)
 	xexec.Attach(cmd)
 	err = cmd.Run()
 	if err != nil {

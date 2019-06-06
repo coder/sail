@@ -33,7 +33,7 @@ func Test_Modifier(t *testing.T) {
 	}
 
 	requireEnvExec := func(t *testing.T, env *Environment, cmdStr string, args ...string) {
-		out, err := env.exec(ctx, cmdStr, args...).CombinedOutput()
+		out, err := env.Exec(ctx, cmdStr, args...).CombinedOutput()
 		require.NoError(t, err, "failed to run command: %s", out)
 	}
 

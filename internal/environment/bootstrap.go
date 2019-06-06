@@ -89,12 +89,12 @@ func ensureVolumeForRepo(ctx context.Context, r *Repo) (*localVolume, error) {
 // The enviroment should have its auth set up in such a way that would allow the
 // user to clone a private repo.
 func cloneInto(ctx context.Context, env *Environment, repo *Repo, path string) error {
-	out, err := env.exec(ctx, "sudo", "mkdir", "-p", path).CombinedOutput()
+	out, err := env.Exec(ctx, "sudo", "mkdir", "-p", path).CombinedOutput()
 	if err != nil {
 		return xerrors.Errorf("failed to create dir: %s: %w", out, err)
 	}
 
-	out, err = env.exec(ctx, "sudo", "chown", "-R", "user", path).CombinedOutput()
+	out, err = env.Exec(ctx, "sudo", "chown", "-R", "user", path).CombinedOutput()
 	if err != nil {
 		return xerrors.Errorf("failed to chown: %s: %w", out, err)
 	}
@@ -102,7 +102,7 @@ func cloneInto(ctx context.Context, env *Environment, repo *Repo, path string) e
 	uri := repo.CloneURI()
 	flog.Info("cloning from %s", uri)
 	cloneStr := fmt.Sprintf("cd %s; GIT_SSH_COMMAND='ssh -o StrictHostKeyChecking=no' git clone %s .", path, uri)
-	cmd := env.execTTY(ctx, "bash", []string{"-c", cloneStr}...)
+	cmd := env.ExecTTY(ctx, "bash", []string{"-c", cloneStr}...)
 	cmd.Stdout = os.Stdout
 	cmd.Stdin = os.Stdin
 	cmd.Stderr = os.Stderr

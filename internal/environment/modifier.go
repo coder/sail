@@ -169,7 +169,7 @@ func (p *ExternalGitProvider) BuildContext(ctx context.Context) (io.Reader, erro
 	workingDir := "/tmp/hat-working-" + randstr.Make(5)
 
 	cloneStr := fmt.Sprintf("mkdir -p %s; cd %s; git clone %s .", workingDir, workingDir, p.URI)
-	out, err := p.WorkingEnv.exec(ctx, "bash", []string{"-c", cloneStr}...).CombinedOutput()
+	out, err := p.WorkingEnv.Exec(ctx, "bash", []string{"-c", cloneStr}...).CombinedOutput()
 	if err != nil {
 		return nil, xerrors.Errorf("failed to clone: %s, %w", out, err)
 	}

@@ -4,7 +4,6 @@ import (
 	"archive/tar"
 	"bytes"
 	"context"
-	"fmt"
 	"io"
 	"os/exec"
 	"path/filepath"
@@ -45,14 +44,6 @@ func FindEnvironment(ctx context.Context, name string) (*Environment, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	// // TODO: If container needed to be started, we should give code-server
-	// // some time to start up.
-	// port, err := env.processPort(ctx, "code-server")
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// env.port = port
 
 	return env, nil
 }
@@ -114,28 +105,12 @@ func Purge(ctx context.Context, env *Environment) error {
 	return nil
 }
 
-// clone clones the repo into the project directory.
-func (e *Environment) clone(ctx context.Context, dir string) error {
-	out, err := e.exec(ctx, "sudo", "chown", "-R", "user", dir).CombinedOutput()
-	if err != nil {
-		return xerrors.Errorf("failed to chown: %s, %w", out, err)
-	}
-
-	cloneStr := fmt.Sprintf("cd %s; git clone %s .", dir, "todo")
-	out, err = e.exec(ctx, "bash", []string{"-c", cloneStr}...).CombinedOutput()
-	if err != nil {
-		return xerrors.Errorf("failed to clone: %s, %w", out, err)
-	}
-
-	return nil
-}
-
-func (e *Environment) exec(ctx context.Context, cmd string, args ...string) *exec.Cmd {
+func (e *Environment) Exec(ctx context.Context, cmd string, args ...string) *exec.Cmd {
 	args = append([]string{"exec", "-i", e.name, cmd}, args...)
 	return exec.CommandContext(ctx, "docker", args...)
 }
 
-func (e *Environment) execTTY(ctx context.Context, cmd string, args ...string) *exec.Cmd {
+func (e *Environment) ExecTTY(ctx context.Context, cmd string, args ...string) *exec.Cmd {
 	args = append([]string{"exec", "-it", e.name, cmd}, args...)
 	return exec.CommandContext(ctx, "docker", args...)
 }
