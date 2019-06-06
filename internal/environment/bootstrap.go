@@ -88,8 +88,6 @@ func ensureVolumeForRepo(ctx context.Context, r *Repo) (*localVolume, error) {
 //
 // The enviroment should have its auth set up in such a way that would allow the
 // user to clone a private repo.
-//
-// TODO: Should this handle creating/attaching the volume?
 func cloneInto(ctx context.Context, env *Environment, repo *Repo, path string) error {
 	out, err := env.exec(ctx, "sudo", "mkdir", "-p", path).CombinedOutput()
 	if err != nil {
@@ -103,14 +101,10 @@ func cloneInto(ctx context.Context, env *Environment, repo *Repo, path string) e
 
 	uri := repo.CloneURI()
 	flog.Info("cloning from %s", uri)
-	cloneStr := fmt.Sprintf("cd %s; git clone %s .", path, uri)
-	cmd := env.execTTY(ctx, "bash", []string{"-c", cloneStr}...)
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	err = cmd.Run()
+	cloneStr := fmt.Sprintf("cd %s; GIT_SSH_COMMAND='ssh -o StrictHostKeyChecking=no' git clone %s .", path, uri)
+	out, err = env.exec(ctx, "bash", []string{"-c", cloneStr}...).CombinedOutput()
 	if err != nil {
-		return xerrors.Errorf("failed to clone: %w", err)
+		return xerrors.Errorf("failed to clone: %s: %w", out, err)
 	}
 
 	return nil
