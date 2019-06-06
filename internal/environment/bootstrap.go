@@ -102,7 +102,11 @@ func cloneInto(ctx context.Context, env *Environment, repo *Repo, path string) e
 	uri := repo.CloneURI()
 	flog.Info("cloning from %s", uri)
 	cloneStr := fmt.Sprintf("cd %s; GIT_SSH_COMMAND='ssh -o StrictHostKeyChecking=no' git clone %s .", path, uri)
-	out, err = env.exec(ctx, "bash", []string{"-c", cloneStr}...).CombinedOutput()
+	cmd := env.execTTY(ctx, "bash", []string{"-c", cloneStr}...)
+	cmd.Stdout = os.Stdout
+	cmd.Stdin = os.Stdin
+	cmd.Stderr = os.Stderr
+	err = cmd.Run()
 	if err != nil {
 		return xerrors.Errorf("failed to clone: %s: %w", out, err)
 	}
