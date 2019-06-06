@@ -2,7 +2,9 @@ package environment
 
 import (
 	"context"
+	"fmt"
 	"math/rand"
+	"os"
 	"os/user"
 	"strconv"
 	"time"
@@ -25,9 +27,35 @@ type BuildConfig struct {
 }
 
 func NewDefaultBuildConfig(name string) *BuildConfig {
+	var (
+		envs   []string
+		mounts []mount.Mount
+	)
+
+	// TODO: This will only work for local sail containers. Some coordination
+	// between forwarding the socket over ssh will need to happen.
+	sshAuthSock, exists := os.LookupEnv("SSH_AUTH_SOCK")
+	if exists {
+		env := fmt.Sprintf("SSH_AUTH_SOCK=%s", sshAuthSock)
+		envs = append(envs, env)
+
+		sockMount := mount.Mount{
+			Type:   mount.TypeBind,
+			Source: sshAuthSock,
+			Target: sshAuthSock,
+		}
+		mounts = append(mounts, sockMount)
+	}
+
+	// TODO: Should this be handled better?
+	// Ensures that the vscode remote extension works correctly.
+	envs = append(envs, "HOME=/home/user")
+
 	return &BuildConfig{
-		Name:  name,
-		Image: "codercom/ubuntu-dev",
+		Name:   name,
+		Image:  "codercom/ubuntu-dev",
+		Envs:   envs,
+		Mounts: mounts,
 	}
 }
 
@@ -35,16 +63,7 @@ func Build(ctx context.Context, cfg *BuildConfig) (*Environment, error) {
 	cli := dockerClient()
 	defer cli.Close()
 
-	var (
-		projDir = "project" // TODO
-		port    = codeServerPort()
-	)
-
-	// TODO: Remove code-server command, potentially put it into its own hat.
-	cmd := "cd " + projDir + "; code-server --host 127.0.0.1" +
-		" --port " + port +
-		" --data-dir ~/.config/Code --extensions-dir ~/.vscode/extensions --allow-http --no-auth 2>&1"
-	cmd = "tail -f /dev/null"
+	cmd := "tail -f /dev/null"
 
 	u, err := user.Current()
 	if err != nil {
@@ -60,9 +79,7 @@ func Build(ctx context.Context, cfg *BuildConfig) (*Environment, error) {
 		Image:  cfg.Image,
 		Labels: map[string]string{},
 		User:   u.Uid + ":user",
-		// TODO: Do something about this. This is just to get the vscode remote
-		// extension working.
-		Env: []string{"HOME=/home/user"},
+		Env:    cfg.Envs,
 	}
 
 	hostConfig := &container.HostConfig{

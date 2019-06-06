@@ -131,8 +131,12 @@ func (e *Environment) clone(ctx context.Context, dir string) error {
 }
 
 func (e *Environment) exec(ctx context.Context, cmd string, args ...string) *exec.Cmd {
-	// TODO: Use docker api.
 	args = append([]string{"exec", "-i", e.name, cmd}, args...)
+	return exec.CommandContext(ctx, "docker", args...)
+}
+
+func (e *Environment) execTTY(ctx context.Context, cmd string, args ...string) *exec.Cmd {
+	args = append([]string{"exec", "-it", e.name, cmd}, args...)
 	return exec.CommandContext(ctx, "docker", args...)
 }
 

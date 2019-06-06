@@ -23,7 +23,8 @@ type BuildContextProvider interface {
 }
 
 // Modify applies a modification to an environment by taking a build context and
-// applying it the environment's existing image.
+// applying it the environment's existing image. The new environment will
+// inherit env vars and mounts.
 //
 // The provided environment will be removed, allowing for the new environment to
 // use the same name.
