@@ -8,8 +8,8 @@ import (
 	"path/filepath"
 
 	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/mount"
 	"go.coder.com/flog"
-	"go.coder.com/sail/internal/randstr"
 	"golang.org/x/xerrors"
 )
 
@@ -23,21 +23,33 @@ import (
 //
 // The default environment will be returned if no sail docker file exists.
 func Bootstrap(ctx context.Context, cfg *BuildConfig, repo *Repo) (*Environment, error) {
+	// TODO: Should this always try to create?
+	lv, err := ensureVolumeForRepo(ctx, repo)
+	if err != nil {
+		return nil, err
+	}
+
+	projectPath := defaultDirForRepo(repo)
+	projectMount := mount.Mount{
+		Type:   mount.TypeVolume,
+		Source: lv.vol.Name,
+		Target: projectPath,
+	}
+	cfg.Mounts = append(cfg.Mounts, projectMount)
+
 	env, err := Build(ctx, cfg)
 	if err != nil {
 		return nil, err
 	}
 
-	err = cloneInto(ctx, env, repo, "/home/user/Projects/project")
+	err = cloneInto(ctx, env, repo, projectPath)
 	if err != nil {
 		return nil, err
 	}
 
-	// TODO: Actually do the other stuff too.
-	return env, nil
-
-	imgName, err := imageFromEnvRepo(ctx, env)
-	if xerrors.Is(err, errMissingDockerfile) {
+	sailPath := filepath.Join(projectPath, ".sail")
+	_, err = env.readPath(ctx, sailPath)
+	if xerrors.Is(err, errNoSuchFile) {
 		flog.Info("no '.sail/Dockerfile' for repo")
 		return env, nil
 	}
@@ -45,29 +57,31 @@ func Bootstrap(ctx context.Context, cfg *BuildConfig, repo *Repo) (*Environment,
 		return nil, err
 	}
 
-	flog.Info("created new image from '.sail/Dockerfile': %s", imgName)
-
-	// New image for environment was created, stop and remove the previous
-	// container to make room for the new one.
-	err = Stop(ctx, env)
-	if err != nil {
-		return nil, err
+	prov := &EnvPathProvider{
+		Env:  env,
+		Path: sailPath,
 	}
-	err = Remove(ctx, env)
+	env, err = Modify(ctx, prov, env)
 	if err != nil {
-		return nil, err
-	}
-
-	// Set new image to build with.
-	cfg.Image = imgName
-
-	// Rebuild with image specific to the repo.
-	env, err = Build(ctx, cfg)
-	if err != nil {
-		return nil, err
+		return nil, xerrors.Errorf("failed to modify: %w", err)
 	}
 
 	return env, nil
+}
+
+// ensureVolumeForRepo ensures that there's a volume dedicated to storing the
+// repo.
+func ensureVolumeForRepo(ctx context.Context, r *Repo) (*localVolume, error) {
+	name := r.DockerName()
+	lv, err := findLocalVolume(ctx, name)
+	if xerrors.Is(err, errMissingVolume) {
+		lv, err = createLocalVolume(ctx, name)
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	return lv, nil
 }
 
 // cloneInto clones the repo into the environment.
@@ -98,33 +112,6 @@ func cloneInto(ctx context.Context, env *Environment, repo *Repo, path string) e
 
 var errMissingDockerfile = xerrors.Errorf("missing dockerfile")
 
-// imageFromEnvRepo will attempt to create an image from repo inside the
-// environment if the repo contains a docker file at '.sail/Dockerfile'.
-// errMissingDockerfile will be returned if a docker file cannot be found.
-func imageFromEnvRepo(ctx context.Context, env *Environment) (string, error) {
-	const relPath = ".sail"
-
-	// Read the file from the docker container and not directly from the path
-	// on the host machine. The path on the host machine is owned by root.
-	// TODO: Fix repo path.
-	rdr, err := env.readPath(ctx, filepath.Join(defaultDirForRepo(nil), relPath))
-	if xerrors.Is(err, errNoSuchFile) {
-		return "", errMissingDockerfile
-	}
-	if err != nil {
-		return "", err
-	}
-
-	// TODO: Better image name
-	imgName := env.name + "-bootstrap-" + randstr.MakeCharset(randstr.Lower, 5)
-	err = buildImage(ctx, rdr, imgName)
-	if err != nil {
-		return "", err
-	}
-
-	return imgName, nil
-}
-
 // buildImage builds an image from the given directory. The dir should contain a
 // valid dockerfile at its root.
 func buildImage(ctx context.Context, buildContext io.Reader, name string) error {
@@ -146,4 +133,8 @@ func buildImage(ctx context.Context, buildContext io.Reader, name string) error 
 	io.Copy(os.Stdout, resp.Body)
 
 	return nil
+}
+
+func defaultDirForRepo(r *Repo) string {
+	return filepath.Join("/home/user/Projects", r.BaseName())
 }

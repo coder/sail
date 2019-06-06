@@ -133,10 +133,15 @@ func (c *runcmd) Run(fl *flag.FlagSet) {
 	}
 
 	flog.Info("running...")
-	sigs := make(chan os.Signal, 1)
-	signal.Notify(sigs, os.Interrupt, os.Kill)
-	<-sigs
-	flog.Info("closing...")
+
+	// Keep the docker socket forwarded.
+	// TODO: How should this be handled?
+	if c.gf.remoteHost != "" {
+		sigs := make(chan os.Signal, 1)
+		signal.Notify(sigs, os.Interrupt, os.Kill)
+		<-sigs
+		flog.Info("closing...")
+	}
 }
 
 func (c *runcmd) build(gf *globalFlags, proj *project, b *hatBuilder, r *runner) error {

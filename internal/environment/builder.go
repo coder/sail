@@ -2,11 +2,10 @@ package environment
 
 import (
 	"context"
-	"fmt"
 	"math/rand"
 	"os/user"
-	"path/filepath"
 	"strconv"
+	"time"
 
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/mount"
@@ -14,10 +13,15 @@ import (
 	"golang.org/x/xerrors"
 )
 
+func init() {
+	rand.Seed(time.Now().Unix())
+}
+
 type BuildConfig struct {
-	Name  string
-	Image string
-	Envs  []string
+	Name   string
+	Image  string
+	Envs   []string
+	Mounts []mount.Mount
 }
 
 func NewDefaultBuildConfig(name string) *BuildConfig {
@@ -32,13 +36,15 @@ func Build(ctx context.Context, cfg *BuildConfig) (*Environment, error) {
 	defer cli.Close()
 
 	var (
-		projDir = defaultDirForRepo(nil) // TODO
+		projDir = "project" // TODO
 		port    = codeServerPort()
 	)
 
+	// TODO: Remove code-server command, potentially put it into its own hat.
 	cmd := "cd " + projDir + "; code-server --host 127.0.0.1" +
 		" --port " + port +
 		" --data-dir ~/.config/Code --extensions-dir ~/.vscode/extensions --allow-http --no-auth 2>&1"
+	cmd = "tail -f /dev/null"
 
 	u, err := user.Current()
 	if err != nil {
@@ -59,26 +65,13 @@ func Build(ctx context.Context, cfg *BuildConfig) (*Environment, error) {
 		Env: []string{"HOME=/home/user"},
 	}
 
-	// repoVol, err := ensureVolumeForRepo(ctx, b.repo)
-	// if err != nil {
-	// 	return nil, err
-	// }
-
-	mounts := []mount.Mount{
-		{
-			Type: mount.TypeVolume,
-			// Source: repoVol.vol.Name,
-			Target: projDir,
-		},
-	}
-
 	hostConfig := &container.HostConfig{
 		NetworkMode: "host",
 		Privileged:  true,
 		ExtraHosts: []string{
 			containerConfig.Hostname + ":127.0.0.1",
 		},
-		Mounts: mounts,
+		Mounts: cfg.Mounts,
 	}
 
 	_, err = cli.ContainerCreate(ctx, containerConfig, hostConfig, nil, cfg.Name)
@@ -101,39 +94,7 @@ func Build(ctx context.Context, cfg *BuildConfig) (*Environment, error) {
 		return nil, err
 	}
 
-	// if !b.skipClone {
-	// 	err = env.clone(ctx, projDir)
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
-	// }
-
 	return env, nil
-}
-
-// ensureVolumeForRepo ensures that there's a volume dedicated to storing the
-// repo.
-func ensureVolumeForRepo(ctx context.Context, r *Repo) (*localVolume, error) {
-	name := formatRepoVolumeName(r)
-	lv, err := findLocalVolume(ctx, name)
-	if xerrors.Is(err, errMissingVolume) {
-		lv, err = createLocalVolume(ctx, name)
-	}
-	if err != nil {
-		return nil, err
-	}
-
-	return lv, nil
-}
-
-func defaultDirForRepo(r *Repo) string {
-	// TODO: Correct path.
-	return filepath.Join("/home/user/Projects/project")
-}
-
-func formatRepoVolumeName(r *Repo) string {
-	// TODO: Correct name.
-	return fmt.Sprintf("%s_%s", "test", "test")
 }
 
 func codeServerPort() string {

@@ -57,8 +57,10 @@ func Modify(ctx context.Context, prov BuildContextProvider, env *Environment) (*
 	}
 
 	cfg := &BuildConfig{
-		Name:  env.name,
-		Image: imgName,
+		Name:   env.name,
+		Image:  imgName,
+		Envs:   env.cnt.Config.Env,
+		Mounts: env.cnt.HostConfig.Mounts,
 	}
 
 	env, err = Build(ctx, cfg)
@@ -152,6 +154,9 @@ func (p LocalProvider) BuildContext(ctx context.Context) (io.Reader, error) {
 //
 // The provided environment will be used to clone the repo. When ssh agent
 // forwarding works, this will allow for private repos to be used.
+//
+// TODO: Maybe git clone outside of the the environment, then use the
+// LocalProvider to provide the dockerfile.
 type ExternalGitProvider struct {
 	WorkingEnv *Environment
 	URI        string
