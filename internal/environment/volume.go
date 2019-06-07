@@ -58,6 +58,18 @@ func createLocalVolume(ctx context.Context, name string) (*localVolume, error) {
 	}, nil
 }
 
+func deleteLocalVolume(ctx context.Context, lv *localVolume) error {
+	cli := dockerClient()
+	defer cli.Close()
+
+	err := cli.VolumeRemove(ctx, lv.vol.Name, false)
+	if err != nil {
+		return xerrors.Errorf("failed to delete local volume: %v", err)
+	}
+
+	return nil
+}
+
 func isVolumeNotFoundError(err error) bool {
 	if err == nil {
 		return false

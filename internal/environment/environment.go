@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/mount"
 	"golang.org/x/xerrors"
 )
 
@@ -97,10 +98,22 @@ func Purge(ctx context.Context, env *Environment) error {
 	cli := dockerClient()
 	defer cli.Close()
 
-	// err = cli.VolumeRemove(ctx, formatRepoVolumeName(env.repo), true)
-	// if err != nil {
-	// 	return xerrors.Errorf("failed to remove volume: %w", err)
-	// }
+	for _, m := range env.cnt.Mounts {
+		if m.Type == mount.TypeVolume {
+			vol, err := findLocalVolume(ctx, m.Name)
+			if isVolumeNotFoundError(err) {
+				continue
+			}
+			if err != nil {
+				return err
+			}
+
+			err = deleteLocalVolume(ctx, vol)
+			if err != nil {
+				return err
+			}
+		}
+	}
 
 	return nil
 }

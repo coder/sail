@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -102,13 +103,14 @@ func cloneInto(ctx context.Context, env *Environment, repo *Repo, path string) e
 	uri := repo.CloneURI()
 	flog.Info("cloning from %s", uri)
 	cloneStr := fmt.Sprintf("cd %s; GIT_SSH_COMMAND='ssh -o StrictHostKeyChecking=no' git clone %s .", path, uri)
-	cmd := env.ExecTTY(ctx, "bash", []string{"-c", cloneStr}...)
+	// TODO: Ensure this works with ssh passphrases.
+	cmd := env.Exec(ctx, "bash", []string{"-c", cloneStr}...)
 	cmd.Stdout = os.Stdout
 	cmd.Stdin = os.Stdin
 	cmd.Stderr = os.Stderr
 	err = cmd.Run()
 	if err != nil {
-		return xerrors.Errorf("failed to clone: %s: %w", out, err)
+		return xerrors.Errorf("failed to clone: %w", err)
 	}
 
 	return nil
@@ -134,7 +136,7 @@ func buildImage(ctx context.Context, buildContext io.Reader, name string) error 
 	defer resp.Body.Close()
 
 	// Mostly for debugging.
-	io.Copy(os.Stdout, resp.Body)
+	io.Copy(ioutil.Discard, resp.Body)
 
 	return nil
 }

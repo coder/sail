@@ -10,6 +10,7 @@ import (
 )
 
 func Test_Modifier(t *testing.T) {
+	t.Parallel()
 	checkDockerDaemon(t)
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)

@@ -30,6 +30,7 @@ func checkDockerDaemon(t *testing.T) {
 }
 
 func Test_Builder(t *testing.T) {
+	t.Parallel()
 	checkDockerDaemon(t)
 
 	t.Run("Basic", func(t *testing.T) {

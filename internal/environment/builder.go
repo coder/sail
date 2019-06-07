@@ -6,7 +6,6 @@ import (
 	"math/rand"
 	"os"
 	"os/user"
-	"strconv"
 	"time"
 
 	"github.com/docker/docker/api/types/container"
@@ -59,6 +58,7 @@ func NewDefaultBuildConfig(name string) *BuildConfig {
 	}
 }
 
+// Build builds an environment using the provided config.
 func Build(ctx context.Context, cfg *BuildConfig) (*Environment, error) {
 	cli := dockerClient()
 	defer cli.Close()
@@ -112,8 +112,4 @@ func Build(ctx context.Context, cfg *BuildConfig) (*Environment, error) {
 	}
 
 	return env, nil
-}
-
-func codeServerPort() string {
-	return strconv.Itoa(rand.Intn(65535-1024+1) + 1024) // TODO
 }
