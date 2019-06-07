@@ -24,7 +24,7 @@ import (
 func loadCodeServer(ctx context.Context) (string, error) {
 	start := time.Now()
 
-	const cachePath = "/tmp/sail-code-server-cache/code-server"
+	cachePath := filepath.Join(os.TempDir(), "sail-code-server-cache/code-server")
 
 	// downloadURLPath stores the download URL, so we know whether we should update
 	// the binary.
