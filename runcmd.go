@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"os"
+	"os/exec"
 	"os/signal"
 	"time"
 
@@ -124,7 +125,7 @@ func (c *runcmd) Run(fl *flag.FlagSet) {
 	_, err = environment.FindEnvironment(ctx, name)
 	if xerrors.Is(err, environment.ErrMissingContainer) {
 		buildCfg := environment.NewDefaultBuildConfig(name)
-		_, err = environment.Bootstrap(ctx, buildCfg, &repo)
+		_, err = environment.Bootstrap(ctx, buildCfg, &repo, c.gf.remoteHost)
 		if err != nil {
 			flog.Fatal("failed to bootstrap environment: %v", err)
 		}
@@ -133,6 +134,21 @@ func (c *runcmd) Run(fl *flag.FlagSet) {
 	}
 
 	flog.Info("running...")
+
+	// TODO: This command stuff is wip. Just testing it out.
+	for i, arg := range fl.Args() {
+		if arg == "--" {
+			commandArgs := fl.Args()[i+1:]
+			command := commandArgs[0]
+			args := commandArgs[1:]
+			cmd := exec.Command(command, args...)
+			err = cmd.Run()
+			if err != nil {
+				flog.Fatal("failed to run command: %v: %v", commandArgs, err)
+			}
+			break
+		}
+	}
 
 	// Keep the docker socket forwarded.
 	// TODO: How should this be handled?

@@ -22,7 +22,7 @@ func Test_Bootstrap(t *testing.T) {
 
 	name := "bootstrap-test-" + randstr.MakeCharset(randstr.Lower, 5)
 	cfg := NewDefaultBuildConfig(name)
-	env, err := Bootstrap(ctx, cfg, &repo)
+	env, err := Bootstrap(ctx, cfg, &repo, "")
 	require.NoError(t, err)
 	defer func() {
 		err := Purge(ctx, env)

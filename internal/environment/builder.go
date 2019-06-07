@@ -2,11 +2,9 @@ package environment
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"math/rand"
-	"os"
 	"os/user"
 	"strings"
 	"time"
@@ -30,35 +28,15 @@ type BuildConfig struct {
 }
 
 func NewDefaultBuildConfig(name string) *BuildConfig {
-	var (
-		envs   []string
-		mounts []mount.Mount
-	)
-
-	// TODO: This will only work for local sail containers. Some coordination
-	// between forwarding the socket over ssh will need to happen.
-	sshAuthSock, exists := os.LookupEnv("SSH_AUTH_SOCK")
-	if exists {
-		env := fmt.Sprintf("SSH_AUTH_SOCK=%s", sshAuthSock)
-		envs = append(envs, env)
-
-		sockMount := mount.Mount{
-			Type:   mount.TypeBind,
-			Source: sshAuthSock,
-			Target: sshAuthSock,
-		}
-		mounts = append(mounts, sockMount)
-	}
-
+	var envs []string
 	// TODO: Should this be handled better?
 	// Ensures that the vscode remote extension works correctly.
 	envs = append(envs, "HOME=/home/user")
 
 	return &BuildConfig{
-		Name:   name,
-		Image:  "codercom/ubuntu-dev",
-		Envs:   envs,
-		Mounts: mounts,
+		Name:  name,
+		Image: "codercom/ubuntu-dev",
+		Envs:  envs,
 	}
 }
 

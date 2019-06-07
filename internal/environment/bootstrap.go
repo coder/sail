@@ -11,6 +11,8 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/mount"
 	"go.coder.com/flog"
+	"go.coder.com/sail/internal/randstr"
+	"go.coder.com/sail/internal/sshforward"
 	"golang.org/x/xerrors"
 )
 
@@ -23,7 +25,9 @@ import (
 // image.
 //
 // The default environment will be returned if no sail docker file exists.
-func Bootstrap(ctx context.Context, cfg *BuildConfig, repo *Repo) (*Environment, error) {
+//
+// TODO: Come up with a cleaner solution to needing to pass in the remote host.
+func Bootstrap(ctx context.Context, cfg *BuildConfig, repo *Repo, remote string) (*Environment, error) {
 	// TODO: Should this always try to create?
 	lv, err := ensureVolumeForRepo(ctx, repo)
 	if err != nil {
@@ -38,9 +42,48 @@ func Bootstrap(ctx context.Context, cfg *BuildConfig, repo *Repo) (*Environment,
 	}
 	cfg.Mounts = append(cfg.Mounts, projectMount)
 
+	// Forward ssh auth sock to container if available. Allows for doing git
+	// operations over ssh inside the container.
+	localSock, authSockExists := os.LookupEnv("SSH_AUTH_SOCK")
+	// Default to the container socket being the same as the local
+	// socket. If the container is remote, the socket will need to be
+	// unique and forwarded over ssh.
+	forwardedSock := localSock
+	if authSockExists {
+		if remote != "" {
+			forwardedSock = fmt.Sprintf("/tmp/sail-agent-%s.sock", randstr.Make(5))
+			flog.Info("forwarding ssh auth agent through %s", forwardedSock)
+			agentForwarder := sshforward.NewRemoteSocketForwarder(forwardedSock, localSock, remote)
+			err := agentForwarder.Forward()
+			if err != nil {
+				flog.Fatal("failed to forward ssh auth sock: %v", err)
+			}
+			defer agentForwarder.Close()
+		}
+
+		authEnv := fmt.Sprintf("SSH_AUTH_SOCK=%s", forwardedSock)
+		authMount := mount.Mount{
+			Type:   mount.TypeBind,
+			Source: forwardedSock,
+			Target: forwardedSock,
+		}
+
+		cfg.Envs = append(cfg.Envs, authEnv)
+		cfg.Mounts = append(cfg.Mounts, authMount)
+	}
+
 	env, err := Build(ctx, cfg)
 	if err != nil {
 		return nil, err
+	}
+
+	if authSockExists {
+		// TODO: Don't do 0777. Right now it's set to 0777 to allow for subsequent
+		// containers to use the same socket without having to chown it every time.
+		out, err := env.Exec(ctx, "sudo", "chmod", "-R", "0777", forwardedSock).CombinedOutput()
+		if err != nil {
+			return nil, xerrors.Errorf("failed to chmod auth sock: %s: %w", out, err)
+		}
 	}
 
 	err = cloneInto(ctx, env, repo, projectPath)
