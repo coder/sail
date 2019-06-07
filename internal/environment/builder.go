@@ -3,11 +3,15 @@ package environment
 import (
 	"context"
 	"fmt"
+	"io"
+	"io/ioutil"
 	"math/rand"
 	"os"
 	"os/user"
+	"strings"
 	"time"
 
+	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/api/types/strslice"
@@ -63,6 +67,11 @@ func Build(ctx context.Context, cfg *BuildConfig) (*Environment, error) {
 	cli := dockerClient()
 	defer cli.Close()
 
+	err := ensureImage(ctx, cfg.Image)
+	if err != nil {
+		return nil, xerrors.Errorf("failed to ensure image: %w", err)
+	}
+
 	cmd := "tail -f /dev/null"
 
 	u, err := user.Current()
@@ -112,4 +121,34 @@ func Build(ctx context.Context, cfg *BuildConfig) (*Environment, error) {
 	}
 
 	return env, nil
+}
+
+// ensureImage ensures that the image exists on the docker host. If the image
+// doesn't exist, the image will be pulled.
+func ensureImage(ctx context.Context, image string) error {
+	cli := dockerClient()
+	defer cli.Close()
+
+	_, _, err := cli.ImageInspectWithRaw(ctx, image)
+	if isImageNotFoundError(err) {
+		opts := types.ImagePullOptions{}
+		rdr, err := cli.ImagePull(ctx, image, opts)
+		if err != nil {
+			return xerrors.Errorf("failed to pull image: %w", err)
+		}
+		defer rdr.Close()
+
+		io.Copy(ioutil.Discard, rdr)
+	} else if err != nil {
+		return xerrors.Errorf("failed to inspect image: %w", err)
+	}
+
+	return nil
+}
+
+func isImageNotFoundError(err error) bool {
+	if err == nil {
+		return false
+	}
+	return strings.Contains(err.Error(), "No such image")
 }
