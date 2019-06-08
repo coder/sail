@@ -24,10 +24,7 @@ func Test_Bootstrap(t *testing.T) {
 	cfg := NewDefaultBuildConfig(name)
 	env, err := Bootstrap(ctx, cfg, &repo, "")
 	require.NoError(t, err)
-	defer func() {
-		err := Purge(ctx, env)
-		require.NoError(t, err)
-	}()
+	defer removeEnv(t, env)
 
 	// If git directory exists, good chance everything worked correctly.
 	out, err := env.Exec(ctx, "ls", "/home/user/Projects/sshcode/.git").CombinedOutput()

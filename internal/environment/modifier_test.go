@@ -26,8 +26,7 @@ func Test_Modifier(t *testing.T) {
 		require.NoError(t, err)
 
 		destroy = func(t *testing.T) {
-			err := Purge(ctx, env)
-			require.NoError(t, err)
+			removeEnv(t, env)
 		}
 
 		return env, destroy

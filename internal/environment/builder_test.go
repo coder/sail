@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/docker/docker/api/types/mount"
 	"github.com/stretchr/testify/require"
 	"go.coder.com/sail/internal/randstr"
 )
@@ -29,6 +30,31 @@ func checkDockerDaemon(t *testing.T) {
 	}
 }
 
+func removeEnv(t *testing.T, env *Environment) {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	err := Purge(ctx, env)
+	if err != nil {
+		t.Logf("error purging environment: %v", err)
+	}
+
+	cli := dockerClient()
+	defer cli.Close()
+
+	for _, m := range env.cnt.Mounts {
+		if m.Type == mount.TypeVolume {
+			vol, err := findLocalVolume(ctx, m.Name)
+			if isVolumeNotFoundError(err) {
+				continue
+			}
+			require.NoError(t, err)
+
+			err = deleteLocalVolume(ctx, vol)
+			require.NoError(t, err)
+		}
+	}
+}
+
 func Test_Builder(t *testing.T) {
 	t.Parallel()
 	checkDockerDaemon(t)
@@ -43,10 +69,7 @@ func Test_Builder(t *testing.T) {
 
 		env, err := Build(ctx, cfg)
 		require.NoError(t, err)
-		defer func() {
-			err := Purge(ctx, env)
-			require.NoError(t, err)
-		}()
+		defer removeEnv(t, env)
 
 		// Assert that code-server was correctly started.
 		// port, err := env.processPort(ctx, "code-server")

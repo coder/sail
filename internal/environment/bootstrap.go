@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/mount"
@@ -27,12 +28,15 @@ import (
 // The default environment will be returned if no sail docker file exists.
 //
 // TODO: Come up with a cleaner solution to needing to pass in the remote host.
+// TODO: Leaks ssh forward commands. No cleanup is being done.
 func Bootstrap(ctx context.Context, cfg *BuildConfig, repo *Repo, remote string) (*Environment, error) {
 	// TODO: Should this always try to create?
 	lv, err := ensureVolumeForRepo(ctx, repo)
 	if err != nil {
 		return nil, err
 	}
+
+	cfg.Image = defaultRepoImage(repo, cfg.Image)
 
 	projectPath := defaultDirForRepo(repo)
 	projectMount := mount.Mount{
@@ -78,8 +82,9 @@ func Bootstrap(ctx context.Context, cfg *BuildConfig, repo *Repo, remote string)
 	}
 
 	if authSockExists {
-		// TODO: Don't do 0777. Right now it's set to 0777 to allow for subsequent
-		// containers to use the same socket without having to chown it every time.
+		// TODO: Don't do 0777. Right now it's set to 0777 to allow for
+		// subsequent containers to use the same socket without having to chown
+		// it every time.
 		out, err := env.Exec(ctx, "sudo", "chmod", "-R", "0777", forwardedSock).CombinedOutput()
 		if err != nil {
 			return nil, xerrors.Errorf("failed to chmod auth sock: %s: %w", out, err)
@@ -182,6 +187,34 @@ func buildImage(ctx context.Context, buildContext io.Reader, name string) error 
 	io.Copy(ioutil.Discard, resp.Body)
 
 	return nil
+}
+
+// defaultRepoImage returns a base image suitable for development with the
+// repo's language. If the repo language isn't able to be determined, this
+// returns the provided default image.
+func defaultRepoImage(repo *Repo, def string) string {
+	lang := (*repo).Language()
+
+	fmtImage := func(s string) string {
+		return fmt.Sprintf("codercom/ubuntu-dev-%s:latest", s)
+	}
+
+	switch strings.ToLower(lang) {
+	case "go":
+		return fmtImage("go")
+	case "javascript", "typescript":
+		return fmtImage("node12")
+	case "python":
+		return fmtImage("python3.7")
+	case "c", "c++":
+		return fmtImage("gcc8")
+	case "java":
+		return fmtImage("openjdk12")
+	case "ruby":
+		return fmtImage("ruby2.6")
+	default:
+		return def
+	}
 }
 
 func defaultDirForRepo(r *Repo) string {

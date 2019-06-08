@@ -104,8 +104,9 @@ func (r Repo) BaseName() string {
 	return strings.TrimSuffix(path.Base(r.Path), ".git")
 }
 
-// Language returns the language of a Repository using github's detected language.
-// This is a best effort try and will return the empty string if something fails.
+// Language returns the language of a Repository using github's detected
+// language.  This is a best effort try and will return the empty string if
+// something fails.
 func (r Repo) Language() string {
 	orgRepo := strings.SplitN(r.trimPath(), "/", 2)
 	if len(orgRepo) != 2 {
@@ -122,7 +123,7 @@ func (r Repo) Language() string {
 		return ""
 	}
 
-	return Repo.GetLanguage()
+	return strings.ToLower(Repo.GetLanguage())
 }
 
 func isAllowedSchema(s string) bool {
