@@ -4,13 +4,14 @@ set -eu
 BASE_IMAGE=ubuntu-dev
 
 LANG_IMAGES=(
+    ubuntu-dev-gcc8
     ubuntu-dev-go
+    ubuntu-dev-llvm8
+    ubuntu-dev-node12
+    ubuntu-dev-openjdk12
     ubuntu-dev-python2.7
     ubuntu-dev-python3.7
     ubuntu-dev-ruby2.6
-    ubuntu-dev-gcc8
-    ubuntu-dev-node12
-    ubuntu-dev-openjdk12
 )
 
 # Build the base for all images.
