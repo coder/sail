@@ -236,12 +236,12 @@ func (r *runner) mounts(mounts []mount.Mount, image string) ([]mount.Mount, erro
 	// Mount in VS Code configs.
 	mounts = append(mounts, mount.Mount{
 		Type:   "bind",
-		Source: "~/.config/Code",
+		Source: vscodeConfigDir(),
 		Target: "~/.config/Code",
 	})
 	mounts = append(mounts, mount.Mount{
 		Type:   "bind",
-		Source: "~/.vscode/extensions",
+		Source: vscodeExtensionsDir(),
 		Target: hostExtensionsDir,
 	})
 
@@ -251,8 +251,7 @@ func (r *runner) mounts(mounts []mount.Mount, image string) ([]mount.Mount, erro
 	// socket to the container allows for using the user's existing setup for
 	// ssh authentication instead of having to create a new keys or explicity
 	// pass them in.
-	sshAuthSock, exists := os.LookupEnv("SSH_AUTH_SOCK")
-	if exists {
+	if sshAuthSock, exists := os.LookupEnv("SSH_AUTH_SOCK"); exists {
 		mounts = append(mounts, mount.Mount{
 			Type:   "bind",
 			Source: sshAuthSock,

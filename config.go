@@ -18,15 +18,14 @@ func resolvePath(homedir string, path string) string {
 		return path
 	}
 
-	list := strings.Split(path, string(filepath.Separator))
-
-	for i, seg := range list {
-		if seg == "~" {
-			list[i] = homedir
-		}
+	// Replace tilde notation in path with homedir.
+	if path == "~" {
+		path = homedir
+	} else if strings.HasPrefix(path, "~/") {
+		path = filepath.Join(homedir, path[2:])
 	}
 
-	return filepath.Join(list...)
+	return filepath.Clean(path)
 }
 
 // config describes the config.toml.
