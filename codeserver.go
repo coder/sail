@@ -24,7 +24,20 @@ import (
 func loadCodeServer(ctx context.Context) (string, error) {
 	start := time.Now()
 
-	cachePath := filepath.Join(os.TempDir(), "sail-code-server-cache/code-server")
+	var cachePath string
+	const codeServerPathSuffix = "sail-code-server-cache/code-server"
+	// MacOS maps os.TempDir() to `/var/folders/...`, which isn't shared with the docker
+	// system since docker tries to comply with Apple's filesystem sandbox guidelines, so
+	// default to `/tmp` when on MacOS.
+	//
+	// See:
+	// https://stackoverflow.com/questions/45122459/docker-mounts-denied-the-paths-are-not-shared-from-os-x-and-are-not-known
+	switch runtime.GOOS {
+	case "darwin":
+		cachePath = filepath.Join("/tmp", codeServerPathSuffix)
+	default:
+		cachePath = filepath.Join(os.TempDir(), codeServerPathSuffix)
+	}
 
 	// downloadURLPath stores the download URL, so we know whether we should update
 	// the binary.
