@@ -15,7 +15,7 @@ Sail comes out the box with VS Code integrated environment editing.
 The UI will freeze as the container is rebuilding.
 
 ## Workflow Tips
--  Ctrl+Shift+r also triggers an environment rebuild.
+-  The `Ctrl+Alt+R` or `Cmd+Alt+R` keyboard shortcut also triggers an environment rebuild.
 -  Move the active part of the Dockerfile to the bottom. Then, stable parts of your Dockerfile will stay
 cached.
 

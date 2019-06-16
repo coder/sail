@@ -77,7 +77,7 @@
         }
 
         window.ide.workbench.actionsRegistry.registerWorkbenchAction(new window.ide.workbench.syncActionDescriptor(rebuildAction, "sail.rebuild", "Rebuild container", {
-            primary: ((1 << 11) >>> 0) | 48 // That's cmd + R. See vscode source for the magic numbers.
+            primary: ((1 << 11) >>> 0) | ((1 << 9) >>> 0) | 48 // That's cmd + alt + R. See vscode keyCodes.ts source for the magic numbers.
         }), "sail: Rebuild container", "sail");
 
         const statusBarService = window.ide.workbench.statusbarService
