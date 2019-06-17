@@ -32,6 +32,17 @@ const containerLogPath = "/tmp/code-server.log"
 // For example, when setting environment variables for the container.
 const containerHome = "/home/user"
 
+// expandDir expands ~ to be the containerHome variable.
+func expandDir(path string) string {
+	path = filepath.Clean(path)
+	if path == "~" {
+		path = containerHome
+	} else if strings.HasPrefix(path, "~/") {
+		path = filepath.Join(containerHome, path[2:])
+	}
+	return filepath.Clean(path)
+}
+
 // Docker labels for sail state.
 const (
 	sailLabel = "com.coder.sail"
@@ -42,6 +53,12 @@ const (
 	projectDirLabel      = sailLabel + ".project_dir"
 	projectNameLabel     = sailLabel + ".project_name"
 	proxyURLLabel        = sailLabel + ".proxy_url"
+)
+
+// Docker labels for user configuration.
+const (
+	onOpenLabel      = "on_open"
+	projectRootLabel = "project_root"
 )
 
 // runner holds all the information needed to assemble a new sail container.
@@ -68,6 +85,8 @@ type runner struct {
 // the container's root process.
 // We want code-server to be the root process as it gives us the nice guarantee that
 // the container is only online when code-server is working.
+// Additionally, runContainer also runs the image's on_open label as a sh
+// command inside of the project directory.
 func (r *runner) runContainer(image string) error {
 	cli := dockerClient()
 	defer cli.Close()
@@ -129,6 +148,11 @@ func (r *runner) runContainer(image string) error {
 	err = cli.ContainerStart(ctx, r.cntName, types.ContainerStartOptions{})
 	if err != nil {
 		return xerrors.Errorf("failed to start container: %w", err)
+	}
+
+	err = r.runOnOpen(ctx, image)
+	if err != nil {
+		return xerrors.Errorf("failed to run on_open label in container: %w", err)
 	}
 
 	return nil
@@ -457,7 +481,7 @@ func (r *runner) projectDir(image string) (string, error) {
 		return "", xerrors.Errorf("failed to inspect image: %w", err)
 	}
 
-	proot, ok := img.Config.Labels["project_root"]
+	proot, ok := img.Config.Labels[projectRootLabel]
 	if ok {
 		return filepath.Join(proot, r.projectName), nil
 	}
@@ -489,6 +513,63 @@ func runnerFromContainer(name string) (*runner, error) {
 		projectName:     cnt.Config.Labels[projectNameLabel],
 		proxyURL:        cnt.Config.Labels[proxyURLLabel],
 	}, nil
+}
+
+// runOnOpen runs the image's `on_open` label in the container in the project directory.
+func (r *runner) runOnOpen(ctx context.Context, image string) error {
+	cli := dockerClient()
+	defer cli.Close()
+
+	// get project directory.
+	projectDir, err := r.projectDir(image)
+	if err != nil {
+		return err
+	}
+
+	// get on_open label from image
+	img, _, err := cli.ImageInspectWithRaw(context.Background(), image)
+	if err != nil {
+		return xerrors.Errorf("failed to inspect image: %w", err)
+	}
+	onOpenCmd, ok := img.Config.Labels[onOpenLabel]
+	if !ok {
+		// no on_open label, so we quit early.
+		return nil
+	}
+
+	cmd := []string{onOpenCmd}
+	return r.runInContainer(ctx, expandDir(projectDir), cmd, true)
+}
+
+// runInContainer runs a command in the container (optionally using /bin/sh -c) using exec (detached).
+func (r *runner) runInContainer(ctx context.Context, workDir string, cmd []string, useSh bool) error {
+	cli := dockerClient()
+	defer cli.Close()
+
+	if useSh {
+		cmd = append([]string{"/bin/sh", "-c"}, cmd...)
+	}
+
+	execID, err := cli.ContainerExecCreate(ctx, r.cntName, types.ExecConfig{
+		Cmd:        cmd,
+		Detach:     true,
+		WorkingDir: workDir,
+
+		// the following options don't attach it, but makes the script think it's running in a terminal.
+		Tty:          true,
+		AttachStdin:  true,
+		AttachStderr: true,
+		AttachStdout: true,
+	})
+	if err != nil {
+		return xerrors.Errorf("failed to create exec configuration: %v", err)
+	}
+
+	err = cli.ContainerExecStart(ctx, execID.ID, types.ExecStartCheck{Detach: true})
+	if err != nil {
+		return xerrors.Errorf("failed to start exec process: %v", err)
+	}
+	return nil
 }
 
 func (r *runner) forkProxy() error {
