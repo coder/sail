@@ -9,9 +9,10 @@ import (
 
 func TestParseRepo(t *testing.T) {
 	var tests = []struct {
-		defSchema string
-		defHost   string
-		fullPath  string
+		defSchema       string
+		defHost         string
+		defOrganization string
+		fullPath        string
 
 		expPath     string
 		expHost     string
@@ -23,6 +24,7 @@ func TestParseRepo(t *testing.T) {
 		{
 			"ssh",
 			"github.com",
+			"",
 			"cdr/sail",
 			"cdr/sail",
 			"github.com",
@@ -34,6 +36,7 @@ func TestParseRepo(t *testing.T) {
 		{
 			"http",
 			"github.com",
+			"",
 			"cdr/sail",
 			"cdr/sail",
 			"github.com",
@@ -45,6 +48,7 @@ func TestParseRepo(t *testing.T) {
 		{
 			"https",
 			"github.com",
+			"",
 			"cdr/sail",
 			"cdr/sail",
 			"github.com",
@@ -56,6 +60,7 @@ func TestParseRepo(t *testing.T) {
 		{
 			"https",
 			"github.com",
+			"",
 			"https://github.com/cdr/sail",
 			"cdr/sail",
 			"github.com",
@@ -67,6 +72,7 @@ func TestParseRepo(t *testing.T) {
 		{
 			"ssh",
 			"github.com",
+			"",
 			"git@github.com/cdr/sail.git",
 			"cdr/sail",
 			"github.com",
@@ -78,6 +84,7 @@ func TestParseRepo(t *testing.T) {
 		{
 			"http",
 			"github.com",
+			"",
 			"ssh://git@github.com/cdr/sail",
 			"cdr/sail",
 			"github.com",
@@ -89,6 +96,7 @@ func TestParseRepo(t *testing.T) {
 		{
 			"https",
 			"my.private-git.com",
+			"",
 			"private/repo",
 			"private/repo",
 			"my.private-git.com",
@@ -96,10 +104,22 @@ func TestParseRepo(t *testing.T) {
 			"https",
 			"https://my.private-git.com/private/repo.git",
 		},
+		// ensure default organization works as expected
+		{
+			"ssh",
+			"github.com",
+			"cdr",
+			"sail",
+			"cdr/sail",
+			"github.com",
+			"git",
+			"ssh",
+			"ssh://git@github.com/cdr/sail.git",
+		},
 	}
 
 	for _, test := range tests {
-		repo, err := parseRepo(test.defSchema, test.defHost, test.fullPath)
+		repo, err := parseRepo(test.defSchema, test.defHost, test.defOrganization, test.fullPath)
 		require.NoError(t, err)
 
 		assert.Equal(t, test.expPath, repo.Path, "expected path to be the same")

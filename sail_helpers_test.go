@@ -43,7 +43,7 @@ func run(t *testing.T, name, repo, hatPath string, fns ...func(t *testing.T, p *
 
 		conf := mustReadConfig(filepath.Join(metaRoot(), ".sail.toml"))
 
-		repo, err := parseRepo("ssh", "github.com", repo)
+		repo, err := parseRepo("ssh", "github.com", "", repo)
 		require.NoError(t, err)
 
 		p.proj = &project{
