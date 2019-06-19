@@ -163,7 +163,7 @@ func nativeMessageHostManifestDirectories() ([]string, error) {
 		chromiumDir = path.Join(homeDir, ".config", "chromium", "NativeMessagingHosts")
 	case "darwin":
 		chromeDir = path.Join(homeDir, "Library", "Application Support", "Google", "Chrome", "NativeMessagingHosts")
-		chromeCanaryDir = path.Join(homeDir, ".config", "google-chrome-unstable", "NativeMessagingHosts")
+		chromeCanaryDir = path.Join(homeDir, "Library", "Application Support", "Google", "Chrome Canary", "NativeMessagingHosts")
 		chromiumDir = path.Join(homeDir, "Library", "Application Support", "Chromium", "NativeMessagingHosts")
 	default:
 		return nil, xerrors.Errorf("unsupported os %q", runtime.GOOS)
