@@ -31,13 +31,15 @@ func resolvePath(homedir string, path string) string {
 // config describes the config.toml.
 // Changes to this should be accompanied by changes to DefaultConfig.
 type config struct {
-	DefaultImage  string `toml:"default_image"`
-	ProjectRoot   string `toml:"project_root"`
-	DefaultHat    string `toml:"default_hat"`
-	DefaultSchema string `toml:"default_schema"`
-	DefaultHost   string `toml:"default_host"`
+	DefaultImage        string `toml:"default_image"`
+	ProjectRoot         string `toml:"project_root"`
+	DefaultHat          string `toml:"default_hat"`
+	DefaultSchema       string `toml:"default_schema"`
+	DefaultHost         string `toml:"default_host"`
+	DefaultOrganization string `toml:"default_organization"`
 }
 
+// DefaultConfig is the default configuration file string.
 const DefaultConfig = `# sail configuration.
 # default_image is the default Docker image to use if the repository provides none.
 default_image = "codercom/ubuntu-dev"
@@ -54,6 +56,10 @@ default_schema = "ssh"
 
 # default host used to clone repo in sail run if none given
 default_host = "github.com"
+
+# default_oranization lets you configure which username to use on default_host
+# when cloning a repo.
+# default_organization = ""
 `
 
 // metaRoot returns the root path of all metadata stored on the host.
