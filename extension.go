@@ -167,7 +167,7 @@ func writeNativeHostManifestFirefox(dir string) error {
 		"path": "%v",
 		"type": "stdio",
 		"allowed_extensions": [
-			"2dcddda6bd28a9237755003f9cb1fcf60c2a7866@temporary-addon"
+			"sail@coder.com"
 		]
 	}`, binPath)
 
