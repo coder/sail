@@ -39,7 +39,7 @@ const doConnection = (socketUrl: string, projectUrl: string, onMessage: (data: {
 
 const ensureButton = (): void | HTMLElement => {
 	const buttonId = "openinsail";
-	const btn = document.querySelector(buttonId) as HTMLElement;
+	const btn = document.querySelector("#" + buttonId) as HTMLElement;
 	if (btn) {
 		return btn;
 	}
