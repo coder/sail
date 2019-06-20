@@ -1,40 +1,43 @@
-import { requestSail } from "./common";
+import { requestSail, SocketMessage } from "./common";
 
 const doConnection = (socketUrl: string, projectUrl: string, onMessage: (data: {
 	readonly type: "data" | "error";
 	readonly v: string;
-}) => void): Promise<WebSocket> => {
-	return new Promise<WebSocket>((resolve, reject) => {
-		const socket = new WebSocket(socketUrl);
-		socket.addEventListener("open", () => {
-			socket.send(JSON.stringify({
-				project: projectUrl,
-			}));
+}) => void): Promise<chrome.runtime.Port> => {
+  return new Promise<chrome.runtime.Port>((resolve, reject) => {
+    const port = chrome.runtime.connect();
 
-			resolve(socket);
-		});
-		socket.addEventListener("close", (event) => {
-			reject(`socket closed: ${event.code}`);
-		});
+    port.onMessage.addListener((message: SocketMessage) => {
+      switch (message.type) {
+        case 'init':
+          port.postMessage({ type: 'init', data: socketUrl } as SocketMessage);
+          break;
+        case 'open':
+          port.postMessage({ type: 'message', data: JSON.stringify({ project: projectUrl }) } as SocketMessage);
+          resolve(port);
+          break;
+        case 'message':
+          const data = JSON.parse(message.data);
+          if (!data) {
+            return;
+          }
+          const type = data.type;
+          const content = atob(data.v);
 
-		socket.addEventListener("message", (event) => {
-			const data = JSON.parse(event.data);
-			if (!data) {
-				return;
-			}
-			const type = data.type;
-			const content = atob(data.v);
-
-			switch (type) {
-				case "data":
-				case "error":
-					onMessage({ type, v: content });
-					break;
-				default:
-					throw new Error("unknown message type: " + type);
-			}
-		});
-	});
+          switch (type) {
+            case 'data':
+            case 'error':
+              onMessage({ type, v: content });
+              break;
+            default:
+              throw new Error('unknown message type: ' + type);
+          }
+          break;
+        default:
+          throw new Error('unknown message type: ' + message.type);
+      }
+    });
+  });
 };
 
 const ensureButton = (): void | HTMLElement => {
@@ -123,8 +126,8 @@ const ensureButton = (): void | HTMLElement => {
 						term.scrollTop = term.scrollHeight;
 					}
 				});
-			}).then((socket) => {
-				socket.addEventListener("close", () => {
+			}).then((port) => {
+        port.onDisconnect.addListener(() => {
 					btn.innerText = "Open in Sail";
 					btn.classList.remove("disabled");
 					term.remove();

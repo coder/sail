@@ -4,6 +4,11 @@ export interface ExtensionMessage {
 	readonly url?: string;
 }
 
+export interface SocketMessage {
+	readonly type: "init" | "open" | "message";
+	readonly data?: string;
+}
+
 export const requestSail = (): Promise<string> => {
 	return new Promise<string>((resolve, reject) => {
 		chrome.runtime.sendMessage({

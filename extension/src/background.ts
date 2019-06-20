@@ -1,4 +1,4 @@
-import { ExtensionMessage } from "./common";
+import { ExtensionMessage, SocketMessage } from "./common";
 
 export class SailConnector {
 	private port: chrome.runtime.Port;
@@ -60,3 +60,28 @@ chrome.runtime.onMessage.addListener((data: ExtensionMessage, sender, sendRespon
 		return true;
 	}
 });
+
+chrome.runtime.onConnect.addListener((port) => {
+  let socket: WebSocket | null;
+
+  port.onMessage.addListener((message: SocketMessage) => {
+    switch (message.type) {
+      case "init":
+        socket = new WebSocket(message.data);
+
+        socket.addEventListener("open", () => port.postMessage({ type: "open" } as SocketMessage))
+        socket.addEventListener("close", e => port.disconnect())
+        socket.addEventListener("message", e => port.postMessage({ type: "message", data: e.data } as SocketMessage))
+        break;
+      case "message":
+        if (socket) {
+          socket.send(message.data)
+        }
+        break;
+      default:
+        throw new Error('unknown message type: ' + message.type);
+      }
+  })
+
+  port.postMessage({ type: "init" } as SocketMessage)
+})
