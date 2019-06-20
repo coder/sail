@@ -21,6 +21,7 @@ import (
 	"golang.org/x/xerrors"
 
 	"go.coder.com/flog"
+	"go.coder.com/sail/internal/dockutil"
 )
 
 // containerLogPath is the location of the code-server log.
@@ -31,17 +32,6 @@ const containerLogPath = "/tmp/code-server.log"
 // docker won't expand the `~` path or the `$HOME` variable.
 // For example, when setting environment variables for the container.
 const containerHome = "/home/user"
-
-// expandDir expands ~ to be the containerHome variable.
-func expandDir(path string) string {
-	path = filepath.Clean(path)
-	if path == "~" {
-		path = containerHome
-	} else if strings.HasPrefix(path, "~/") {
-		path = filepath.Join(containerHome, path[2:])
-	}
-	return filepath.Clean(path)
-}
 
 // Docker labels for sail state.
 const (
@@ -57,7 +47,7 @@ const (
 
 // Docker labels for user configuration.
 const (
-	onOpenLabel      = "on_open"
+	onStartLabel     = "on_start"
 	projectRootLabel = "project_root"
 )
 
@@ -85,7 +75,7 @@ type runner struct {
 // the container's root process.
 // We want code-server to be the root process as it gives us the nice guarantee that
 // the container is only online when code-server is working.
-// Additionally, runContainer also runs the image's on_open label as a sh
+// Additionally, runContainer also runs the image's `on_start` label as a bash
 // command inside of the project directory.
 func (r *runner) runContainer(image string) error {
 	cli := dockerClient()
@@ -150,9 +140,9 @@ func (r *runner) runContainer(image string) error {
 		return xerrors.Errorf("failed to start container: %w", err)
 	}
 
-	err = r.runOnOpen(ctx, image)
+	err = r.runOnStart(image)
 	if err != nil {
-		return xerrors.Errorf("failed to run on_open label in container: %w", err)
+		return xerrors.Errorf("failed to run on_start label in container: %w", err)
 	}
 
 	return nil
@@ -515,61 +505,32 @@ func runnerFromContainer(name string) (*runner, error) {
 	}, nil
 }
 
-// runOnOpen runs the image's `on_open` label in the container in the project directory.
-func (r *runner) runOnOpen(ctx context.Context, image string) error {
+// runOnStart runs the image's `on_start` label in the container in the project directory.
+func (r *runner) runOnStart(image string) error {
 	cli := dockerClient()
 	defer cli.Close()
 
-	// get project directory.
+	// Get project directory.
 	projectDir, err := r.projectDir(image)
 	if err != nil {
 		return err
 	}
+	projectDir = resolvePath(containerHome, projectDir)
 
-	// get on_open label from image
+	// Get on_start label from image.
 	img, _, err := cli.ImageInspectWithRaw(context.Background(), image)
 	if err != nil {
 		return xerrors.Errorf("failed to inspect image: %w", err)
 	}
-	onOpenCmd, ok := img.Config.Labels[onOpenLabel]
+	onStartCmd, ok := img.Config.Labels[onStartLabel]
 	if !ok {
-		// no on_open label, so we quit early.
+		// No on_start label, so we quit early.
 		return nil
 	}
 
-	cmd := []string{onOpenCmd}
-	return r.runInContainer(ctx, expandDir(projectDir), cmd, true)
-}
-
-// runInContainer runs a command in the container (optionally using /bin/sh -c) using exec (detached).
-func (r *runner) runInContainer(ctx context.Context, workDir string, cmd []string, useSh bool) error {
-	cli := dockerClient()
-	defer cli.Close()
-
-	if useSh {
-		cmd = append([]string{"/bin/sh", "-c"}, cmd...)
-	}
-
-	execID, err := cli.ContainerExecCreate(ctx, r.cntName, types.ExecConfig{
-		Cmd:        cmd,
-		Detach:     true,
-		WorkingDir: workDir,
-
-		// the following options don't attach it, but makes the script think it's running in a terminal.
-		Tty:          true,
-		AttachStdin:  true,
-		AttachStderr: true,
-		AttachStdout: true,
-	})
-	if err != nil {
-		return xerrors.Errorf("failed to create exec configuration: %v", err)
-	}
-
-	err = cli.ContainerExecStart(ctx, execID.ID, types.ExecStartCheck{Detach: true})
-	if err != nil {
-		return xerrors.Errorf("failed to start exec process: %v", err)
-	}
-	return nil
+	// Execute the command detached in the container.
+	cmd := dockutil.DetachedExecDir(r.cntName, projectDir, "/bin/bash", "-c", onStartCmd)
+	return cmd.Run()
 }
 
 func (r *runner) forkProxy() error {

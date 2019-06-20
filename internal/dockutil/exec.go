@@ -25,6 +25,11 @@ func DetachedExec(cntName, cmd string, args ...string) *exec.Cmd {
 	return exec.Command("docker", args...)
 }
 
+func DetachedExecDir(cntName, dir, cmd string, args ...string) *exec.Cmd {
+	args = append([]string{"exec", "-dw", dir, cntName, cmd}, args...)
+	return exec.Command("docker", args...)
+}
+
 func ExecEnv(cntName string, envs []string, cmd string, args ...string) *exec.Cmd {
 	args = append([]string{"exec", "-e", strings.Join(envs, ","), "-i", cntName, cmd}, args...)
 	return exec.Command("docker", args...)
