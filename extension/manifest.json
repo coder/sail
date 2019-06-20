@@ -1,9 +1,8 @@
 {
 	"manifest_version": 2,
-
 	"name": "Sail",
-	"version": "1.0.5",
-	"author": "Coder",
+  "version": "1.0.8",
+  "author": "Coder",
 	"description": "Work in immutable, pre-configured development environments.",
 
 	"background": {
@@ -28,6 +27,9 @@
 	"browser_action": {
 		"default_title": "Sail",
 		"default_popup": "out/popup.html"
+  },
+  "icons": {
+		"128": "logo128.png"
   },
   "browser_specific_settings": {
     "gecko": {
