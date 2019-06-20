@@ -51,7 +51,7 @@ func Test_project(t *testing.T) {
 			rb := newRollback()
 			defer rb.run()
 
-			repo, err := parseRepo(test.schema, "github.com", test.repo)
+			repo, err := parseRepo(test.schema, "github.com", "", test.repo)
 			require.NoError(t, err)
 
 			p := &project{

@@ -44,7 +44,7 @@ func (r repo) BaseName() string {
 // It can be a full url like https://github.com/cdr/sail or ssh://git@github.com/cdr/sail,
 // or just the path like cdr/sail and the host + schema will be inferred.
 // By default the host and the schema will be the provided defaultSchema.
-func parseRepo(defaultSchema, defaultHost, name string) (repo, error) {
+func parseRepo(defaultSchema, defaultHost, defaultOrganization, name string) (repo, error) {
 	u, err := url.Parse(name)
 	if err != nil {
 		return repo{}, xerrors.Errorf("failed to parse repo path: %w", err)
@@ -66,6 +66,11 @@ func parseRepo(defaultSchema, defaultHost, name string) (repo, error) {
 		} else {
 			r.Host = defaultHost
 		}
+	}
+
+	// add the defaultOrganization if the path has no slashes
+	if defaultOrganization != "" && !strings.Contains(r.trimPath(), "/") {
+		r.Path = fmt.Sprintf("%v/%v", defaultOrganization, r.trimPath())
 	}
 
 	// make sure path doesn't have a leading forward slash

@@ -9,7 +9,7 @@ import (
 
 var version string
 
-type versioncmd struct {}
+type versioncmd struct{}
 
 func (v *versioncmd) Spec() cli.CommandSpec {
 	return cli.CommandSpec{
