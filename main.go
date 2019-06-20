@@ -65,7 +65,7 @@ func (r rootCmd) Subcommands() []cli.Command {
 		&lscmd{},
 		&rmcmd{gf: &r.globalFlags},
 		&proxycmd{},
-		&chromeExtInstall{},
+		&extensionSetup{},
 		&versioncmd{},
 	}
 }
@@ -74,7 +74,8 @@ func main() {
 	root := &rootCmd{}
 
 	if (len(os.Args) >= 2 && strings.HasPrefix(os.Args[1], "chrome-extension://")) ||
-		(len(os.Args) >= 3 && strings.HasPrefix(os.Args[2], "chrome-extension://")) {
+		(len(os.Args) >= 3 && strings.HasPrefix(os.Args[2], "chrome-extension://")) ||
+		(len(os.Args) >= 2 && strings.HasSuffix(os.Args[1], "com.coder.sail.json")) {
 		runNativeMsgHost()
 		return
 	}

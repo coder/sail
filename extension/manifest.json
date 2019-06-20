@@ -28,5 +28,11 @@
 	"browser_action": {
 		"default_title": "Sail",
 		"default_popup": "out/popup.html"
-	}
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "sail@coder.com",
+      "strict_min_version": "48.0"
+    }
+  }
 }

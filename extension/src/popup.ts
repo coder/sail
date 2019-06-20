@@ -10,7 +10,7 @@ requestSail().then((url) => {
 	const has = (str: string) => ex.toString().indexOf(str) !== -1;
 
 	if (has("not found")) {
-		document.body.innerText = "After installing sail, run `sail install-for-chrome-ext`.";
+		document.body.innerText = "After installing sail, run `sail setup-extension`.";
 	} else {
 		document.body.innerText = ex.toString();
 	}

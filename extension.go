@@ -91,35 +91,51 @@ func handleRun(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-type chromeExtInstall struct{}
+type extensionSetup struct{}
 
-func (c *chromeExtInstall) Spec() cli.CommandSpec {
+func (e *extensionSetup) Spec() cli.CommandSpec {
 	return cli.CommandSpec{
-		Name: "install-for-chrome-ext",
-		Desc: `Installs the chrome native message host manifest.
-This allows the sail chrome extension to manage sail.`,
+		Name: "setup-extension",
+		Desc: `Installs the extension API native message host manifest.
+This allows the sail extension to manage sail.`,
 	}
 }
 
-func (c *chromeExtInstall) Run(fl *flag.FlagSet) {
-	nativeHostDirs, err := nativeMessageHostManifestDirectories()
+func (e *extensionSetup) Run(fl *flag.FlagSet) {
+	nativeHostDirsChrome, err := nativeMessageHostManifestDirectoriesChrome()
 	if err != nil {
 		flog.Fatal("failed to get native message host manifest directory: %v", err)
 	}
 
-	for _, dir := range nativeHostDirs {
+	for _, dir := range nativeHostDirsChrome {
 		err = os.MkdirAll(dir, 0755)
 		if err != nil {
 			flog.Fatal("failed to ensure manifest directory exists: %v", err)
 		}
-		err = writeNativeHostManifest(dir)
+		err = writeNativeHostManifestChrome(dir)
+		if err != nil {
+			flog.Fatal("failed to write native messaging host manifest: %v", err)
+		}
+	}
+
+	nativeHostDirsFirefox, err := nativeMessageHostManifestDirectoriesFirefox()
+	if err != nil {
+		flog.Fatal("failed to get native message host manifest directory: %v", err)
+	}
+
+	for _, dir := range nativeHostDirsFirefox {
+		err = os.MkdirAll(dir, 0755)
+		if err != nil {
+			flog.Fatal("failed to ensure manifest directory exists: %v", err)
+		}
+		err = writeNativeHostManifestFirefox(dir)
 		if err != nil {
 			flog.Fatal("failed to write native messaging host manifest: %v", err)
 		}
 	}
 }
 
-func writeNativeHostManifest(dir string) error {
+func writeNativeHostManifestChrome(dir string) error {
 	binPath, err := os.Executable()
 	if err != nil {
 		return err
@@ -139,7 +155,27 @@ func writeNativeHostManifest(dir string) error {
 	return ioutil.WriteFile(dst, []byte(manifest), 0644)
 }
 
-func nativeMessageHostManifestDirectories() ([]string, error) {
+func writeNativeHostManifestFirefox(dir string) error {
+	binPath, err := os.Executable()
+	if err != nil {
+		return err
+	}
+
+	manifest := fmt.Sprintf(`{
+		"name": "com.coder.sail",
+		"description": "sail message host",
+		"path": "%v",
+		"type": "stdio",
+		"allowed_extensions": [
+			"2dcddda6bd28a9237755003f9cb1fcf60c2a7866@temporary-addon"
+		]
+	}`, binPath)
+
+	dst := path.Join(dir, "com.coder.sail.json")
+	return ioutil.WriteFile(dst, []byte(manifest), 0644)
+}
+
+func nativeMessageHostManifestDirectoriesChrome() ([]string, error) {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		return nil, xerrors.Errorf("failed to get user home dir: %w", err)
@@ -162,5 +198,27 @@ func nativeMessageHostManifestDirectories() ([]string, error) {
 	return []string{
 		chromeDir,
 		chromiumDir,
+	}, nil
+}
+
+func nativeMessageHostManifestDirectoriesFirefox() ([]string, error) {
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return nil, xerrors.Errorf("failed to get user home dir: %w", err)
+	}
+
+	var firefoxDir string
+
+	switch runtime.GOOS {
+	case "linux":
+		firefoxDir = path.Join(homeDir, ".mozilla", "native-messaging-hosts")
+	case "darwin":
+		firefoxDir = path.Join(homeDir, "Library", "Application Support", "Mozilla", "NativeMessagingHosts")
+	default:
+		return nil, xerrors.Errorf("unsupported os %q", runtime.GOOS)
+	}
+
+	return []string{
+		firefoxDir,
 	}, nil
 }
