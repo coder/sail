@@ -1,9 +1,5 @@
 import { requestSail } from "./common";
 
-const root = document.getElementById("root") as HTMLElement;
-// const projects = document.getElementById("projects") as HTMLUListElement;
-document.body.style.width = "150px";
-
 requestSail().then((url) => {
 	document.body.innerText = "Sail is setup and working properly!";
 }).catch((ex) => {
