@@ -108,6 +108,10 @@ func (c *chromeExtInstall) Run(fl *flag.FlagSet) {
 	}
 
 	for _, dir := range nativeHostDirs {
+		if dir == "" {
+			continue
+		}
+
 		err = os.MkdirAll(dir, 0755)
 		if err != nil {
 			flog.Fatal("failed to ensure manifest directory exists: %v", err)
@@ -146,14 +150,20 @@ func nativeMessageHostManifestDirectories() ([]string, error) {
 	}
 
 	var chromeDir string
+	var chromeBetaDir string
+	var chromeDevDir string
+	var chromeCanaryDir string
 	var chromiumDir string
 
 	switch runtime.GOOS {
 	case "linux":
 		chromeDir = path.Join(homeDir, ".config", "google-chrome", "NativeMessagingHosts")
+		chromeBetaDir = path.Join(homeDir, ".config", "google-chrome-beta", "NativeMessagingHosts")
+		chromeDevDir = path.Join(homeDir, ".config", "google-chrome-unstable", "NativeMessagingHosts")
 		chromiumDir = path.Join(homeDir, ".config", "chromium", "NativeMessagingHosts")
 	case "darwin":
 		chromeDir = path.Join(homeDir, "Library", "Application Support", "Google", "Chrome", "NativeMessagingHosts")
+		chromeCanaryDir = path.Join(homeDir, "Library", "Application Support", "Google", "Chrome Canary", "NativeMessagingHosts")
 		chromiumDir = path.Join(homeDir, "Library", "Application Support", "Chromium", "NativeMessagingHosts")
 	default:
 		return nil, xerrors.Errorf("unsupported os %q", runtime.GOOS)
@@ -162,5 +172,8 @@ func nativeMessageHostManifestDirectories() ([]string, error) {
 	return []string{
 		chromeDir,
 		chromiumDir,
+		chromeBetaDir,
+		chromeDevDir,
+		chromeCanaryDir,
 	}, nil
 }
