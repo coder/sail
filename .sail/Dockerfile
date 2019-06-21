@@ -8,12 +8,11 @@ RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.34.0/install.sh | b
 
 LABEL project_root "~/go/src/go.coder.com"
 
-ENV GO111MODULE=on
+ENV GO111MODULE=off
 
 # Install the latest version of Hugo.
 RUN wget -O /tmp/hugo.deb https://github.com/gohugoio/hugo/releases/download/v0.55.4/hugo_extended_0.55.4_Linux-64bit.deb && \
   sudo dpkg -i /tmp/hugo.deb && \
   rm -f /tmp/hugo.deb
 
-RUN mkdir -p ~/go && sudo chown -R user:root ~/go
 RUN installext peterjausovec.vscode-docker
