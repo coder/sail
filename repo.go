@@ -12,6 +12,7 @@ import (
 	"golang.org/x/xerrors"
 
 	"go.coder.com/flog"
+	"go.coder.com/sail/internal/xexec"
 )
 
 type repo struct {
@@ -110,11 +111,33 @@ func parseRepo(defaultSchema, defaultHost, defaultOrganization, name string) (re
 	return r, nil
 }
 
+func (r repo) isGithubRemote() (ok bool) {
+	cmd := xexec.Fmt("git remote -v")
+	out, err := cmd.Output()
+	if err != nil {
+		flog.Error("Unable to check repo remotes")
+		return false
+	}
+
+	o := strings.Split(string(out), "\n")
+
+	for _, url := range o {
+		if strings.HasPrefix(url, "https://github.com") || strings.HasPrefix(url, "git@github.com") {
+			return true
+		}
+	}
+	return false
+}
+
 // language returns the language of a repository using github's detected language.
 // This is a best effort try and will return the empty string if something fails.
 func (r repo) language() string {
 	orgRepo := strings.SplitN(r.trimPath(), "/", 2)
 	if len(orgRepo) != 2 {
+		return ""
+	}
+
+	if ok := r.isGithubRemote(); !ok {
 		return ""
 	}
 
