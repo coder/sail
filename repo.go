@@ -111,22 +111,25 @@ func parseRepo(defaultSchema, defaultHost, defaultOrganization, name string) (re
 	return r, nil
 }
 
-func (r repo) isGithubRemote() (ok bool) {
-	cmd := xexec.Fmt("git remote -v")
-	out, err := cmd.Output()
+func (r repo) isGitHubRemote(orgRepo []string) (bool, error) {
+	// TODO: How do I get the path from here?
+	cmd := xexec.Fmt("git -C %s remote get-url origin")
+	out, err := cmd.CombinedOutput()
 	if err != nil {
-		flog.Error("Unable to check repo remotes")
-		return false
+		flog.Error("unable to check Git remotes: %s", out)
+		return false, err
 	}
 
 	o := strings.Split(string(out), "\n")
 
+	org := fmt.Sprintf("%s/%s.git", orgRepo[0], orgRepo[1])
+
 	for _, url := range o {
-		if strings.HasPrefix(url, "https://github.com") || strings.HasPrefix(url, "git@github.com") {
-			return true
+		if strings.Contains(url, "https://github.com/"+org) || strings.Contains(url, "ssh://git@github.com:"+org) {
+			return true, nil
 		}
 	}
-	return false
+	return false, nil
 }
 
 // language returns the language of a repository using github's detected language.
@@ -137,7 +140,7 @@ func (r repo) language() string {
 		return ""
 	}
 
-	if ok := r.isGithubRemote(); !ok {
+	if ok, err := r.isGitHubRemote(orgRepo); !ok || err != nil {
 		return ""
 	}
 
