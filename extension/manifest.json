@@ -2,7 +2,7 @@
 	"manifest_version": 2,
 
 	"name": "Sail",
-	"version": "1.0.5",
+	"version": "1.0.9",
 	"author": "Coder",
 	"description": "Work in immutable, pre-configured development environments.",
 
@@ -26,6 +26,9 @@
 	"permissions": [
 		"nativeMessaging"
 	],
+	"icons": {
+		"128": "logo128.png"
+	},
 	"browser_action": {
 		"default_title": "Sail",
 		"default_popup": "out/popup.html"

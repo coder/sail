@@ -23,7 +23,7 @@ const doConnection = (socketUrl: string, projectUrl: string, onMessage: (data: {
 				return;
 			}
 			const type = data.type;
-			const content = atob(data.v);
+			const content = type === "data" ? atob(data.v) : data.v;
 
 			switch (type) {
 				case "data":
@@ -121,6 +121,14 @@ const ensureButton = (): void | HTMLElement => {
 					if (data.type === "data") {
 						text.innerText += data.v;
 						term.scrollTop = term.scrollHeight;
+					} else if (data.type === "error") {
+						text.innerText += data.v;
+						term.scrollTop = term.scrollHeight;
+						setTimeout(() => {
+							btn.innerText = "Open in Sail";
+							btn.classList.remove("disabled");
+							term.remove();
+						}, 5000);
 					}
 				});
 			}).then((socket) => {
@@ -141,10 +149,8 @@ const ensureButton = (): void | HTMLElement => {
 
 		requestSail().then(() => (button as HTMLElement).classList.remove("disabled"))
 			.catch((ex) => {
-				if (ex.toString().indexOf("host not found") !== -1) {
-					(button as HTMLElement).style.opacity = "0.5";
-					(button as HTMLElement).title = "Setup Sail using the extension icon in the top-right!";
-				}
+				(button as HTMLElement).style.opacity = "0.5";
+				(button as HTMLElement).title = "Setup Sail using the extension icon in the top-right!";
 			});
 	}
 

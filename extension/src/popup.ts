@@ -9,7 +9,7 @@ requestSail().then((url) => {
 }).catch((ex) => {
 	const has = (str: string) => ex.toString().indexOf(str) !== -1;
 
-	if (has("not found")) {
+	if (has("not found") || has("forbidden")) {
 		document.body.innerText = "After installing sail, run `sail install-for-chrome-ext`.";
 	} else {
 		document.body.innerText = ex.toString();
