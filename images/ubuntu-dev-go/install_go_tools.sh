@@ -1,6 +1,6 @@
 #!/bin/bash
-# Taken from https://github.com/Microsoft/vscode-go/wiki/Go-tools-that-the-Go-extension-depends-on
 
+# Taken from https://github.com/Microsoft/vscode-go/wiki/Go-tools-that-the-Go-extension-depends-on
 go get -u -v github.com/ramya-rao-a/go-outline
 go get -u -v github.com/acroca/go-symbols
 go get -u -v github.com/mdempsky/gocode
@@ -20,8 +20,14 @@ go get -u -v github.com/uudashr/gopkgs/cmd/gopkgs
 go get -u -v github.com/davidrjenni/reftools/cmd/fillstruct
 go get -u -v github.com/alecthomas/gometalinter
 
-~/go/bin/gometalinter --install
+go get -u -v github.com/go-delve/delve/cmd/dlv
 
+# gocode-gomod needs to be built manually as the binary is renamed.
+go get -u -v -d github.com/stamblerre/gocode
+go build -o $GOPATH/bin/gocode-gomod github.com/stamblerre/gocode
+
+# Install linters for gometalinter.
+$GOPATH/bin/gometalinter --install
 
 # gopls is generally recommended over community tools.
 # It's much faster and more reliable than the other options.
