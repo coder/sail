@@ -1,5 +1,10 @@
 FROM %BASE
 
+# Set and create GOPATH directories.
+ENV GOPATH /home/user/go
+ENV PATH $GOPATH/bin:$PATH
+RUN mkdir -p "$GOPATH/src" "$GOPATH/bin" && chmod -R 777 "$GOPATH"
+
 ADD install_go_tools.sh /tmp/
 RUN bash /tmp/install_go_tools.sh
 
