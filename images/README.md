@@ -59,3 +59,6 @@ extensions or tooling.
 `buildpush.sh` - This script takes an image name, i.e. `ubuntu-dev-go1.12`, changes into the specified directory,
 and calls `buildlang.sh` and `push.sh` to build the language image and push the finalized image to the codercom
 docker hub.
+
+`buildbase.sh` - This script builds both of the base images and is run via `main.sh` or should be run before
+doing a `buildpush.sh` for a specific language.
