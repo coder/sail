@@ -12,15 +12,16 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
-	"nhooyr.io/websocket"
 	"strconv"
 	"sync"
 	"sync/atomic"
 	"time"
 
+	"golang.org/x/xerrors"
+	"nhooyr.io/websocket"
+
 	"go.coder.com/cli"
 	"go.coder.com/flog"
-	"golang.org/x/xerrors"
 )
 
 func codeServerProxy(w http.ResponseWriter, r *http.Request, port string) {

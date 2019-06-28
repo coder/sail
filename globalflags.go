@@ -5,6 +5,7 @@ import (
 	"os/exec"
 
 	"github.com/fatih/color"
+
 	"go.coder.com/flog"
 )
 

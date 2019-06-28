@@ -8,15 +8,14 @@ import (
 	"strings"
 	"time"
 
-	"go.coder.com/sail/internal/dockutil"
+	"github.com/docker/docker/api/types"
+	"golang.org/x/xerrors"
 
+	"go.coder.com/flog"
 	"go.coder.com/sail/internal/browserapp"
 	"go.coder.com/sail/internal/codeserver"
-
-	"github.com/docker/docker/api/types"
-	"go.coder.com/flog"
+	"go.coder.com/sail/internal/dockutil"
 	"go.coder.com/sail/internal/xexec"
-	"golang.org/x/xerrors"
 )
 
 type projectStatus string

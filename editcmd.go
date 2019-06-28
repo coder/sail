@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/docker/docker/api/types"
+	"golang.org/x/xerrors"
 
 	"go.coder.com/cli"
 	"go.coder.com/flog"
@@ -16,7 +17,6 @@ import (
 	"go.coder.com/sail/internal/editor"
 	"go.coder.com/sail/internal/randstr"
 	"go.coder.com/sail/internal/xexec"
-	"golang.org/x/xerrors"
 )
 
 type editcmd struct {

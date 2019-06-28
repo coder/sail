@@ -10,8 +10,8 @@ build(){
 	go build -ldflags "-X main.version=${tag}" -o $tmpdir/sail
 
 	pushd $tmpdir
-	tarname=sail-$GOOS-$GOARCH.tar
-	tar -cf $tarname sail
+	tarname=sail-$GOOS-$GOARCH.tar.gz
+	tar -czf $tarname sail
 	popd	
 	cp $tmpdir/$tarname bin
 	rm -rf $tmpdir

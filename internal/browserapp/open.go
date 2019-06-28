@@ -7,6 +7,7 @@ import (
 	"os/exec"
 
 	"github.com/pkg/browser"
+
 	"go.coder.com/sail/internal/nohup"
 )
 

@@ -4,8 +4,9 @@ import (
 	"strconv"
 	"strings"
 
-	"go.coder.com/sail/internal/dockutil"
 	"golang.org/x/xerrors"
+
+	"go.coder.com/sail/internal/dockutil"
 )
 
 var (
