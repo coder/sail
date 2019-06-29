@@ -6,6 +6,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/posener/complete"
+
 	"go.coder.com/cli"
 )
 

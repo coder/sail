@@ -14,9 +14,10 @@ import (
 	"strings"
 	"time"
 
+	"golang.org/x/xerrors"
+
 	"go.coder.com/flog"
 	"go.coder.com/sail/internal/codeserver"
-	"golang.org/x/xerrors"
 )
 
 // loadCodeServer produces a path containing the code-server binary.

@@ -5,8 +5,9 @@ import (
 	"bytes"
 	"io/ioutil"
 
-	"go.coder.com/sail/internal/xexec"
 	"golang.org/x/xerrors"
+
+	"go.coder.com/sail/internal/xexec"
 )
 
 // DockerReplaceFrom replaces the FROM clause in a Dockerfile

@@ -10,9 +10,10 @@ import (
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
+	"golang.org/x/xerrors"
+
 	"go.coder.com/cli"
 	"go.coder.com/flog"
-	"golang.org/x/xerrors"
 )
 
 type lscmd struct {
