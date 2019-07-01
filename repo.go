@@ -12,7 +12,6 @@ import (
 	"golang.org/x/xerrors"
 
 	"go.coder.com/flog"
-	"go.coder.com/sail/internal/xexec"
 )
 
 type repo struct {
@@ -111,42 +110,29 @@ func parseRepo(defaultSchema, defaultHost, defaultOrganization, name string) (re
 	return r, nil
 }
 
-func (r repo) isGitHubRemote(orgRepo []string) (bool, error) {
-	// TODO: How do I get the path from here?
-	cmd := xexec.Fmt("git -C %s remote get-url origin")
-	out, err := cmd.CombinedOutput()
-	if err != nil {
-		flog.Error("unable to check Git remotes: %s", out)
-		return false, err
+// language tries to determine the language of a repository. If any error is
+// encountered, an empty string is returned.
+func (r repo) language() string {
+	switch strings.ToLower(r.Host) {
+	case "github.com":
+		return r.getGitHubLanguage()
+	default:
+		return ""
 	}
-
-	o := strings.Split(string(out), "\n")
-
-	org := fmt.Sprintf("%s/%s.git", orgRepo[0], orgRepo[1])
-
-	for _, url := range o {
-		if strings.Contains(url, "https://github.com/"+org) || strings.Contains(url, "ssh://git@github.com:"+org) {
-			return true, nil
-		}
-	}
-	return false, nil
 }
 
-// language returns the language of a repository using github's detected language.
-// This is a best effort try and will return the empty string if something fails.
-func (r repo) language() string {
+// getGitHubLanguage returns the language of a repository using GitHub's
+// detected language. This is a best effort try and will return the empty string
+// if something fails.
+func (r repo) getGitHubLanguage() string {
 	orgRepo := strings.SplitN(r.trimPath(), "/", 2)
 	if len(orgRepo) != 2 {
 		return ""
 	}
 
-	if ok, err := r.isGitHubRemote(orgRepo); !ok || err != nil {
-		return ""
-	}
-
 	repo, resp, err := github.NewClient(nil).Repositories.Get(context.Background(), orgRepo[0], orgRepo[1])
 	if err != nil {
-		flog.Error("unable to get repo language: %v", err)
+		flog.Error("unable to get repo language from GitHub: %v", err)
 		return ""
 	}
 
