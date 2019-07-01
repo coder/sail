@@ -21,6 +21,7 @@ import (
 	"golang.org/x/xerrors"
 
 	"go.coder.com/flog"
+	"go.coder.com/sail/internal/dockutil"
 )
 
 // containerLogPath is the location of the code-server log.
@@ -42,6 +43,12 @@ const (
 	projectDirLabel      = sailLabel + ".project_dir"
 	projectNameLabel     = sailLabel + ".project_name"
 	proxyURLLabel        = sailLabel + ".proxy_url"
+)
+
+// Docker labels for user configuration.
+const (
+	onStartLabel     = "on_start"
+	projectRootLabel = "project_root"
 )
 
 // runner holds all the information needed to assemble a new sail container.
@@ -68,6 +75,8 @@ type runner struct {
 // the container's root process.
 // We want code-server to be the root process as it gives us the nice guarantee that
 // the container is only online when code-server is working.
+// Additionally, runContainer also runs the image's `on_start` label as a bash
+// command inside of the project directory.
 func (r *runner) runContainer(image string) error {
 	cli := dockerClient()
 	defer cli.Close()
@@ -129,6 +138,11 @@ func (r *runner) runContainer(image string) error {
 	err = cli.ContainerStart(ctx, r.cntName, types.ContainerStartOptions{})
 	if err != nil {
 		return xerrors.Errorf("failed to start container: %w", err)
+	}
+
+	err = r.runOnStart(image)
+	if err != nil {
+		return xerrors.Errorf("failed to run on_start label in container: %w", err)
 	}
 
 	return nil
@@ -457,7 +471,7 @@ func (r *runner) projectDir(image string) (string, error) {
 		return "", xerrors.Errorf("failed to inspect image: %w", err)
 	}
 
-	proot, ok := img.Config.Labels["project_root"]
+	proot, ok := img.Config.Labels[projectRootLabel]
 	if ok {
 		return filepath.Join(proot, r.projectName), nil
 	}
@@ -489,6 +503,34 @@ func runnerFromContainer(name string) (*runner, error) {
 		projectName:     cnt.Config.Labels[projectNameLabel],
 		proxyURL:        cnt.Config.Labels[proxyURLLabel],
 	}, nil
+}
+
+// runOnStart runs the image's `on_start` label in the container in the project directory.
+func (r *runner) runOnStart(image string) error {
+	cli := dockerClient()
+	defer cli.Close()
+
+	// Get project directory.
+	projectDir, err := r.projectDir(image)
+	if err != nil {
+		return err
+	}
+	projectDir = resolvePath(containerHome, projectDir)
+
+	// Get on_start label from image.
+	img, _, err := cli.ImageInspectWithRaw(context.Background(), image)
+	if err != nil {
+		return xerrors.Errorf("failed to inspect image: %w", err)
+	}
+	onStartCmd, ok := img.Config.Labels[onStartLabel]
+	if !ok {
+		// No on_start label, so we quit early.
+		return nil
+	}
+
+	// Execute the command detached in the container.
+	cmd := dockutil.DetachedExecDir(r.cntName, projectDir, "/bin/bash", "-c", onStartCmd)
+	return cmd.Run()
 }
 
 func (r *runner) forkProxy() error {

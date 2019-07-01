@@ -24,6 +24,30 @@ LABEL project_root "~/go/src/"
 
 Will bind mount the host directory `$project_root/<org>/<repo>` to `~/go/src/<repo>` in the container.
 
+### On Start Labels
+
+You can run a command in your sail container after it starts by specifying
+the `on_start` label. If you'd like to run multiple commands on launch, we
+recommend using a `.sh` file as your `on_start` label, as you cannot
+provide multiple `on_start` labels in your image.
+
+The `on_start` label is run detached inside of `/bin/bash` as soon as the
+container is started, with the work directory set to your `project_root`
+(see the section above).
+
+For example:
+```Dockerfile
+LABEL on_start "npm install"
+```
+```Dockerfile
+LABEL on_start "go get"
+```
+```Dockerfile
+LABEL on_start "./.sail/on_start.sh"
+```
+
+Make sure any scripts you make are executable, otherwise sail will fail to
+launch.
 
 ### Share Labels
 
