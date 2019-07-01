@@ -2,9 +2,15 @@ package main
 
 import (
 	"flag"
+	"net/url"
+	"os"
 	"os/exec"
+	"os/user"
+	"path/filepath"
+	"strings"
 
 	"github.com/fatih/color"
+	"golang.org/x/xerrors"
 
 	"go.coder.com/flog"
 )
@@ -39,16 +45,82 @@ func (gf *globalFlags) ensureDockerDaemon() {
 }
 
 func requireRepo(conf config, prefs schemaPrefs, fl *flag.FlagSet) repo {
-	repoURI := fl.Arg(0)
+	var (
+		repoURI = strings.Join(fl.Args(), "/")
+		r       repo
+		err     error
+	)
+
 	if repoURI == "" {
 		flog.Fatal("Argument <repo> must be provided.")
 	}
 
-	r, err := parseRepo(defaultSchema(conf, prefs), conf.DefaultHost, conf.DefaultOrganization, repoURI)
+	// if this returns a non-empty string know it's pointing to a valid project on disk
+	// an error indicates an existing path outside of the project dir
+	repoName, err := pathIsRunnable(conf, repoURI)
 	if err != nil {
-		flog.Fatal("failed to parse repo %q: %v", repoURI, err)
+		flog.Fatal(err.Error())
 	}
+
+	if repoName != "" {
+		// we only need the path since the repo exists on disk.
+		// there's not currently way for us to figure out the host anyways
+		r = repo{URL: &url.URL{Path: repoName}}
+	} else {
+		r, err = parseRepo(defaultSchema(conf, prefs), conf.DefaultHost, conf.DefaultOrganization, repoURI)
+		if err != nil {
+			flog.Fatal("failed to parse repo %q: %v", repoURI, err)
+		}
+	}
+
+	// check if path is pointing to a subdirectory
+	if sp := strings.Split(r.Path, "/"); len(sp) > 2 {
+		r.Path = strings.Join(sp[:2], "/")
+		r.subdir = strings.Join(sp[2:], "/")
+	}
+
 	return r
+}
+
+// pathIsRunnable returns the container name if the given path exists and is
+// in the projects directory, else an empty string. An error is returned if
+// and only if the path exists but it isn't in the user's project directory.
+func pathIsRunnable(conf config, path string) (cnt string, _ error) {
+	fp, err := filepath.Abs(path)
+	if err != nil {
+		return
+	}
+
+	s, err := os.Stat(fp)
+	if err != nil {
+		return
+	}
+
+	if !s.IsDir() {
+		return
+	}
+
+	pre := expandRoot(conf.ProjectRoot)
+	if pre[len(pre)-1] != '/' {
+		pre = pre + "/"
+	}
+
+	// path exists but doesn't belong to projects directory, return error
+	if !strings.HasPrefix(fp, pre[:len(pre)-1]) {
+		return "", xerrors.Errorf("directory %s exists but isn't in projects directory", fp)
+	}
+
+	split := strings.Split(fp, "/")
+	if len(split) < 2 {
+		return
+	}
+
+	return strings.TrimPrefix(fp, pre), nil
+}
+
+func expandRoot(path string) string {
+	u, _ := user.Current()
+	return strings.Replace(path, "~/", u.HomeDir+"/", 1)
 }
 
 func defaultSchema(conf config, prefs schemaPrefs) string {
