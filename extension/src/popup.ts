@@ -1,16 +1,15 @@
-import { requestSail } from "./common";
+import { sailAvailable } from "./common";
 
 const root = document.getElementById("root") as HTMLElement;
-// const projects = document.getElementById("projects") as HTMLUListElement;
-document.body.style.width = "150px";
+document.body.style.width = "250px";
 
-requestSail().then((url) => {
+sailAvailable().then(() => {
 	document.body.innerText = "Sail is setup and working properly!";
 }).catch((ex) => {
 	const has = (str: string) => ex.toString().indexOf(str) !== -1;
 
 	if (has("not found") || has("forbidden")) {
-		document.body.innerText = "After installing sail, run `sail install-for-chrome-ext`.";
+		document.body.innerText = "After installing Sail, run `sail install-for-chrome-ext`.\n\n" + ex.toString();
 	} else {
 		document.body.innerText = ex.toString();
 	}
