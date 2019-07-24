@@ -1,4 +1,9 @@
-import { ExtensionMessage, WebSocketMessage } from "./common";
+import {
+	ExtensionMessage,
+	WebSocketMessage,
+	getApprovedHosts,
+	addApprovedHost
+} from "./common";
 
 export class SailConnector {
 	private port: chrome.runtime.Port;
@@ -90,24 +95,72 @@ chrome.runtime.onMessage.addListener((data: ExtensionMessage, sender, sendRespon
 				return;
 			}
 
-			// onMessage forwards WebSocketMessages to the tab that
-			// launched Sail.
-			const onMessage = (message: WebSocketMessage) => {
-				chrome.tabs.sendMessage(sender.tab.id, message);
-			};
-			connector.connect().then((sailUrl) => {
-				const socketUrl = sailUrl.replace("http:", "ws:") + "/api/v1/run";
-				return doConnection(socketUrl, data.projectUrl, onMessage).then((conn) => {
+			// Check that the tab is an approved host, otherwise ask
+			// the user for permission before launching Sail.
+			const url = new URL(sender.tab.url);
+			const host = url.hostname;
+			getApprovedHosts()
+				.then((hosts) => {
+					for (let h of hosts) {
+						if (h === host || (h.startsWith(".") && (host === h.substr(1) || host.endsWith(h)))) {
+							// Approved host.
+							return true;
+						}
+					}
+
+					// If not approved, ask for approval.
+					return new Promise((resolve, reject) => {
+						chrome.tabs.executeScript(sender.tab.id, {
+							code: `confirm("Launch Sail? This will add this host to your approved hosts list.")`,
+						}, (result) => {
+							if (chrome.runtime.lastError) {
+								return reject(chrome.runtime.lastError.message);
+							}
+
+							if (result) {
+								// The user approved the confirm dialog.
+								addApprovedHost(host)
+									.then(() => resolve(true))
+									.catch(reject);
+								return;
+							}
+
+							return false;
+						});
+					});
+				})
+				.then((approved) => {
+					if (!approved) {
+						return;
+					}
+
+					// Start Sail.
+					// onMessage forwards WebSocketMessages to the tab that
+					// launched Sail.
+					const onMessage = (message: WebSocketMessage) => {
+						chrome.tabs.sendMessage(sender.tab.id, message);
+					};
+					connector.connect().then((sailUrl) => {
+						const socketUrl = sailUrl.replace("http:", "ws:") + "/api/v1/run";
+						return doConnection(socketUrl, data.projectUrl, onMessage).then((conn) => {
+							sendResponse({
+								type: "sail",
+							});
+						});
+					}).catch((ex) => {
+						sendResponse({
+							type: "sail",
+							error: ex.toString(),
+						});
+					});
+				})
+				.catch((ex) => {
 					sendResponse({
 						type: "sail",
+						error: ex.toString(),
 					});
+
 				});
-			}).catch((ex) => {
-				sendResponse({
-					type: "sail",
-					error: ex.toString(),
-				});
-			})
 		} else {
 			// Check if we can get a sail URL.
 			connector.connect().then(() => {

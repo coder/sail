@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Sail Extension</title>
+</head>
+<body>
+	<header>
+		<h1>Sail</h1>
+	</header>
+
+	<section id="sail-available">
+		<p id="sail-available-status">Fetching Sail URL...</p>
+	</section>
+
+	<section id="approved-hosts">
+		<h3>Approved Hosts</h3>
+		<p>
+			Approved hosts can start Sail without requiring you to
+			approve it via a popup. Without this, any website could
+			launch Sail and launch a malicious repository.
+		</p>
+		<p>
+			For more information, please refer to
+			<a href="https://github.com/cdr/sail/issues/237" target="_blank">cdr/sail#237</a>
+		</p>
+
+		<table>
+			<tbody id="approved-hosts-entries">
+				<tr>
+					<td>Loading entries...</td>
+				</tr>
+
+				<!--
+				<tr>
+					<td>
+						<input type="checkbox" class="host-checkbox">
+					</td>
+					<td>
+						.host.com
+					</td>
+					<td>
+						<button class="host-remove-btn">
+							Remove
+						</button>
+					</td>
+				</tr>
+				-->
+			</tbody>
+		</table>
+
+		<div>
+			<h4>Add an approved host:</h4>
+			<p>
+				If you prepend your host with a period (<code>.</code>),
+				Sail will match all subdomains on that host as well as
+				the host itself.
+			</p>
+
+			<input id="approved-hosts-add-input" type="text" pattern="^(\.?[^\.]+)+$">
+			<button id="approved-hosts-add">Add</button>
+		</div>
+	</section>
+
+	<script src="/out/config.js"></script>
+</body>
+</html>

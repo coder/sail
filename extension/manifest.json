@@ -15,8 +15,7 @@
 	"content_scripts": [
 		{
 			"matches": [
-				"https://github.com/*",
-				"https://gitlab.com/*"
+				"https://*/*"
 			],
 			"js": [
 				"out/content.js"
@@ -24,7 +23,10 @@
 		}
 	],
 	"permissions": [
-		"nativeMessaging"
+		"<all_urls>",
+		"nativeMessaging",
+		"storage",
+		"tabs"
 	],
 	"icons": {
 		"128": "logo128.png"

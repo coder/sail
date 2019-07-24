@@ -52,12 +52,21 @@ const mainConfig = (plugins = []) => ({
 module.exports = [
 	{
 		...mainConfig([
-			new CopyPlugin([{
-				from: path.resolve(__dirname, "src/popup.html"),
-				to: path.resolve(process.cwd(), "out/popup.html"),
-			}], {
+			new CopyPlugin(
+				[
+					{
+						from: path.resolve(__dirname, "src/popup.html"),
+						to: path.resolve(process.cwd(), "out/popup.html"),
+					},
+					{
+						from: path.resolve(__dirname, "src/config.html"),
+						to: path.resolve(process.cwd(), "out/config.html"),
+					}
+				],
+				{
 					copyUnmodified: true,
-				}),
+				}
+			),
 		]),
 		entry: path.join(__dirname, "src", "background.ts"),
 		output: {
@@ -79,6 +88,14 @@ module.exports = [
 		output: {
 			path: outDir,
 			filename: "popup.js",
+		},
+	},
+	{
+		...mainConfig(),
+		entry: path.join(__dirname, "src", "config.ts"),
+		output: {
+			path: outDir,
+			filename: "config.js",
 		},
 	}
 ];
