@@ -178,3 +178,9 @@ chrome.runtime.onMessage.addListener((data: ExtensionMessage, sender, sendRespon
 		return true;
 	}
 });
+
+// Open the config page when the browser action is clicked.
+chrome.browserAction.onClicked.addListener(() => {
+	const url = chrome.runtime.getURL("/out/config.html");
+	chrome.tabs.create({ url });
+});

@@ -1,0 +1,45 @@
+$bg-color: #fff;
+$bg-color-header: #f4f7fc;
+$bg-color-status: #c4d5ff;
+$bg-color-status-error: #ef9a9a;
+$bg-color-status-darker: #b1c0e6;
+$bg-color-input: #f4f7fc;
+$text-color: #677693;
+$text-color-darker: #000a44;
+$text-color-brand: #4569fc;
+$text-color-status: #486cff;
+$text-color-status-error: #8b1515;
+
+$font-family: "aktiv grotesk", -apple-system, roboto, serif;
+
+* {
+	box-sizing: border-box;
+}
+
+h1, h2, h3 {
+	color: $text-color-darker;
+	font-weight: bold;
+}
+
+input[type=text] {
+	padding: 6px 9px;
+	border: solid $text-color-darker 1px;
+	border-radius: 3px;
+	background-color: $bg-color-input;
+	outline: 0;
+}
+
+button {
+	padding: 7px 10px;
+	border: none;
+	border-radius: 3px;
+	background-color: $bg-color-status;
+	color: $text-color-status;
+	font-weight: 600;
+	outline: 0;
+	cursor: pointer;
+
+	&:hover {
+		background-color: $bg-color-status-darker;
+	}
+}

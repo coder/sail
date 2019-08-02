@@ -5,6 +5,7 @@ import {
 	addApprovedHost
 } from "./common";
 
+const sailStatus = document.getElementById("sail-status");
 const sailAvailableStatus = document.getElementById("sail-available-status");
 const approvedHostsEntries = document.getElementById("approved-hosts-entries");
 const approvedHostsAdd = document.getElementById("approved-hosts-add");
@@ -16,17 +17,21 @@ sailAvailable().then(() => {
 }).catch((ex) => {
 	const has = (str: string) => ex.toString().indexOf(str) !== -1;
 
+	sailStatus.classList.add("error");
+	let message = "Failed to connect to Sail.";
 	if (has("not found") || has("forbidden")) {
-		sailAvailableStatus.innerText = "After installing Sail, run `sail install-for-chrome-ext`.\n\n" + ex.toString();
-	} else {
-		sailAvailableStatus.innerText = ex.toString();
+		message = "After installing Sail, run <code>sail install-for-chrome-ext</code>.";
 	}
+	sailAvailableStatus.innerHTML = message;
+
+	const pre = document.createElement("pre");
+	pre.innerText = ex.toString();
+	sailStatus.appendChild(pre);
 });
 
 // Create event listener to add approved hosts.
 approvedHostsAdd.addEventListener("click", (e: Event) => {
 	e.preventDefault();
-	// TODO: safe to lowercase?
 	const host = approvedHostsAddInput.value.toLowerCase();
 	// TODO: validate here
 	if (!host) {
@@ -67,7 +72,11 @@ const removeBtnHandler = function (e: Event) {
 			alert("Failed to remove host from approved hosts list.\n\n" + ex.toString());
 		})
 		.finally(() => {
-			reloadApprovedHostsTable();
+			reloadApprovedHostsTable()
+				.then((hosts) => console.log("Reloaded approved hosts.", hosts))
+				.catch((ex) => {
+					alert("Failed to reload approved hosts from extension storage.\n\n" + ex.toString());
+				});
 		});
 };
 
@@ -123,5 +132,6 @@ const reloadApprovedHostsTable = (): Promise<String[]> => {
 
 reloadApprovedHostsTable()
 	.then((hosts) => console.log("Loaded approved hosts.", hosts))
-	// TODO: context
-	.catch((ex) => console.error(ex));
+	.catch((ex) => {
+		alert("Failed to load approved hosts from extension storage.\n\n" + ex.toString());
+	});

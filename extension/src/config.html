@@ -3,29 +3,48 @@
 <head>
 	<meta charset="UTF-8">
 	<title>Sail Extension</title>
+	<link rel="stylesheet" href="./config.css">
 </head>
+
 <body>
 	<header>
-		<h1>Sail</h1>
+		<div class="content">
+			<div class="logo">
+				<a target="_blank" href="https://sail.dev/">
+					<img src="/logo.svg" alt="Sail Logo">
+				</a>
+			</div>
+
+			<div class="right">
+				<a target="_blank" href="https://sail.dev/docs/introduction/">Docs</a>
+				<a target="_blank" href="https://coder.com/">Enterprise</a>
+				<a target="_blank" href="https://github.com/cdr/sail">Repo</a>
+			</div>
+		</div>
 	</header>
 
-	<section id="sail-available">
-		<p id="sail-available-status">Fetching Sail URL...</p>
+	<section id="sail-status" class="status-container content">
+		<div class="status content">
+			<h3 id="sail-available-status">Fetching Sail URL...</h3>
+		</div>
 	</section>
 
-	<section id="approved-hosts">
-		<h3>Approved Hosts</h3>
+	<section class="content" style="margin-top: 40px;">
+		<h2>Approved Hosts</h2>
 		<p>
 			Approved hosts can start Sail without requiring you to
 			approve it via a popup. Without this, any website could
-			launch Sail and launch a malicious repository.
-		</p>
-		<p>
-			For more information, please refer to
-			<a href="https://github.com/cdr/sail/issues/237" target="_blank">cdr/sail#237</a>
+			launch Sail and launch a malicious repository. For more
+			information, please refer to
+			<a href="https://github.com/cdr/sail/issues/237" target="_blank">cdr/sail#237</a>.
 		</p>
 
-		<table>
+		<table class="hosts-table">
+			<thead>
+				<th>Host</th>
+				<th>Actions</th>
+			</thead>
+
 			<tbody id="approved-hosts-entries">
 				<tr>
 					<td>Loading entries...</td>
@@ -34,13 +53,10 @@
 				<!--
 				<tr>
 					<td>
-						<input type="checkbox" class="host-checkbox">
-					</td>
-					<td>
 						.host.com
 					</td>
 					<td>
-						<button class="host-remove-btn">
+						<button class="host-remove-btn" data-host=".host.com">
 							Remove
 						</button>
 					</td>
@@ -49,16 +65,16 @@
 			</tbody>
 		</table>
 
-		<div>
-			<h4>Add an approved host:</h4>
-			<p>
-				If you prepend your host with a period (<code>.</code>),
-				Sail will match all subdomains on that host as well as
-				the host itself.
-			</p>
-
+		<div style="margin-top: 40px;">
+			<h3 style="margin-bottom: 8px;">Add an approved host:</h3>
 			<input id="approved-hosts-add-input" type="text" pattern="^(\.?[^\.]+)+$">
 			<button id="approved-hosts-add">Add</button>
+
+			<p>
+				If you prepend your host with a period, Sail
+				will match all subdomains on that host as well
+				as the host itself.
+			</p>
 		</div>
 	</section>
 
