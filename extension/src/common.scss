@@ -9,6 +9,7 @@ $text-color-darker: #000a44;
 $text-color-brand: #4569fc;
 $text-color-status: #486cff;
 $text-color-status-error: #8b1515;
+$text-color-link: #4d72f0;
 
 $font-family: "aktiv grotesk", -apple-system, roboto, serif;
 
@@ -41,5 +42,14 @@ button {
 
 	&:hover {
 		background-color: $bg-color-status-darker;
+	}
+}
+
+a {
+	color: $text-color-link;
+	text-decoration: none;
+
+	&:hover {
+		text-decoration: underline;
 	}
 }
