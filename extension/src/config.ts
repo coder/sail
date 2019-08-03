@@ -9,8 +9,11 @@ import "./config.scss";
 const sailStatus = document.getElementById("sail-status");
 const sailAvailableStatus = document.getElementById("sail-available-status");
 const approvedHostsEntries = document.getElementById("approved-hosts-entries");
+const approvedHostsRemoveError = document.getElementById("approved-hosts-remove-error");
 const approvedHostsAdd = document.getElementById("approved-hosts-add");
 const approvedHostsAddInput = document.getElementById("approved-hosts-add-input") as HTMLInputElement;
+const approvedHostsBadInput = document.getElementById("approved-hosts-bad-input");
+const approvedHostsError = document.getElementById("approved-hosts-error");
 
 // Check if the native manifest is installed.
 sailAvailable().then(() => {
@@ -30,29 +33,61 @@ sailAvailable().then(() => {
 	sailStatus.appendChild(pre);
 });
 
-// Create event listener to add approved hosts.
+// Create event listeners to add approved hosts.
 approvedHostsAdd.addEventListener("click", (e: Event) => {
 	e.preventDefault();
-	const host = approvedHostsAddInput.value.toLowerCase();
-	// TODO: validate here
+	submitApprovedHost();
+});
+approvedHostsAddInput.addEventListener("keyup", (e: KeyboardEvent) => {
+	if (e.keyCode === 13) {
+		e.preventDefault();
+		submitApprovedHost();
+	}
+});
+let invalidInputTimeout: number = null;
+let errorTimeout: number = null;
+const submitApprovedHost = (): Promise<void> => {
+	let host = approvedHostsAddInput.value.toLowerCase();
 	if (!host) {
 		return;
 	}
-	console.log(host);
 
-	addApprovedHost(host)
+	// Validation logic. Users can put in a full URL or a valid host and it
+	// should be parsed successfully.
+	const match = host.match(/^\s*(https?:\/\/)?((\.?[a-z\d_-]+)+)(\/.*)?\s*$/);
+	if (!match) {
+		approvedHostsBadInput.style.display = "block";
+		clearTimeout(invalidInputTimeout);
+		invalidInputTimeout = setTimeout(() => {
+			approvedHostsBadInput.style.display = "none";
+		}, 5000);
+		return;
+	}
+	host = match[2];
+
+	return addApprovedHost(host)
 		.then(() => {
 			approvedHostsAddInput.value = "";
 		})
 		.catch((ex) => {
-			alert("Failed to add host to approved hosts list.\n\n" + ex.toString());
+			console.error("Failed to add host to approved hosts list.", ex);
+			approvedHostsRemoveError.style.display = "block";
+			clearTimeout(errorTimeout);
+			errorTimeout = setTimeout(() => {
+				approvedHostsError.style.display = "none";
+			}, 5000);
 		})
 		.finally(() => {
-			reloadApprovedHostsTable();
+			reloadApprovedHostsTable()
+				.then((hosts) => console.log("Reloaded approved hosts.", hosts))
+				.catch((ex) => {
+					alert("Failed to reload approved hosts from extension storage.\n\n" + ex.toString());
+				});
 		});
-});
+};
 
 // Handles click events for remove buttons in the approved hosts table.
+let removeErrorTimeout: number = null;
 const removeBtnHandler = function (e: Event) {
 	e.preventDefault();
 	const host = this.dataset.host;
@@ -70,7 +105,12 @@ const removeBtnHandler = function (e: Event) {
 			return setApprovedHosts(hosts);
 		})
 		.catch((ex) => {
-			alert("Failed to remove host from approved hosts list.\n\n" + ex.toString());
+			console.error("Failed to remove host from approved hosts list.", ex);
+			approvedHostsRemoveError.style.display = "block";
+			clearTimeout(removeErrorTimeout);
+			removeErrorTimeout = setTimeout(() => {
+				approvedHostsRemoveError.style.display = "none";
+			}, 5000);
 		})
 		.finally(() => {
 			reloadApprovedHostsTable()

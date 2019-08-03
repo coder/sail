@@ -22,6 +22,15 @@ h1, h2, h3 {
 	font-weight: bold;
 }
 
+.error {
+	color: $text-color-status-error;
+}
+.small {
+	margin-top: 6px;
+	margin-bottom: 6px;
+	font-size: 0.8em;
+}
+
 input[type=text] {
 	padding: 6px 9px;
 	border: solid $text-color-darker 1px;

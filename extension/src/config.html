@@ -23,7 +23,7 @@
 	</header>
 
 	<section id="sail-status" class="status-container content">
-		<div class="status content">
+		<div class="status">
 			<h3 id="sail-available-status">Fetching Sail URL...</h3>
 		</div>
 	</section>
@@ -63,11 +63,24 @@
 				-->
 			</tbody>
 		</table>
+		<p id="approved-hosts-remove-error" class="error small" style="display: none;">
+			Failed to remove host from the approved hosts list.
+			Check the browser console for more details.
+		</p>
 
 		<div style="margin-top: 40px;">
 			<h3 style="margin-bottom: 8px;">Add an approved host:</h3>
 			<input id="approved-hosts-add-input" type="text" pattern="^(\.?[^\.]+)+$">
 			<button id="approved-hosts-add">Add</button>
+			<p id="approved-hosts-bad-input" class="error small" style="display: none;">
+				Invalid host. A valid host looks like
+				<code>.github.com</code> or
+				<code>sail.dev</code>.
+			</p>
+			<p id="approved-hosts-error" class="error small" style="display: none;">
+				Failed to add host to the approved hosts list.
+				Check the browser console for more details.
+			</p>
 
 			<p>
 				If you prepend your host with a period, Sail
