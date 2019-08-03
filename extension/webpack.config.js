@@ -1,6 +1,5 @@
 const path = require("path");
 const HappyPack = require("happypack");
-const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 const os = require("os");
 const CopyPlugin = require("copy-webpack-plugin");
 const outDir = path.join(__dirname, "out");
@@ -14,8 +13,7 @@ const mainConfig = (plugins = []) => ({
 			{
 				test: /\.scss$/,
 				use: [
-					//process.env.NODE_ENV !== "production" ? "style-loader" : MiniCssExtractPlugin.loader,
-					MiniCssExtractPlugin.loader,
+					"style-loader",
 					"css-loader",
 					"sass-loader",
 				],
@@ -87,19 +85,6 @@ module.exports = [
 		output: {
 			path: outDir,
 			filename: "config.js",
-		},
-	},
-	{
-		...mainConfig([
-			new MiniCssExtractPlugin({
-				filename: "config.css",
-				chunkFilename: "config.css"
-			}),
-		]),
-		entry: path.join(__dirname, "src", "config.scss"),
-		output: {
-			path: outDir,
-			filename: "config.css.js",
 		},
 	},
 ];

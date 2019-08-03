@@ -4,6 +4,7 @@ import {
 	setApprovedHosts,
 	addApprovedHost
 } from "./common";
+import "./config.scss";
 
 const sailStatus = document.getElementById("sail-status");
 const sailAvailableStatus = document.getElementById("sail-available-status");
@@ -93,6 +94,7 @@ const reloadApprovedHostsTable = (): Promise<String[]> => {
 				// No approved hosts.
 				const tr = document.createElement("tr");
 				const td = document.createElement("td");
+				td.colSpan = 2;
 				td.innerText = "No approved host entries found.";
 				tr.appendChild(td);
 				approvedHostsEntries.appendChild(tr);
