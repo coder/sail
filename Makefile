@@ -4,5 +4,7 @@ build:
 deps:
 	go get ./...
 
-install: deps build
+install:
 	mv sail /usr/local/bin/sail
+
+all: deps build install
