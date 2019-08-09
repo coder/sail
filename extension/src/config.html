@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Sail Extension</title>
+</head>
+
+<body>
+	<header>
+		<div class="content">
+			<div class="logo">
+				<a target="_blank" href="https://sail.dev/">
+					<img src="/logo.svg" alt="Sail Logo">
+				</a>
+			</div>
+
+			<div class="right">
+				<a target="_blank" href="https://sail.dev/docs/introduction/">Docs</a>
+				<a target="_blank" href="https://coder.com/">Enterprise</a>
+				<a target="_blank" href="https://github.com/cdr/sail">Repo</a>
+			</div>
+		</div>
+	</header>
+
+	<section id="sail-status" class="status-container content">
+		<div class="status">
+			<h3 id="sail-available-status">Fetching Sail URL...</h3>
+		</div>
+	</section>
+
+	<section class="content" style="margin-top: 40px;">
+		<h2>Approved Hosts</h2>
+		<p>
+			Approved hosts can start Sail without requiring you to
+			approve it via a popup. Without this, any website could
+			launch Sail and launch a malicious repository. For more
+			information, please refer to
+			<a href="https://github.com/cdr/sail/issues/237" target="_blank">cdr/sail#237</a>.
+		</p>
+
+		<table class="hosts-table">
+			<thead>
+				<th>Host</th>
+				<th>Actions</th>
+			</thead>
+
+			<tbody id="approved-hosts-entries">
+				<tr>
+					<td colspan="2">Loading entries...</td>
+				</tr>
+
+				<!--
+				<tr>
+					<td>
+						.host.com
+					</td>
+					<td>
+						<button class="host-remove-btn" data-host=".host.com">
+							Remove
+						</button>
+					</td>
+				</tr>
+				-->
+			</tbody>
+		</table>
+		<p id="approved-hosts-remove-error" class="error small" style="display: none;">
+			Failed to remove host from the approved hosts list.
+			Check the browser console for more details.
+		</p>
+
+		<div style="margin-top: 40px;">
+			<h3 style="margin-bottom: 8px;">Add an approved host:</h3>
+			<input id="approved-hosts-add-input" type="text" pattern="^(\.?[^\.]+)+$">
+			<button id="approved-hosts-add">Add</button>
+			<p id="approved-hosts-bad-input" class="error small" style="display: none;">
+				Invalid host. A valid host looks like
+				<code>.github.com</code> or
+				<code>sail.dev</code>.
+			</p>
+			<p id="approved-hosts-error" class="error small" style="display: none;">
+				Failed to add host to the approved hosts list.
+				Check the browser console for more details.
+			</p>
+
+			<p>
+				If you prepend your host with a period, Sail
+				will match all subdomains on that host as well
+				as the host itself.
+			</p>
+		</div>
+	</section>
+
+	<script src="/out/config.js"></script>
+</body>
+</html>

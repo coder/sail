@@ -2,7 +2,7 @@
 	"manifest_version": 2,
 
 	"name": "Sail",
-	"version": "1.0.9",
+	"version": "1.1.0",
 	"author": "Coder",
 	"description": "Work in immutable, pre-configured development environments.",
 
@@ -15,8 +15,7 @@
 	"content_scripts": [
 		{
 			"matches": [
-				"https://github.com/*",
-				"https://gitlab.com/*"
+				"https://*/*"
 			],
 			"js": [
 				"out/content.js"
@@ -24,13 +23,16 @@
 		}
 	],
 	"permissions": [
-		"nativeMessaging"
+		"<all_urls>",
+		"nativeMessaging",
+		"storage",
+		"tabs"
 	],
+	"options_page": "out/config.html",
 	"icons": {
 		"128": "logo128.png"
 	},
 	"browser_action": {
-		"default_title": "Sail",
-		"default_popup": "out/popup.html"
+		"default_title": "Sail"
 	}
 }

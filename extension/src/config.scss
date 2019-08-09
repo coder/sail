@@ -1,0 +1,136 @@
+@import "./common.scss";
+
+body {
+	margin: 0 auto;
+	font-family: $font-family;
+	background-color: $bg-color;
+	color: $text-color;
+	line-height: 1.5;
+	font-size: 16px;
+}
+
+.content {
+	max-width: calc(1110px + 2rem);
+	width: 100%;
+	padding-left: 1rem;
+	padding-right: 1rem;
+	margin: 0 auto;
+}
+
+header {
+	height: 64px;
+	background-color: $bg-color-header;
+
+
+	> .content {
+		height: 64px;
+		display: flex;
+		flex-direction: row;
+		align-items: center;
+	}
+
+	.logo {
+		font-size: 24px;
+		font-weight: 900;
+		cursor: pointer;
+
+		img {
+			height: 48px;
+			margin-bottom: -6px;
+		}
+	}
+
+	.right {
+		margin-left: auto;
+		padding-top: 20px;
+		padding-bottom: 20px;
+		margin-top: 0;
+		margin-bottom: 0;
+
+		> a {
+			font-weight: 700;
+			font-size: 16px;
+			line-height: 21px;
+			position: relative;
+			transition: 150ms color ease;
+			color: $text-color-darker;
+			text-decoration: none;
+
+			&:not(:last-child) {
+				margin-right: 44px;
+			}
+
+			&:hover {
+				color: $text-color-brand;
+
+				&:after {
+					opacity: 1;
+				}
+			}
+
+			&:after {
+				width: 50%;
+				height: 2px;
+				content: " ";
+				position: absolute;
+				background-color: currentColor;
+				opacity: 0;
+				pointer-events: none;
+				transition: 150ms opacity ease;
+				bottom: -5px;
+				left: 25%;
+			}
+		}
+	}
+}
+
+.status-container {
+	.status {
+		background-color: $bg-color-status;
+		border-radius: 3px;
+		font-weight: 500;
+		padding: 10px;
+		padding-left: 16px;
+		padding-right: 16px;
+		margin-top: 25px;
+		margin-bottom: 25px;
+
+		@media only screen and (max-width: 1110px) {
+			border-radius: 0;
+		}
+
+		> h3 {
+			color: $text-color-status;
+			margin: 0;
+		}
+	}
+
+	&.error .status {
+		background-color: $bg-color-status-error;
+
+		> h3 {
+			color: $text-color-status-error;
+		}
+	}
+}
+
+.hosts-table {
+	width: 100%;
+	border-collapse: collapse;
+
+	thead {
+		border-bottom: solid $text-color-darker 2px;
+		text-align: left;
+		font-size: 1.1em;
+		color: $text-color-darker;
+	}
+
+	tbody tr {
+		border-bottom: solid $text-color-darker 1px;
+
+		> td {
+			padding-top: 6px;
+			padding-bottom: 6px;
+		}
+	}
+}

@@ -1,41 +1,4 @@
-import { requestSail } from "./common";
-
-const doConnection = (socketUrl: string, projectUrl: string, onMessage: (data: {
-	readonly type: "data" | "error";
-	readonly v: string;
-}) => void): Promise<WebSocket> => {
-	return new Promise<WebSocket>((resolve, reject) => {
-		const socket = new WebSocket(socketUrl);
-		socket.addEventListener("open", () => {
-			socket.send(JSON.stringify({
-				project: projectUrl,
-			}));
-
-			resolve(socket);
-		});
-		socket.addEventListener("close", (event) => {
-			reject(`socket closed: ${event.code}`);
-		});
-
-		socket.addEventListener("message", (event) => {
-			const data = JSON.parse(event.data);
-			if (!data) {
-				return;
-			}
-			const type = data.type;
-			const content = type === "data" ? atob(data.v) : data.v;
-
-			switch (type) {
-				case "data":
-				case "error":
-					onMessage({ type, v: content });
-					break;
-				default:
-					throw new Error("unknown message type: " + type);
-			}
-		});
-	});
-};
+import { WebSocketMessage, launchSail, sailAvailable } from "./common";
 
 const ensureButton = (): void | HTMLElement => {
 	const buttonId = "openinsail";
@@ -47,7 +10,6 @@ const ensureButton = (): void | HTMLElement => {
 	const githubMenu = document.querySelector(".get-repo-select-menu");
 	let button: HTMLElement | void;
 	if (githubMenu) {
-		// GitHub
 		button = createGitHubButton();
 
 		githubMenu.parentElement.appendChild(button);
@@ -55,7 +17,6 @@ const ensureButton = (): void | HTMLElement => {
 	}
 	const gitlabMenu = document.querySelector(".project-repo-buttons") as HTMLElement;
 	if (gitlabMenu) {
-		// GitLab
 		button = createGitLabButton(gitlabMenu);
 	}
 
@@ -88,6 +49,7 @@ const ensureButton = (): void | HTMLElement => {
 			bottom: 0;
 			right: 0;
 			width: 35vw;
+			min-width: 500px;
 			height: 40vh;
 			background: black;
 			padding: 10px;
@@ -116,27 +78,19 @@ const ensureButton = (): void | HTMLElement => {
 			x.title = "Close";
 			term.appendChild(x);
 
-			requestSail().then((socketUrl) => {
-				return doConnection(socketUrl.replace("http:", "ws:") + "/api/v1/run", cloneUrl, (data) => {
-					if (data.type === "data") {
-						text.innerText += data.v;
-						term.scrollTop = term.scrollHeight;
-					} else if (data.type === "error") {
-						text.innerText += data.v;
-						term.scrollTop = term.scrollHeight;
-						setTimeout(() => {
-							btn.innerText = "Open in Sail";
-							btn.classList.remove("disabled");
-							term.remove();
-						}, 5000);
-					}
-				});
-			}).then((socket) => {
-				socket.addEventListener("close", () => {
-					btn.innerText = "Open in Sail";
-					btn.classList.remove("disabled");
-					term.remove();
-				});
+			launchSail(cloneUrl, (data: WebSocketMessage) => {
+				if (data.type === "data") {
+					text.innerText += data.v;
+					term.scrollTop = term.scrollHeight;
+				} else if (data.type === "error") {
+					text.innerText += data.v;
+					term.scrollTop = term.scrollHeight;
+					setTimeout(() => {
+						btn.innerText = "Open in Sail";
+						btn.classList.remove("disabled");
+						term.remove();
+					}, 5000);
+				}
 			}).catch((ex) => {
 				btn.innerText = ex.toString();
 				setTimeout(() => {
@@ -147,7 +101,7 @@ const ensureButton = (): void | HTMLElement => {
 			});
 		});
 
-		requestSail().then(() => (button as HTMLElement).classList.remove("disabled"))
+		sailAvailable().then(() => (button as HTMLElement).classList.remove("disabled"))
 			.catch((ex) => {
 				(button as HTMLElement).style.opacity = "0.5";
 				(button as HTMLElement).title = "Setup Sail using the extension icon in the top-right!";
