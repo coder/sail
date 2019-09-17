@@ -2,6 +2,8 @@ const path = require("path");
 const HappyPack = require("happypack");
 const os = require("os");
 const CopyPlugin = require("copy-webpack-plugin");
+
+const srcDir = path.join(__dirname, "src");
 const outDir = path.join(__dirname, "out");
 
 const mainConfig = (plugins = []) => ({
@@ -55,17 +57,18 @@ module.exports = [
 		...mainConfig([
 			new CopyPlugin(
 				[
-					{
-						from: path.resolve(__dirname, "src/config.html"),
-						to: path.resolve(process.cwd(), "out/config.html"),
-					}
+					{ from: path.join(srcDir, "config.html"), },
+					{ from: path.join(__dirname, "logo128.png") },
+					{ from: path.join(__dirname, "logo.svg") },
+					{ from: path.join(__dirname, "manifest.json") },
+					{ from: path.join(__dirname, "logo128.png") },
 				],
 				{
 					copyUnmodified: true,
 				}
 			),
 		]),
-		entry: path.join(__dirname, "src", "background.ts"),
+		entry: path.join(srcDir, "background.ts"),
 		output: {
 			path: outDir,
 			filename: "background.js",
@@ -73,7 +76,7 @@ module.exports = [
 	},
 	{
 		...mainConfig(),
-		entry: path.join(__dirname, "src", "content.ts"),
+		entry: path.join(srcDir, "content.ts"),
 		output: {
 			path: outDir,
 			filename: "content.js",
@@ -81,7 +84,7 @@ module.exports = [
 	},
 	{
 		...mainConfig(),
-		entry: path.join(__dirname, "src", "config.ts"),
+		entry: path.join(srcDir, "config.ts"),
 		output: {
 			path: outDir,
 			filename: "config.js",

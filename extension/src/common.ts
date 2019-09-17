@@ -29,26 +29,32 @@ export interface WebSocketMessage {
 // launchSail starts an instance of sail and instructs it to launch the
 // specified project URL. Terminal output will be sent to the onMessage handler.
 export const launchSail = (projectUrl: string, onMessage: (WebSocketMessage) => void): Promise<void> => {
-	const listener = (message: any) => {
-		if (message.type && message.v) {
-			onMessage(message);
-		}
-	};
-	chrome.runtime.onMessage.addListener(listener);
-
 	return new Promise<void>((resolve, reject) => {
-		chrome.runtime.sendMessage({
-			type: "sail",
-			projectUrl: projectUrl,
-		}, (response: ExtensionMessage) => {
+		const port = chrome.runtime.connect();
+		port.onMessage.addListener((message: WebSocketMessage): void => {
+			if (message.type && message.v) {
+				onMessage(message);
+			}
+			if (message.type === "error") {
+				port.disconnect();
+			}
+		});
+
+		const responseListener = (response: ExtensionMessage): void => {
 			if (response.type === "sail") {
+				port.onMessage.removeListener(responseListener);
 				if (response.error) {
-					chrome.runtime.onMessage.removeListener(listener);
 					return reject(response.error);
 				}
 
 				resolve();
 			}
+		};
+
+		port.onMessage.addListener(responseListener);
+		port.postMessage({
+			type: "sail",
+			projectUrl: projectUrl,
 		});
 	});
 };
@@ -57,16 +63,23 @@ export const launchSail = (projectUrl: string, onMessage: (WebSocketMessage) => 
 // the extension to connect to Sail. This does not attempt a connection to Sail.
 export const sailAvailable = (): Promise<void> => {
 	return new Promise<void>((resolve, reject) => {
-		chrome.runtime.sendMessage({
-			type: "sail",
-		}, (response: ExtensionMessage) => {
+		const port = chrome.runtime.connect();
+
+		const responseListener = (response: ExtensionMessage): void => {
 			if (response.type === "sail") {
+				port.onMessage.removeListener(responseListener);
+				port.disconnect();
 				if (response.error) {
 					return reject(response.error);
 				}
 
 				resolve();
 			}
+		};
+
+		port.onMessage.addListener(responseListener);
+		port.postMessage({
+			type: "sail",
 		});
 	});
 };
