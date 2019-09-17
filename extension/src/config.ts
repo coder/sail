@@ -24,7 +24,7 @@ sailAvailable().then(() => {
 	sailStatus.classList.add("error");
 	let message = "Failed to connect to Sail.";
 	if (has("not found") || has("forbidden")) {
-		message = "After installing Sail, run <code>sail install-for-chrome-ext</code>.";
+		message = "After installing Sail, run <code>sail install-ext-host</code>.";
 	}
 	sailAvailableStatus.innerHTML = message;
 

@@ -11,7 +11,7 @@ import (
 	"go.coder.com/cli"
 )
 
-// A dedication to Nhooyr Software.
+// Dedicated to nhooyr_software.
 var _ interface {
 	cli.Command
 	cli.FlaggedCommand
