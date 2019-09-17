@@ -4,7 +4,7 @@ set -e
 
 cd $(dirname "$0")
 
-VERSION=$(jq -r ".version" ./manifest.json)
+VERSION=$(jq -r ".version" ./out/manifest.json)
 SRC_DIR="./out"
 OUTPUT_DIR="./packed-extensions"
 
@@ -22,4 +22,4 @@ fi
 
 # Chrome extension
 rm "$OUTPUT_DIR/sail-$VERSION.chrome.zip" || true
-zip -R "$OUTPUT_DIR/sail-$VERSION.chrome.zip" "$SRC_DIR/*"
+zip -j "$OUTPUT_DIR/sail-$VERSION.chrome.zip" "$SRC_DIR"/*
