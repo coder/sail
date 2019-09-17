@@ -1,13 +1,25 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 set -e
 
+cd $(dirname "$0")
+
+VERSION=$(jq -r ".version" ./manifest.json)
+SRC_DIR="./out"
+OUTPUT_DIR="./packed-extensions"
+
+mkdir -p "$OUTPUT_DIR"
+
 # Firefox extension (done first because web-ext verifies manifest)
-if [ -z "$AMO_JWT_ISSUER" ]; then
-	web-ext build -i "node_modules/**/*" -i "src/**/*" -i "package.json" -i "tsconfig.json" -i "webpack.config.js" -i "yarn.lock"
+if [ -z "$WEB_EXT_API_KEY" ]; then
+	web-ext build --source-dir="$SRC_DIR" --artifacts-dir="$OUTPUT_DIR" --overwrite-dest
+	mv "$OUTPUT_DIR/sail-$VERSION.zip" "$OUTPUT_DIR/sail-$VERSION.firefox.zip"
 else
-	web-ext sign --api-key="$AMO_JWT_ISSUER" --api-secret="$AMO_JWT_SECRET" -i "node_modules/**/*" -i "src/**/*" -i "package.json" -i "tsconfig.json" -i "webpack.config.js" -i "yarn.lock"
+	# Requires $WEB_EXT_API_KEY and $WEB_EXT_API_SECRET from addons.mozilla.org.
+	web-ext sign --source-dir="$SRC_DIR" --artifacts-dir="$OUTPUT_DIR" --overwrite-dest
+	mv "$OUTPUT_DIR/sail-$VERSION.xpi" "$OUTPUT_DIR/sail-$VERSION.firefox.xpi"
 fi
 
 # Chrome extension
-zip -R chrome-extension.zip manifest.json out/* logo128.png logo.svg
+rm "$OUTPUT_DIR/sail-$VERSION.chrome.zip" || true
+zip -R "$OUTPUT_DIR/sail-$VERSION.chrome.zip" "$SRC_DIR/*"

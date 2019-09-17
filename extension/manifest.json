@@ -15,7 +15,7 @@
 
 	"background": {
 		"scripts": [
-			"out/background.js"
+			"background.js"
 		],
 		"persistent": false
 	},
@@ -25,7 +25,7 @@
 				"https://*/*"
 			],
 			"js": [
-				"out/content.js"
+				"content.js"
 			]
 		}
 	],
@@ -38,7 +38,7 @@
 	"icons": {
 		"128": "logo128.png"
 	},
-	"options_page": "out/config.html",
+	"options_page": "config.html",
 	"icons": {
 		"128": "logo128.png"
 	},

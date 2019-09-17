@@ -186,6 +186,6 @@ chrome.runtime.onConnect.addListener((port: chrome.runtime.Port): void => {
 
 // Open the config page when the browser action is clicked.
 chrome.browserAction.onClicked.addListener(() => {
-	const url = chrome.runtime.getURL("/out/config.html");
+	const url = chrome.runtime.getURL("/config.html");
 	chrome.tabs.create({ url });
 });
