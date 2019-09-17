@@ -58,6 +58,8 @@ func (r *rootCmd) RegisterFlags(fl *flag.FlagSet) {
 }
 
 func (r rootCmd) Subcommands() []cli.Command {
+	extHostCmd := &installExtHostCmd{}
+
 	return []cli.Command{
 		&runcmd{gf: &r.globalFlags},
 		&shellcmd{gf: &r.globalFlags},
@@ -65,7 +67,8 @@ func (r rootCmd) Subcommands() []cli.Command {
 		&lscmd{},
 		&rmcmd{gf: &r.globalFlags},
 		&proxycmd{},
-		&chromeExtInstall{},
+		extHostCmd,
+		&chromeExtInstallCmd{cmd: extHostCmd},
 		&versioncmd{},
 	}
 }
@@ -74,7 +77,8 @@ func main() {
 	root := &rootCmd{}
 
 	if (len(os.Args) >= 2 && strings.HasPrefix(os.Args[1], "chrome-extension://")) ||
-		(len(os.Args) >= 3 && strings.HasPrefix(os.Args[2], "chrome-extension://")) {
+		(len(os.Args) >= 3 && strings.HasPrefix(os.Args[2], "chrome-extension://")) ||
+		(len(os.Args) >= 2 && strings.HasSuffix(os.Args[1], "com.coder.sail.json")) {
 		runNativeMsgHost()
 		return
 	}

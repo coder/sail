@@ -26,7 +26,7 @@ require (
 	go.coder.com/cli v0.1.1-0.20190426214427-610063ae7153
 	go.coder.com/flog v0.0.0-20190129195112-eaed154a0db8
 	golang.org/x/sys v0.0.0-20190415145633-3fd5a3612ccd // indirect
-	golang.org/x/xerrors v0.0.0-20190315151331-d61658bd2e18
+	golang.org/x/xerrors v0.0.0-20190717185122-a985d3407aa7
 	google.golang.org/grpc v1.20.0 // indirect
 	gotest.tools v2.2.0+incompatible // indirect
 	nhooyr.io/websocket v0.2.0
