@@ -35,6 +35,9 @@
 		"storage",
 		"tabs"
 	],
+	"icons": {
+		"128": "logo128.png"
+	},
 	"options_page": "out/config.html",
 	"icons": {
 		"128": "logo128.png"
