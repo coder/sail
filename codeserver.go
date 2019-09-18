@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"io"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"os"
@@ -20,115 +19,86 @@ import (
 	"go.coder.com/sail/internal/codeserver"
 )
 
-// loadCodeServer produces a path containing the code-server binary.
-// It will attempt to cache the binary.
-func loadCodeServer(ctx context.Context) (string, error) {
-	start := time.Now()
-
-	var cachePath string
-	const codeServerPathSuffix = "sail-code-server-cache/code-server"
-	// MacOS maps os.TempDir() to `/var/folders/...`, which isn't shared with the docker
-	// system since docker tries to comply with Apple's filesystem sandbox guidelines, so
-	// default to `/tmp` when on MacOS.
-	//
-	// See:
-	// https://stackoverflow.com/questions/45122459/docker-mounts-denied-the-paths-are-not-shared-from-os-x-and-are-not-known
-	switch runtime.GOOS {
-	case "darwin":
-		cachePath = filepath.Join("/tmp", codeServerPathSuffix)
-	default:
-		cachePath = filepath.Join(os.TempDir(), codeServerPathSuffix)
+// ensureCodeServerCachePath determines the applicable cache directory path for
+// this system, adds our suffix, does MkdirAll on it and returns it with
+// /code-server appended to the end.
+//
+// Example output:
+//     /home/dean/.cache/sail-code-server-cache/2.1485-vsc1.38.1/code-server.
+func ensureCodeServerCachePath(codeServerVersion string) (string, error) {
+	userCacheDir, err := os.UserCacheDir()
+	if err != nil {
+		return "", xerrors.Errorf("failed to determine user cache directory: %w", err)
 	}
 
-	// downloadURLPath stores the download URL, so we know whether we should update
-	// the binary.
-	downloadURLPath := cachePath + ".download_url"
-
-	// Only check for a new codeserver if it's over an hour old.
-	info, err := os.Stat(cachePath)
-	if err == nil {
-		if info.ModTime().Add(time.Hour).After(time.Now()) {
-			return cachePath, nil
-		}
-	}
-
+	cachePath := filepath.Join(userCacheDir, "sail-code-server-cache", codeServerVersion, "code-server")
 	err = os.MkdirAll(filepath.Dir(cachePath), 0750)
 	if err != nil {
 		return "", err
 	}
 
+	return cachePath, nil
+}
+
+// loadCodeServer produces a path containing the code-server binary.
+// It will attempt to cache the binary.
+func loadCodeServer(ctx context.Context) (string, error) {
+	const codeServerVersion = codeserver.CodeServerVersion
+
+	cachePath, err := ensureCodeServerCachePath(codeServerVersion)
+	if err != nil {
+		return "", xerrors.Errorf("failed to ensure code-server cache path: %w", err)
+	}
+
+	// Only download the file if it doesn't exist in the cache directory.
 	_, err = os.Stat(cachePath)
-	if err != nil && !os.IsNotExist(err) {
-		return "", xerrors.Errorf("failed to stat %v: %v", cachePath, err)
-	}
-
-	cachedBinExists := err == nil
-
-	downloadURL, err := codeserver.DownloadURL(ctx)
-	if err != nil {
-		return "", err
-	}
-
-	lastDownloadURL, err := ioutil.ReadFile(downloadURLPath)
-	if err != nil {
-		if !os.IsNotExist(err) {
-			return "", xerrors.Errorf("failed to get download URL: %w", err)
-		}
-
-		lastDownloadURL = []byte("")
-	}
-
-	// The binary is already up to date.
-	if string(lastDownloadURL) == downloadURL && cachedBinExists {
+	if err == nil {
 		return cachePath, nil
 	}
+	if err != nil && !xerrors.Is(err, os.ErrNotExist) {
+		return "", xerrors.Errorf("failed to check if code-server is cached: %w", err)
+	}
 
-	// We can't just overwrite the binary, as that would cause a `text file busy` error if code-server is running.
-	// We write to a temporary path first, and then atomically swap in this new file.
+	start := time.Now()
+	flog.Info("downloading and caching code-server %v", codeServerVersion)
+	downloadURL := codeserver.DownloadURL(codeServerVersion)
+
+	// We can't just overwrite the binary, as that would cause a `text file
+	// busy` error if code-server is running. We write to a temporary path
+	// first, and then atomically swap in this new file.
 	tmpCachePath := cachePath + strconv.FormatInt(time.Now().UnixNano(), 10)
 	defer os.Remove(tmpCachePath)
 
-	// Update the binary.
 	cachedBinFi, err := os.OpenFile(tmpCachePath, os.O_CREATE|os.O_RDWR, 0750)
 	if err != nil {
-		return "", err
+		return "", xerrors.Errorf("failed to open temporary file %v for writing: %w", err)
 	}
 	defer cachedBinFi.Close()
 
-	tarFi, err := http.Get(downloadURL)
+	binRd, err := http.Get(downloadURL)
 	if err != nil {
-		return "", xerrors.Errorf("failed to get %v: %w", downloadURL, err)
+		return "", xerrors.Errorf(`failed to download code-server from "%v": %w`, downloadURL, err)
 	}
-	defer tarFi.Body.Close()
+	defer binRd.Body.Close()
 
-	binRd, err := codeserver.Extract(ctx, tarFi.Body)
-	if err != nil {
-		return "", xerrors.Errorf("failed to untar %v: %w", downloadURL, err)
-	}
-
-	_, err = io.Copy(cachedBinFi, binRd)
+	_, err = io.Copy(cachedBinFi, binRd.Body)
 	if err != nil {
 		return "", xerrors.Errorf("failed to copy binary into %v: %w", tmpCachePath, err)
 	}
 
 	err = cachedBinFi.Close()
 	if err != nil {
-		return "", xerrors.Errorf("failed to close %v: %v", cachedBinFi.Name(), err)
+		return "", xerrors.Errorf("failed to close temporary file %v: %w", cachedBinFi.Name(), err)
 	}
 
 	// TODO: make this actually atomic.
 	_ = os.Remove(cachePath)
 	err = os.Rename(tmpCachePath, cachePath)
 	if err != nil {
-		return "", xerrors.Errorf("failed to rename %v to %v: %v", tmpCachePath, cachePath, err)
+		return "", xerrors.Errorf("failed to rename %v to %v: %w", tmpCachePath, cachePath, err)
 	}
 
-	err = ioutil.WriteFile(downloadURLPath, []byte(downloadURL), 0640)
-	if err != nil {
-		return "", err
-	}
-
-	flog.Info("loaded code-server in %v", time.Since(start))
+	flog.Info("downloaded and cached code-server %v in %v", codeServerVersion, time.Since(start))
 
 	return cachePath, nil
 }
@@ -149,8 +119,8 @@ func codeServerPort(cntName string) (string, error) {
 	for ctx.Err() == nil {
 		if runtime.GOOS == "darwin" {
 			// macOS uses port forwarding instead of host networking so netstat stuff below will not work
-			// as it will find the port inside the container, which we already know is 8443.
-			cmd := exec.CommandContext(ctx, "docker", "port", cntName, "8443")
+			// as it will find the port inside the container, which we already know is 8080.
+			cmd := exec.CommandContext(ctx, "docker", "port", cntName, "8080")
 			var out []byte
 			out, err = cmd.CombinedOutput()
 			if err != nil {

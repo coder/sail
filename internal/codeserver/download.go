@@ -1,53 +1,14 @@
 package codeserver
 
 import (
-	"archive/tar"
-	"compress/gzip"
-	"context"
-	"io"
-	"path/filepath"
-	"strings"
-
-	"github.com/google/go-github/v24/github"
-	"golang.org/x/xerrors"
+	"fmt"
 )
 
-// DownloadURL gets a URL for the latest version of code-server.
-func DownloadURL(ctx context.Context) (string, error) {
-	client := github.NewClient(nil)
-	rel, _, err := client.Repositories.GetLatestRelease(ctx, "cdr", "code-server")
-	if err != nil {
-		return "", xerrors.Errorf("failed to get latest code-server release: %w", err)
-	}
-	for _, v := range rel.Assets {
-		// TODO: fix this jank.
-		if strings.Index(*v.Name, "linux") < 0 {
-			continue
-		}
-		return *v.BrowserDownloadURL, nil
-	}
-	return "", xerrors.New("no released found for platform")
-}
+// CodeServerVersion stores the version of code-server to use.
+// TODO (Dean): move this to build steps
+const CodeServerVersion = "2.1485-vsc1.38.1"
 
-// Extract takes a code-server release tar and writes out the main binary to bin.
-func Extract(ctx context.Context, tarFi io.Reader) (io.Reader, error) {
-	grd, err := gzip.NewReader(tarFi)
-	if err != nil {
-		return nil, xerrors.Errorf("failed to create gzip decoder: %w", err)
-	}
-	defer grd.Close()
-
-	rd := tar.NewReader(grd)
-	for {
-		hdr, err := rd.Next()
-		if err != nil {
-			if err == io.EOF {
-				return nil, xerrors.New("code-server not found")
-			}
-			return nil, err
-		}
-		if filepath.Base(hdr.Name) == "code-server" {
-			return rd, nil
-		}
-	}
+// DownloadURL gets a download URL for the specified version of code-server.
+func DownloadURL(version string) string {
+	return fmt.Sprintf("https://codesrv-ci.cdr.sh/releases/%v/linux-x86_64/code-server", version)
 }

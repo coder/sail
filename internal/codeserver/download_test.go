@@ -1,33 +1,24 @@
 package codeserver
 
 import (
-	"context"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"os/exec"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/require"
 )
 
-func TestDownloadURL_Extract(t *testing.T) {
+func TestDownloadURL_FetchAndRun(t *testing.T) {
 	t.Parallel()
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Minute*2)
-	defer cancel()
-
-	url, err := DownloadURL(ctx)
-	require.NoError(t, err)
+	url := DownloadURL(CodeServerVersion)
 
 	resp, err := http.Get(url)
 	require.NoError(t, err)
 	defer resp.Body.Close()
-
-	binRd, err := Extract(ctx, resp.Body)
-	require.NoError(t, err)
 
 	if testing.Short() {
 		t.Skipf("downloading code-server can take a while")
@@ -37,7 +28,7 @@ func TestDownloadURL_Extract(t *testing.T) {
 	require.NoError(t, err)
 	defer os.Remove(tmpfi.Name())
 
-	_, err = io.Copy(tmpfi, binRd)
+	_, err = io.Copy(tmpfi, resp.Body)
 	require.NoError(t, err)
 
 	err = os.Chmod(tmpfi.Name(), 0750)

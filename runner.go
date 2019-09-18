@@ -163,15 +163,16 @@ func (r *runner) constructCommand(projectDir string) string {
 	// access during development, but also going to stdout so `docker logs` can be used
 	// to debug a failed code-server startup.
 	//
-	// We start code-server such that extensions installed through the UI are placed in the host's extension dir.
+	// We start code-server such that extensions installed through the UI are placed
+	// in the host's extension dir.
 	cmd := fmt.Sprintf(`set -euxo pipefail || exit 1
 cd %v
 # This is necessary in case the .vscode directory wasn't created inside the container, as mounting to the host
 # extension dir will create it as root.
 sudo chown user:user ~/.vscode
 code-server --host %v --port %v \
-	--data-dir ~/.config/Code --extensions-dir %v --extra-extensions-dir ~/.vscode/extensions --allow-http --no-auth 2>&1 | tee %v
-`, projectDir, containerAddr, containerPort, hostExtensionsDir, containerLogPath)
+	--user-data-dir ~/.config/Code --extensions-dir %v --extra-extensions-dir ~/.vscode/extensions %v 2>&1 | tee %v
+`, projectDir, containerAddr, containerPort, hostExtensionsDir, projectDir, containerLogPath)
 	if r.testCmd != "" {
 		cmd = r.testCmd + "\n exit 1"
 	}
@@ -540,7 +541,11 @@ func (r *runner) forkProxy() error {
 }
 
 func forkProxy(cntName string) (proxyURL string, _ error) {
-	sailProxy := exec.Command(os.Args[0], "proxy", cntName)
+	sailPath, err := os.Executable()
+	if err != nil {
+		return "", xerrors.Errorf("failed to determine sail executable path for proxy fork: %w", err)
+	}
+	sailProxy := exec.Command(sailPath, "proxy", cntName)
 	stdout, err := sailProxy.StdoutPipe()
 	if err != nil {
 		return "", xerrors.Errorf("failed to create stdout pipe: %v", err)

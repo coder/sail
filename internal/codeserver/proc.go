@@ -32,8 +32,7 @@ func Port(containerName string) (string, error) {
 	// Example output:
 	// Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name
 	// tcp        0      0 localhost:4774          0.0.0.0:*               LISTEN      6/code-server
-	// tcp        0      0 127.0.0.53:domain       0.0.0.0:*               LISTEN      -
-	out, err := dockutil.Exec(containerName, "netstat", "-tpl").CombinedOutput()
+	out, err := dockutil.Exec(containerName, "netstat", "-ntpl").CombinedOutput()
 	if err != nil {
 		return "", xerrors.Errorf("failed to netstat: %s, %w", out, err)
 	}
@@ -43,8 +42,8 @@ func Port(containerName string) (string, error) {
 		if strings.Contains(line, "code-server") {
 			fields := strings.Fields(line)
 			const localAddrIndex = 3
-			localAddrField := fields[localAddrIndex]
-			return strings.TrimLeft(localAddrField, "localhost:"), nil
+			localAddrField := strings.TrimPrefix(fields[localAddrIndex], "127.0.0.1:")
+			return strings.TrimPrefix(localAddrField, "localhost:"), nil
 		}
 	}
 
