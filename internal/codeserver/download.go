@@ -6,7 +6,7 @@ import (
 
 // CodeServerVersion stores the version of code-server to use.
 // TODO (Dean): move this to build steps
-const CodeServerVersion = "2.1485-vsc1.38.1"
+const CodeServerVersion = "2.1523-vsc1.38.1"
 
 // DownloadURL gets a download URL for the specified version of code-server.
 func DownloadURL(version string) string {
