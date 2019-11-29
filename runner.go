@@ -170,7 +170,7 @@ cd %v
 # extension dir will create it as root.
 sudo chown user:user ~/.vscode
 code-server --host %v --port %v \
-	--data-dir ~/.config/Code --extensions-dir %v --extra-extensions-dir ~/.vscode/extensions --allow-http --no-auth 2>&1 | tee %v
+	--data-dir ~/.config/Code --extensions-dir %v --extra-extensions-dir ~/.vscode/extensions --allow-http --auth=none 2>&1 | tee %v
 `, projectDir, containerAddr, containerPort, hostExtensionsDir, containerLogPath)
 	if r.testCmd != "" {
 		cmd = r.testCmd + "\n exit 1"
