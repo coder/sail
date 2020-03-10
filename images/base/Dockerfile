@@ -1,4 +1,4 @@
-FROM buildpack-deps:cosmic
+FROM buildpack-deps:20.04
 
 RUN apt-get update && apt-get install -y \
     vim \
