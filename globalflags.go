@@ -2,11 +2,13 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"net/url"
 	"os"
 	"os/exec"
 	"os/user"
 	"path/filepath"
+	"runtime"
 	"strings"
 
 	"github.com/fatih/color"
@@ -37,6 +39,15 @@ func (gf *globalFlags) config() config {
 
 // ensureDockerDaemon verifies that Docker is running.
 func (gf *globalFlags) ensureDockerDaemon() {
+	if runtime.GOOS == "darwin" {
+		path := os.Getenv("PATH")
+		localBin := "/usr/local/bin"
+		if !strings.Contains(path, localBin) {
+			sep := fmt.Sprintf("%c", os.PathListSeparator)
+			// Fix for MacOS to include /usr/local/bin where docker is commonly installed which is not included in $PATH when sail is launched by browser that was opened in Finder
+			os.Setenv("PATH", strings.Join([]string{path, localBin}, sep))
+		}
+	}
 	out, err := exec.Command("docker", "info").CombinedOutput()
 	if err != nil {
 		flog.Fatal("failed to run `docker info`: %v\n%s", err, out)
