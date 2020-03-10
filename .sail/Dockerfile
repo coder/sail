@@ -15,4 +15,6 @@ RUN wget -O /tmp/hugo.deb https://github.com/gohugoio/hugo/releases/download/v0.
   sudo dpkg -i /tmp/hugo.deb && \
   rm -f /tmp/hugo.deb
 
-#RUN installext ms-azuretools.vscode-docker
+# Fails to install Extension 'ms-azuretools.vscode-docker' not found.
+#    error vscode undefined
+# RUN installext ms-azuretools.vscode-docker

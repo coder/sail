@@ -20,8 +20,8 @@ func DownloadURL(ctx context.Context) (string, error) {
 		return "", xerrors.Errorf("failed to get latest code-server release: %w", err)
 	}
 	for _, v := range rel.Assets {
-		// TODO: fix this jank.
-		if strings.Index(*v.Name, "linux") < 0 {
+		// TODO: fix this jank, detect container architecture instead of hardcoding to x86_64
+		if strings.Index(*v.Name, "linux-x86_64") < 0 {
 			continue
 		}
 		return *v.BrowserDownloadURL, nil
