@@ -2,11 +2,13 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"net/url"
 	"os"
 	"os/exec"
 	"os/user"
 	"path/filepath"
+	"runtime"
 	"strings"
 
 	"github.com/fatih/color"
@@ -37,6 +39,16 @@ func (gf *globalFlags) config() config {
 
 // ensureDockerDaemon verifies that Docker is running.
 func (gf *globalFlags) ensureDockerDaemon() {
+	// docker is installed in /usr/local/bin on MacOS, but this isn't in
+	// $PATH when launched by a browser that was opened via Finder.
+	if runtime.GOOS == "darwin" {
+		path := os.Getenv("PATH")
+		localBin := "/usr/local/bin"
+		if !strings.Contains(path, localBin) {
+			sep := fmt.Sprintf("%c", os.PathListSeparator)
+			os.Setenv("PATH", strings.Join([]string{path, localBin}, sep))
+		}
+	}
 	out, err := exec.Command("docker", "info").CombinedOutput()
 	if err != nil {
 		flog.Fatal("failed to run `docker info`: %v\n%s", err, out)
