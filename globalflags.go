@@ -39,6 +39,8 @@ func (gf *globalFlags) config() config {
 
 // ensureDockerDaemon verifies that Docker is running.
 func (gf *globalFlags) ensureDockerDaemon() {
+	// docker is installed in /usr/local/bin on MacOS, but this isn't in
+	// $PATH when launched by a browser that was opened via Finder.
 	if runtime.GOOS == "darwin" {
 		path := os.Getenv("PATH")
 		localBin := "/usr/local/bin"
