@@ -31,5 +31,6 @@ $GOPATH/bin/gometalinter --install
 
 # gopls is generally recommended over community tools.
 # It's much faster and more reliable than the other options.
-go get -u golang.org/x/tools/cmd/gopls
+# FIX: https://github.com/golang/go/issues/36442 by running as described here https://github.com/golang/tools/blob/master/gopls/doc/user.md#installation
+GO111MODULE=on go get golang.org/x/tools/gopls@latest
 

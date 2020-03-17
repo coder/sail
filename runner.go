@@ -169,9 +169,10 @@ cd %v
 # This is necessary in case the .vscode directory wasn't created inside the container, as mounting to the host
 # extension dir will create it as root.
 sudo chown user:user ~/.vscode
-code-server --host %v --port %v \
-	--data-dir ~/.config/Code --extensions-dir %v --extra-extensions-dir ~/.vscode/extensions --allow-http --no-auth 2>&1 | tee %v
-`, projectDir, containerAddr, containerPort, hostExtensionsDir, containerLogPath)
+/usr/bin/code-server --host %v --port %v --user-data-dir ~/.config/Code --extensions-dir %v --extra-extensions-dir ~/.vscode/extensions --auth=none \
+--allow-http 2>&1 | tee %v`,
+		projectDir, containerAddr, containerPort, hostExtensionsDir, containerLogPath)
+
 	if r.testCmd != "" {
 		cmd = r.testCmd + "\n exit 1"
 	}
