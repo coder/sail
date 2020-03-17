@@ -25,8 +25,8 @@ ENV LC_ALL=en_US.UTF-8
 # install extensions.
 
 RUN wget -O code-server.tgz "https://codesrv-ci.cdr.sh/releases/3.0.1/linux-x86_64.tar.gz" && \
-	tar -C /usr/lib -xzf code-server.tgz && \
-	rm code-server.tgz && \
+    tar -C /usr/lib -xzf code-server.tgz && \
+    rm code-server.tgz && \
     ln -s /usr/lib/code-server-3.0.1-linux-x86_64/code-server /usr/bin/code-server && \
     chmod +x /usr/lib/code-server-3.0.1-linux-x86_64/code-server && \
     chmod +x /usr/bin/code-server
