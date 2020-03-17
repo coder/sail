@@ -44,7 +44,6 @@ func (gf *globalFlags) ensureDockerDaemon() {
 		localBin := "/usr/local/bin"
 		if !strings.Contains(path, localBin) {
 			sep := fmt.Sprintf("%c", os.PathListSeparator)
-			// Fix for MacOS to include /usr/local/bin where docker is commonly installed which is not included in $PATH when sail is launched by browser that was opened in Finder
 			os.Setenv("PATH", strings.Join([]string{path, localBin}, sep))
 		}
 	}
