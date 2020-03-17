@@ -24,14 +24,11 @@ ENV LC_ALL=en_US.UTF-8
 # anyways, but it's nice to have this during the build pipepline so we can
 # install extensions.
 
-# Download and Install code-server: https://github.com/cdr/code-server/releases/tag/3.0.0
-
-RUN wget -O code-server.tgz "https://codesrv-ci.cdr.sh/releases/3.0.1/linux-x86_64.tar.gz"; \
-	tar -C /usr/lib -xzf code-server.tgz; \
-	rm code-server.tgz;
-
-RUN ln -s /usr/lib/code-server-3.0.1-linux-x86_64/code-server /usr/bin/code-server; \
-    chmod +x /usr/lib/code-server-3.0.1-linux-x86_64/code-server; \
-    chmod +x /usr/bin/code-server;
+RUN wget -O code-server.tgz "https://codesrv-ci.cdr.sh/releases/3.0.1/linux-x86_64.tar.gz" && \
+	tar -C /usr/lib -xzf code-server.tgz && \
+	rm code-server.tgz && \
+    ln -s /usr/lib/code-server-3.0.1-linux-x86_64/code-server /usr/bin/code-server && \
+    chmod +x /usr/lib/code-server-3.0.1-linux-x86_64/code-server && \
+    chmod +x /usr/bin/code-server
 
 ADD installext /usr/bin/installext

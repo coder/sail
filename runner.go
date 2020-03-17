@@ -165,13 +165,13 @@ func (r *runner) constructCommand(projectDir string) string {
 	//
 	// We start code-server such that extensions installed through the UI are placed in the host's extension dir.
 	cmd := fmt.Sprintf(`set -euxo pipefail || exit 1
-	cd %v
-	# This is necessary in case the .vscode directory wasn't created inside the container, as mounting to the host
-	# extension dir will create it as root.
-	sudo chown user:user ~/.vscode
-	/usr/bin/code-server --host %v --port %v --user-data-dir ~/.config/Code --extensions-dir %v --extra-extensions-dir ~/.vscode/extensions --auth=none \
-	--allow-http 2>&1 | tee %v
-	`, projectDir, containerAddr, containerPort, hostExtensionsDir, containerLogPath)
+cd %v
+# This is necessary in case the .vscode directory wasn't created inside the container, as mounting to the host
+# extension dir will create it as root.
+sudo chown user:user ~/.vscode
+/usr/bin/code-server --host %v --port %v --user-data-dir ~/.config/Code --extensions-dir %v --extra-extensions-dir ~/.vscode/extensions --auth=none \
+--allow-http 2>&1 | tee %v`,
+		projectDir, containerAddr, containerPort, hostExtensionsDir, containerLogPath)
 
 	if r.testCmd != "" {
 		cmd = r.testCmd + "\n exit 1"
