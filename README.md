@@ -1,5 +1,9 @@
 # sail
 
+**Deprecated:** The workflow of developing from project-defined environments has been adopted for organizations in [Coder Enterprise](https://coder.com/).
+
+---
+
 [!["Open Issues"](https://img.shields.io/github/issues-raw/cdr/sail.svg)](https://github.com/cdr/sail/issues)
 [![MIT license](https://img.shields.io/badge/license-MIT-green.svg)](https://github.com/cdr/sail/blob/master/LICENSE)
 [![AUR version](https://img.shields.io/aur/version/sail.svg)](https://aur.archlinux.org/packages/sail/)
