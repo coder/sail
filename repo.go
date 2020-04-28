@@ -109,9 +109,21 @@ func parseRepo(defaultSchema, defaultHost, defaultOrganization, name string) (re
 	return r, nil
 }
 
-// language returns the language of a repository using github's detected language.
-// This is a best effort try and will return the empty string if something fails.
+// language tries to determine the language of a repository. If any error is
+// encountered, an empty string is returned.
 func (r repo) language() string {
+	switch strings.ToLower(r.Host) {
+	case "github.com":
+		return r.getGitHubLanguage()
+	default:
+		return ""
+	}
+}
+
+// getGitHubLanguage returns the language of a repository using GitHub's
+// detected language. This is a best effort try and will return the empty string
+// if something fails.
+func (r repo) getGitHubLanguage() string {
 	orgRepo := strings.SplitN(r.trimPath(), "/", 2)
 	if len(orgRepo) != 2 {
 		return ""
@@ -119,7 +131,7 @@ func (r repo) language() string {
 
 	repo, resp, err := github.NewClient(nil).Repositories.Get(context.Background(), orgRepo[0], orgRepo[1])
 	if err != nil {
-		flog.Error("unable to get repo language: %v", err)
+		flog.Error("unable to get repo language from GitHub: %v", err)
 		return ""
 	}
 
